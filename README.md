@@ -12,7 +12,7 @@ Reproductor multimedia de terminal con `curses` + `python-vlc`. Navega archivos 
 ## Instalación
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/USER/tplay/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/braiidev/tplay/main/install.sh | bash
 ```
 
 Esto:

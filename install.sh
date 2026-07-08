@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # install.sh — Instala tplay (reproductor multimedia TUI)
-# Uso: curl -fsSL https://raw.githubusercontent.com/USER/tplay/main/install.sh | bash
+# Uso: curl -fsSL https://raw.githubusercontent.com/braiidev/tplay/main/install.sh | bash
 
 set -e
 
