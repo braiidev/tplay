@@ -80,6 +80,7 @@ class PlayerApp:
         self.config_scroll = 0
         self.update_available = False
         self.update_check_done = False
+        self.update_behind = 0
 
         self.confirm_mode = False
         self.confirm_label = ""
@@ -241,8 +242,10 @@ class PlayerApp:
                 cwd=repo, capture_output=True, text=True, timeout=10,
             )
             behind = int(result.stdout.strip() or 0)
+            self.update_behind = behind
             self.update_available = behind > 0
         except Exception:
+            self.update_behind = 0
             self.update_available = False
         self.update_check_done = True
 

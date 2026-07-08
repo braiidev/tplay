@@ -710,10 +710,11 @@ def _rename_playlist_cb(app, new_name: str) -> None:
 # ── Update ──
 
 def _handle_update(app) -> None:
-    if not app.update_check_done:
-        app._check_updates()
+    app._check_updates()
     if app.update_available:
-        _confirm(app, "¿Actualizar ahora?", lambda: _do_update(app))
+        n = app.update_behind
+        s = "s" if n != 1 else ""
+        _confirm(app, f"Actualización disp. ({n} commit{s}) ¿Descargar?", lambda: _do_update(app))
     else:
         _confirm(app, "Sin actualizaciones disponibles", None)
 
