@@ -80,6 +80,10 @@ class PlayerApp:
         self.config_scroll = 0
         self.update_available = False
         self.update_check_done = False
+
+        self.confirm_mode = False
+        self.confirm_label = ""
+        self.confirm_callback = None
         self._setup_keybindings()
         self._build_config_items()
         self._build_action_handlers()
@@ -321,7 +325,9 @@ class PlayerApp:
             self.audio.check_sleep_timer()
             key = self.stdscr.getch()
             if key != -1:
-                if self.prompt_mode:
+                if self.confirm_mode:
+                    self._handle_confirm(key)
+                elif self.prompt_mode:
                     self._handle_prompt(key)
                 else:
                     self._handle_key(key)
@@ -528,6 +534,18 @@ class PlayerApp:
         elif 32 <= key <= 126 and len(self.prompt_buf) < 60:
             self.prompt_buf += chr(key)
 
+    def _handle_confirm(self, key: int) -> None:
+        cb = self.confirm_callback
+        self.confirm_mode = False
+        self.confirm_label = ""
+        self.confirm_callback = None
+        curses.curs_set(0)
+        curses.flushinp()
+        if not cb:
+            return
+        if chr(key).lower() in ("s", "y"):
+            cb()
+
     def _toggle_sleep_timer(self) -> None:
         if self.audio.sleep_timer_active:
             self.audio.sleep_timer_active = False
@@ -556,22 +574,26 @@ class PlayerApp:
                             or (self.current_view == 2 and self.playlist_filter_mode)
                             or self.prompt_mode)
             if needs_cursor:
-                curses.curs_set(0)
+                curses.curs_set(1)
 
             drawer = self._view_drawers.get(self.current_view)
             if drawer:
                 drawer(self, h, w)
 
             self._draw_status(h, w)
-            if self.prompt_mode:
+            if self.confirm_mode:
+                ui.draw_prompt(self.stdscr, h, w, self.confirm_label, "  s/N  ")
+            elif self.prompt_mode:
                 ui.draw_prompt(self.stdscr, h, w, self.prompt_label, self.prompt_buf)
             else:
                 ui.draw_nav(self.stdscr, h, w)
-            if self.update_available and not self.prompt_mode and not self.show_help:
-                try:
-                    self.stdscr.addstr(0, w - 14, " [⚡ Actualizar] ", curses.A_REVERSE)
-                except curses.error:
-                    pass
+            if self.update_available and not self.confirm_mode and not self.prompt_mode and not self.show_help:
+                msg = " Nueva actualización disponible "
+                if w > len(msg) + 1:
+                    try:
+                        self.stdscr.addstr(0, w - len(msg), msg, curses.A_REVERSE)
+                    except curses.error:
+                        pass
             if self.show_help:
                 ui.draw_help(self.stdscr, h, w)
 

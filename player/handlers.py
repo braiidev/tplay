@@ -105,7 +105,7 @@ def handle_playlist(app, key: int) -> None:
         _prompt(app, f"Renombrar '{app.active_name}' a", _rename_playlist_cb)
     elif key == ord("D"):
         if len(app.playlist_data) > 1 and app.active_name != "default":
-            _prompt(app, f"¿Borrar '{app.active_name}'? (s/N)", _delete_confirm_cb)
+            _confirm(app, f"¿Borrar '{app.active_name}'?", lambda: _do_delete_playlist(app))
     elif key == ord("K"):
         if app.playlist_cursor > 0:
             i = app.playlist_cursor
@@ -670,6 +670,13 @@ def _prompt(app, label: str, callback, initial: str = "") -> None:
     curses.flushinp()
 
 
+def _confirm(app, label: str, callback) -> None:
+    app.confirm_mode = True
+    app.confirm_label = label
+    app.confirm_callback = callback
+    curses.flushinp()
+
+
 def _save_temp_queue_cb(app, name: str) -> None:
     import os as _os
     if name and name not in app.playlist_data:
@@ -684,8 +691,8 @@ def _create_playlist_cb(app, name: str) -> None:
         _save_playlist(app)
 
 
-def _delete_confirm_cb(app, answer: str) -> None:
-    if answer.lower() == "s" and len(app.playlist_data) > 1 and app.active_name != "default":
+def _do_delete_playlist(app) -> None:
+    if len(app.playlist_data) > 1 and app.active_name != "default":
         del app.playlist_data[app.active_name]
         new_name = next(n for n in app.playlist_data if n != app.active_name)
         _switch_playlist(app, new_name)
@@ -705,13 +712,13 @@ def _handle_update(app) -> None:
     if not app.update_check_done:
         app._check_updates()
     if app.update_available:
-        _prompt(app, "¿Actualizar ahora? (s/N)", lambda buf: _do_update(app, buf), "s")
+        _confirm(app, "¿Actualizar ahora?", lambda: _do_update(app))
     else:
-        _prompt(app, "Sin actualizaciones disponibles", lambda _: None)
+        _confirm(app, "Sin actualizaciones disponibles", None)
 
 
-def _do_update(app, answer: str) -> None:
-    if answer.lower() != "s":
-        return
+def _do_update(app) -> None:
     ok, msg = app._apply_updates()
-    _prompt(app, msg, lambda _: None)
+    if ok:
+        app.update_available = False
+    _confirm(app, msg, None)

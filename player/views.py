@@ -224,9 +224,10 @@ def draw_config(app, h: int, w: int) -> None:
             mode_label = "Default" if app.keybinding_mode == "default" else "Custom"
             line = f"  {label}  [{mode_label}]"
         elif key == "update":
-            line = f"  {label}  [Enter]"
             if app.update_available:
-                line += " ⚡"
+                line = f"  {label}  [Actualizar ahora]"
+            else:
+                line = f"  {label}  [No hay actualizaciones]"
         else:
             line = f"  {labels.get(key, key)}"
         attr = texto
