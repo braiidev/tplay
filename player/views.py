@@ -2,7 +2,7 @@ import os
 import curses
 
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR
-from .file_utils import human_size, time_str, ext_label
+from .file_utils import time_str, ext_label
 from .ui import safe_addstr, draw_box, LIST_H, STATUS_ROW, EXPLORER_MARGIN, PLAYLIST_MARGIN
 from . import keybindings as kb
 from .handlers import _get_current_key
@@ -36,7 +36,8 @@ def draw_explorer(app, h: int, w: int) -> None:
             line = f"  [+]/ {name}"
             attr = destacar
         else:
-            line = f"  ♪ {name}  [{label}]"
+            base = name.rsplit('.', 1)[0] if '.' in name else name
+            line = f"  ♪ {base}  [{label}]"
             attr = texto
         max_w = w - EXPLORER_MARGIN
         if len(line) > max_w:
@@ -48,9 +49,11 @@ def draw_explorer(app, h: int, w: int) -> None:
         else:
             app.stdscr.addstr(y, 2, line, attr)
         if not is_dir:
-            size_str = human_size(full)
-            if size_str:
-                app.stdscr.addstr(y, w - len(size_str) - 2, size_str, texto)
+            meta = app.meta_cache.get(full)
+            dur = meta.get('length', 0) if meta else 0
+            dur_str = time_str(dur) if dur > 0 else ""
+            if dur_str:
+                app.stdscr.addstr(y, w - len(dur_str) - 2, dur_str, texto)
 
 
 def draw_playlist(app, h: int, w: int) -> None:
@@ -92,6 +95,10 @@ def draw_playlist(app, h: int, w: int) -> None:
             app.stdscr.addstr(y, 2, line, attr | curses.A_REVERSE)
         else:
             app.stdscr.addstr(y, 2, line, attr)
+        dur = meta.get('length', 0) if meta else 0
+        dur_str = time_str(dur) if dur > 0 else ""
+        if dur_str:
+            app.stdscr.addstr(y, w - len(dur_str) - 2, dur_str, attr)
 
 
 def draw_now_playing(app, h: int, w: int) -> None:
@@ -124,6 +131,10 @@ def draw_now_playing(app, h: int, w: int) -> None:
                     app.stdscr.addstr(y, 2, line, attr | curses.A_REVERSE)
                 else:
                     app.stdscr.addstr(y, 2, line, attr)
+                dur = meta.get('length', 0) if meta else 0
+                dur_str = time_str(dur) if dur > 0 else ""
+                if dur_str:
+                    app.stdscr.addstr(y, w - len(dur_str) - 2, dur_str, attr)
             safe_addstr(app.stdscr, h - 4, 2, "  [Enter]►  [Tab] Volver  [N] Next  [d]el  [x]clear", texto, h, w)
             safe_addstr(app.stdscr, h - 3, 2, "  [J/K]ordenar  [s]guardar  [g]Inicio  [G]Fin", texto, h, w)
         return
@@ -236,12 +247,18 @@ def draw_history(app, h: int, w: int) -> None:
     for i, (name, path) in enumerate(visible):
         y = 3 + i
         idx = start + i
-        line = f"  {name}"
+        base = name.rsplit('.', 1)[0] if '.' in name else name
+        line = f"  {base}"
         attr = destacar if idx == app.history_cursor else texto
         if idx == app.history_cursor:
             app.stdscr.addstr(y, 2, line, attr | curses.A_REVERSE)
         else:
             app.stdscr.addstr(y, 2, line, attr)
+        meta = app.meta_cache.get(path)
+        dur = meta.get('length', 0) if meta else 0
+        dur_str = time_str(dur) if dur > 0 else ""
+        if dur_str:
+            app.stdscr.addstr(y, w - len(dur_str) - 2, dur_str, texto)
 
 
 def draw_keybindings(app, h: int, w: int) -> None:
