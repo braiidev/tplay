@@ -5,6 +5,7 @@ from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR
 from .file_utils import human_size, time_str, ext_label
 from .ui import safe_addstr, draw_box, LIST_H, STATUS_ROW, SEARCH_LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN
 from . import keybindings as kb
+from .handlers import _get_current_key
 
 
 def draw_explorer(app, h: int, w: int) -> None:
@@ -257,7 +258,7 @@ def draw_keybindings(app, h: int, w: int) -> None:
     for i, action in enumerate(visible):
         y = 5 + i
         idx = start + i
-        keycode = app._get_current_key(action)
+        keycode = _get_current_key(app, action)
         kname = kb.key_name(keycode)
         line = f"  {action:<15}  {kname}"
         if app.kb_capturing and app.kb_capturing_action == action:
