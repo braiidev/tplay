@@ -95,6 +95,10 @@ class PlayerApp:
         self.confirm_label = ""
         self.confirm_callback = None
         self.confirm_is_info = False
+
+        self.file_op_mode = None
+        self.file_op_source = None
+
         self._setup_keybindings()
         self._build_config_items()
         self._build_action_handlers()
@@ -493,6 +497,11 @@ class PlayerApp:
         if key == ord("t"):
             self._toggle_sleep_timer()
             return True
+        if key == ord("T"):
+            handlers._prompt(self, "Minutos sleep timer",
+                             lambda a, b: self._setup_sleep_timer(b),
+                             str(self.config.get("sleep_timer_minutes", 30)))
+            return True
         if key == ord("q"):
             self.config["volume"] = self.audio.volume
             save_config(self.config)
@@ -623,6 +632,15 @@ class PlayerApp:
         else:
             minutes = self.config.get("sleep_timer_minutes", 30)
             self.audio.set_sleep_timer(minutes)
+
+    def _setup_sleep_timer(self, buf: str) -> None:
+        try:
+            mins = max(1, int(buf.strip()))
+        except ValueError:
+            mins = 30
+        self.config["sleep_timer_minutes"] = mins
+        save_config(self.config)
+        self.audio.set_sleep_timer(mins)
 
     # ── Drawing ──
 

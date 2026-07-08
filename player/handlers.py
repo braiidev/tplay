@@ -1,5 +1,6 @@
 import curses
 import os
+import shutil
 
 from .config import THEME_NAMES, COLORS
 from .file_utils import list_dir as _list_dir, is_media as _is_media_file
@@ -7,6 +8,10 @@ from . import keybindings as kb
 
 
 def handle_explorer(app, key: int) -> None:
+    if app.file_op_mode:
+        _handle_file_op_picker(app, key)
+        return
+
     if key == curses.KEY_DOWN:
         if app.entries:
             app.cursor = min(app.cursor + 1, len(app.entries) - 1)
@@ -35,6 +40,14 @@ def handle_explorer(app, key: int) -> None:
             name, is_dir, full = app.entries[app.cursor]
             if not is_dir:
                 _playlist_append(app, full)
+    elif key == ord("C"):
+        _start_file_op(app, "copy")
+    elif key == ord("V"):
+        _start_file_op(app, "move")
+    elif key == ord("E"):
+        _start_rename(app)
+    elif key == ord("I"):
+        _start_tag_edit(app)
     elif key in (curses.KEY_LEFT, 127, curses.KEY_BACKSPACE):
         parent = os.path.dirname(app.current_dir)
         if parent and parent != app.current_dir:
@@ -764,6 +777,152 @@ def _rename_playlist_cb(app, new_name: str) -> None:
         app.playlist_data[new_name] = app.playlist_data.pop(app.active_name)
         app.active_name = new_name
         _save_playlist(app)
+
+
+# ── File Operations ──
+
+def _start_file_op(app, mode: str) -> None:
+    if not app.entries:
+        return
+    _, is_dir, full = app.entries[app.cursor]
+    if is_dir:
+        return
+    app.file_op_mode = mode
+    app.file_op_source = full
+
+
+def _do_file_op(app, dest_dir: str) -> None:
+    src = app.file_op_source
+    mode = app.file_op_mode
+    app.file_op_mode = None
+    app.file_op_source = None
+    if not src or not mode or not os.path.isdir(dest_dir):
+        return
+    try:
+        dest = os.path.join(dest_dir, os.path.basename(src))
+        if mode == "copy":
+            shutil.copy2(src, dest)
+        elif mode == "move":
+            shutil.move(src, dest)
+        app.entries = _list_dir(app.current_dir)
+    except Exception as e:
+        _confirm(app, f"Error: {e}", None)
+
+
+def _handle_file_op_picker(app, key: int) -> None:
+    if key == 27:
+        app.file_op_mode = None
+        app.file_op_source = None
+        return
+
+    if key in (curses.KEY_DOWN,):
+        if app.entries:
+            app.cursor = min(app.cursor + 1, len(app.entries) - 1)
+    elif key in (curses.KEY_UP,):
+        app.cursor = max(app.cursor - 1, 0)
+    elif key in (curses.KEY_NPAGE,):
+        app.cursor = min(app.cursor + _page_size(app), len(app.entries) - 1)
+    elif key in (curses.KEY_PPAGE,):
+        app.cursor = max(app.cursor - _page_size(app), 0)
+    elif key == ord("g"):
+        app.cursor = 0
+    elif key == ord("G"):
+        app.cursor = len(app.entries) - 1
+    elif key in (curses.KEY_RIGHT, ord("l")):
+        if app.entries:
+            _, is_dir, full = app.entries[app.cursor]
+            if is_dir:
+                app.current_dir = full
+                app.entries = _list_dir(full)
+                app.cursor = 0
+                app.scroll = 0
+    elif key in (ord("\n"), 10, 13):
+        if app.entries:
+            _, is_dir, full = app.entries[app.cursor]
+            if is_dir:
+                _do_file_op(app, full)
+    elif key in (curses.KEY_LEFT, 127, curses.KEY_BACKSPACE):
+        parent = os.path.dirname(app.current_dir)
+        if parent and parent != app.current_dir:
+            app.current_dir = parent
+            app.entries = _list_dir(parent)
+            app.cursor = 0
+            app.scroll = 0
+    elif key == ord("~"):
+        app.current_dir = os.path.expanduser("~")
+        app.entries = _list_dir(app.current_dir)
+        app.cursor = 0
+        app.scroll = 0
+
+    h, _ = app.stdscr.getmaxyx()
+    list_h = h - app.LIST_H
+    if app.cursor < app.scroll:
+        app.scroll = app.cursor
+    elif app.cursor >= app.scroll + list_h:
+        app.scroll = app.cursor - list_h + 1
+
+
+def _start_rename(app) -> None:
+    if not app.entries:
+        return
+    name, _, full = app.entries[app.cursor]
+
+    def _cb(app, buf):
+        if not buf or buf == name:
+            return
+        new_path = os.path.join(os.path.dirname(full), buf)
+        try:
+            os.rename(full, new_path)
+            app.entries = _list_dir(app.current_dir)
+        except Exception as e:
+            _confirm(app, f"Error al renombrar: {e}", None)
+
+    _prompt(app, "Renombrar a", _cb, name)
+
+
+def _start_tag_edit(app) -> None:
+    if not app.entries:
+        return
+    _, is_dir, full = app.entries[app.cursor]
+    if is_dir or not _is_media_file(full):
+        return
+
+    import mutagen
+
+    meta = app.meta_cache.get(full)
+    tags = {
+        'title': (meta and meta.get('title')) or '',
+        'artist': (meta and meta.get('artist')) or '',
+        'album': (meta and meta.get('album')) or '',
+    }
+    fields = ['title', 'artist', 'album']
+    labels = ['Título', 'Artista', 'Álbum']
+    pending = {}
+
+    def _save_all():
+        try:
+            audio = mutagen.File(full, easy=True)
+            if audio is not None:
+                for f, v in pending.items():
+                    audio[f] = v
+                audio.save()
+        except Exception:
+            pass
+        app.meta_cache.clear()
+
+    def _make_cb(idx):
+        def _cb(app, buf):
+            if buf != tags[fields[idx]]:
+                pending[fields[idx]] = buf
+            nxt = idx + 1
+            if nxt < len(fields):
+                _prompt(app, f"{labels[nxt]} [{tags[fields[nxt]]}]",
+                        _make_cb(nxt), tags[fields[nxt]])
+            else:
+                _save_all()
+        return _cb
+
+    _prompt(app, f"Título [{tags['title']}]", _make_cb(0), tags['title'])
 
 
 # ── Update ──

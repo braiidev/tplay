@@ -28,6 +28,7 @@ RESERVED_KEYS = {
     curses.KEY_NPAGE, curses.KEY_PPAGE,
     ord("~"), ord("g"), ord("G"), ord("a"), ord("A"), ord("d"), ord("x"),
     ord("C"), ord("E"), ord("D"), ord("["), ord("]"), ord("/"),
+    ord("V"), ord("I"), ord("T"),
     curses.KEY_F1, curses.KEY_F2, curses.KEY_F3,
     curses.KEY_F4, curses.KEY_F5, curses.KEY_F6,
     curses.KEY_F7, curses.KEY_F8, curses.KEY_F9, curses.KEY_F10,

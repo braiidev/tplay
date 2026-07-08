@@ -13,11 +13,17 @@ def draw_explorer(app, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
 
-    list_h = h - LIST_H
+    offset = 0
+    if app.file_op_mode:
+        mode_label = "Copiar a" if app.file_op_mode == "copy" else "Mover a"
+        app.stdscr.addstr(2, 2, f"  {mode_label}: Enter confirma  Esc cancela", destacar)
+        offset = 1
+
+    list_h = h - LIST_H - offset
     visible = app.entries[app.scroll:app.scroll + list_h]
 
     for i, (name, is_dir, full) in enumerate(visible):
-        y = 2 + i
+        y = 2 + offset + i
         label = ext_label(name)
         if is_dir:
             line = f"  [+]/ {name}"
