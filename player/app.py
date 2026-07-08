@@ -505,14 +505,6 @@ class PlayerApp:
 
     # ── Prompt ──
 
-    def _prompt(self, label: str, callback, initial: str = "") -> None:
-        self.prompt_mode = True
-        self.prompt_label = label
-        self.prompt_buf = initial
-        self.prompt_callback = callback
-        curses.curs_set(1)
-        curses.flushinp()
-
     def _handle_prompt(self, key: int) -> None:
         if key == 27:
             self.prompt_mode = False
@@ -558,10 +550,6 @@ class PlayerApp:
             self.audio.set_sleep_timer(minutes)
 
     # ── Drawing ──
-
-    def _page_size(self) -> int:
-        h, _ = self.stdscr.getmaxyx()
-        return max(1, h - self.LIST_H)
 
     def _draw(self) -> None:
         try:
