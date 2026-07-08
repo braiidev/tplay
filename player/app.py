@@ -1,5 +1,6 @@
 import curses
 import os
+import subprocess
 import time
 
 from .audio import AudioEngine
@@ -77,6 +78,8 @@ class PlayerApp:
 
         self.config_cursor = 0
         self.config_scroll = 0
+        self.update_available = False
+        self.update_check_done = False
         self._setup_keybindings()
         self._build_config_items()
         self._build_action_handlers()
@@ -103,6 +106,7 @@ class PlayerApp:
         curses.start_color()
         curses.use_default_colors()
         self._apply_theme()
+        self._check_updates()
 
     def _setup_keybindings(self) -> None:
         self.keybinding_mode = self.config.get("keybinding_mode", "default")
@@ -214,6 +218,41 @@ class PlayerApp:
     def _apply_theme(self) -> None:
         apply_theme(self.config)
 
+    @property
+    def _repo_dir(self) -> str:
+        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    def _check_updates(self) -> None:
+        repo = self._repo_dir
+        git_dir = os.path.join(repo, ".git")
+        if not os.path.isdir(git_dir):
+            self.update_check_done = True
+            return
+        try:
+            subprocess.run(["git", "fetch", "origin"], cwd=repo,
+                           capture_output=True, timeout=10)
+            result = subprocess.run(
+                ["git", "rev-list", "--count", "HEAD..origin/main"],
+                cwd=repo, capture_output=True, text=True, timeout=10,
+            )
+            behind = int(result.stdout.strip() or 0)
+            self.update_available = behind > 0
+        except Exception:
+            self.update_available = False
+        self.update_check_done = True
+
+    def _apply_updates(self) -> None:
+        repo = self._repo_dir
+        try:
+            result = subprocess.run(["git", "pull"], cwd=repo,
+                                    capture_output=True, text=True, timeout=30)
+            if result.returncode == 0:
+                self.update_available = False
+                return True, "Actualizado correctamente"
+            return False, result.stderr.strip() or "Error al actualizar"
+        except Exception as e:
+            return False, str(e)
+
     def _build_config_items(self) -> None:
         self.config_items = [
             ("music_dir", "Directorio de música", "path"),
@@ -230,6 +269,7 @@ class PlayerApp:
         self.config_items += [
             ("sleep_timer_minutes", "Sleep timer (min)", "int"),
             ("keybindings", "Keybindings", "action"),
+            ("update", "Actualizar tplay", "action"),
         ]
 
     def _auto_next_temp(self) -> bool:
@@ -527,6 +567,11 @@ class PlayerApp:
                 ui.draw_prompt(self.stdscr, h, w, self.prompt_label, self.prompt_buf)
             else:
                 ui.draw_nav(self.stdscr, h, w)
+            if self.update_available and not self.prompt_mode and not self.show_help:
+                try:
+                    self.stdscr.addstr(0, w - 14, " [⚡ Actualizar] ", curses.A_REVERSE)
+                except curses.error:
+                    pass
             if self.show_help:
                 ui.draw_help(self.stdscr, h, w)
 

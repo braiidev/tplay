@@ -1,10 +1,42 @@
 import curses
+import os
+import subprocess
 import sys
 
 from .app import PlayerApp
 
 
+def _cli_update() -> bool:
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    git_dir = os.path.join(repo, ".git")
+    if not os.path.isdir(git_dir):
+        print("Error: no es un repositorio git, no se puede actualizar", file=sys.stderr)
+        return False
+    try:
+        subprocess.run(["git", "fetch", "origin"], cwd=repo, capture_output=True, timeout=10)
+        result = subprocess.run(
+            ["git", "rev-list", "--count", "HEAD..origin/main"],
+            cwd=repo, capture_output=True, text=True, timeout=10,
+        )
+        behind = int(result.stdout.strip() or 0)
+        if behind == 0:
+            print("✓ tplay ya está actualizado")
+            return True
+        print(f"  ↳ {behind} commits detrás, actualizando...")
+        pull = subprocess.run(["git", "pull"], cwd=repo, capture_output=True, text=True, timeout=30)
+        if pull.returncode == 0:
+            print("✓ tplay actualizado correctamente")
+            return True
+        print(f"Error: {pull.stderr.strip()}", file=sys.stderr)
+        return False
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return False
+
+
 def main() -> None:
+    if "--update" in sys.argv:
+        sys.exit(0 if _cli_update() else 1)
     try:
         curses.wrapper(lambda stdscr: PlayerApp(stdscr).run())
     except KeyboardInterrupt:

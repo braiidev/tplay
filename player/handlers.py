@@ -184,6 +184,8 @@ def handle_config(app, key: int) -> None:
             _config_int_inc(app, key_name)
         elif ctype == "action" and key_name == "keybindings":
             _open_keybindings(app)
+        elif ctype == "action" and key_name == "update":
+            _handle_update(app)
     elif key == curses.KEY_LEFT:
         key_name, _, ctype = app.config_items[app.config_cursor]
         if ctype == "choice":
@@ -695,3 +697,21 @@ def _rename_playlist_cb(app, new_name: str) -> None:
         app.playlist_data[new_name] = app.playlist_data.pop(app.active_name)
         app.active_name = new_name
         _save_playlist(app)
+
+
+# ── Update ──
+
+def _handle_update(app) -> None:
+    if not app.update_check_done:
+        app._check_updates()
+    if app.update_available:
+        _prompt(app, "¿Actualizar ahora? (s/N)", lambda buf: _do_update(app, buf), "s")
+    else:
+        _prompt(app, "Sin actualizaciones disponibles", lambda _: None)
+
+
+def _do_update(app, answer: str) -> None:
+    if answer.lower() != "s":
+        return
+    ok, msg = app._apply_updates()
+    _prompt(app, msg, lambda _: None)
