@@ -13,6 +13,7 @@ from . import views
 from . import ui
 from . import handlers
 from . import keybindings as kb
+from .state import load_state, save_state
 
 
 class PlayerApp:
@@ -125,6 +126,7 @@ class PlayerApp:
         curses.use_default_colors()
         self._apply_theme()
         self._check_updates()
+        self._resume_session()
 
     def _setup_keybindings(self) -> None:
         self.keybinding_mode = self.config.get("keybinding_mode", "default")
@@ -272,6 +274,15 @@ class PlayerApp:
             return False, result.stderr.strip() or "Error al actualizar"
         except Exception as e:
             return False, str(e)
+
+    def _resume_session(self) -> None:
+        st = load_state()
+        if st.get("playing") and st.get("file") and os.path.isfile(st["file"]):
+            self.audio.play_file(st["file"])
+            pos = st.get("position", 0)
+            if pos > 0:
+                self.audio.player.set_time(pos)
+            self.current_view = 3
 
     def _build_config_items(self) -> None:
         self.config_items = [
@@ -491,6 +502,7 @@ class PlayerApp:
                              str(self.config.get("sleep_timer_minutes", 30)))
             return True
         if key == ord("q"):
+            save_state(False)
             self.config["volume"] = self.audio.volume
             save_config(self.config)
             handlers._save_playlist(self)
