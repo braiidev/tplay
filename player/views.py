@@ -3,13 +3,14 @@ import curses
 
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR
 from .file_utils import human_size, time_str, ext_label
-from .ui import safe_addstr, draw_box, LIST_H, STATUS_ROW, SEARCH_LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN
+from .ui import safe_addstr, draw_box, LIST_H, STATUS_ROW, EXPLORER_MARGIN, PLAYLIST_MARGIN
 from . import keybindings as kb
 from .handlers import _get_current_key
 
 
 def draw_explorer(app, h: int, w: int) -> None:
-    draw_box(app.stdscr, h, w, f"Explorador: {app.current_dir}")
+    extra = " [Filtro]" if app.explorer_filter_mode else ""
+    draw_box(app.stdscr, h, w, f"Explorador: {app.current_dir}{extra}")
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
 
@@ -19,11 +20,17 @@ def draw_explorer(app, h: int, w: int) -> None:
         app.stdscr.addstr(2, 2, f"  {mode_label}: Enter confirma  Esc cancela", destacar)
         offset = 1
 
-    list_h = h - LIST_H - offset
-    visible = app.entries[app.scroll:app.scroll + list_h]
+    if app.explorer_filter_mode:
+        app.stdscr.addstr(2 + offset, 2, f"> {app.explorer_filter}", destacar)
+        offset += 1
 
-    for i, (name, is_dir, full) in enumerate(visible):
+    list_h = h - LIST_H - offset
+    indices = app.explorer_filtered if app.explorer_filter_mode else list(range(len(app.entries)))
+    visible = indices[app.scroll:app.scroll + list_h]
+
+    for i, abs_idx in enumerate(visible):
         y = 2 + offset + i
+        name, is_dir, full = app.entries[abs_idx]
         label = ext_label(name)
         if is_dir:
             line = f"  [+]/ {name}"
@@ -34,7 +41,9 @@ def draw_explorer(app, h: int, w: int) -> None:
         max_w = w - EXPLORER_MARGIN
         if len(line) > max_w:
             line = line[:max_w - 1] + "…"
-        if app.scroll + i == app.cursor:
+        cur = app.cursor
+        is_cursor = (cur < len(indices) and abs_idx == indices[cur])
+        if is_cursor:
             app.stdscr.addstr(y, 2, line, attr | curses.A_REVERSE)
         else:
             app.stdscr.addstr(y, 2, line, attr)
@@ -177,36 +186,6 @@ def draw_now_playing(app, h: int, w: int) -> None:
     if app.temp_queue:
         hint += "  [Tab] Lista"
     safe_addstr(app.stdscr, h - STATUS_ROW, 2, hint, texto, h, w)
-
-
-def draw_search(app, h: int, w: int) -> None:
-    draw_box(app.stdscr, h, w, "Búsqueda")
-    texto = curses.color_pair(PAIR_TEXTO)
-    destacar = curses.color_pair(PAIR_DESTACAR)
-
-    app.stdscr.addstr(2, 2, f"> {app.search_query}", destacar)
-    if not app.search_query:
-        search_scope = app.current_dir.replace(os.path.expanduser("~"), "~")
-        app.stdscr.addstr(3, 2, f"Escribí para buscar en {search_scope}", texto)
-        return
-
-    list_h = h - SEARCH_LIST_H
-    visible = app.search_results[app.search_scroll:app.search_scroll + list_h]
-    for i, path in enumerate(visible):
-        y = 4 + i
-        rel = path.replace(os.path.expanduser("~"), "~")
-        if len(rel) > w - PLAYLIST_MARGIN:
-            rel = "..." + rel[-(w - 9):]
-        attr = texto
-        if app.search_scroll + i == app.search_cursor:
-            app.stdscr.addstr(y, 2, f"  ♪ {rel}", attr | curses.A_REVERSE)
-        else:
-            app.stdscr.addstr(y, 2, f"  ♪ {rel}", attr)
-
-    if len(app.search_results) > list_h:
-        total = len(app.search_results)
-        info = f"  {total} resultados"
-        app.stdscr.addstr(3, 2, info, texto)
 
 
 def draw_config(app, h: int, w: int) -> None:

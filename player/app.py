@@ -20,7 +20,6 @@ class PlayerApp:
             ord("k"): curses.KEY_UP, ord("l"): curses.KEY_RIGHT}
 
     LIST_H = 5
-    SEARCH_LIST_H = 7
     FILTER_LIST_H = 6
     STATUS_ROW = 3
     NAV_ROW = 1
@@ -53,17 +52,16 @@ class PlayerApp:
         self.prompt_label = ""
         self.prompt_callback = None
 
-        self.search_query = ""
-        self.search_results = []
-        self.search_cursor = 0
-        self.search_scroll = 0
-
         self.meta_cache = MetadataCache()
         self.temp_queue: list[tuple[str, bool]] = []
 
         self.playlist_filter = ""
         self.playlist_filtered = []
         self.playlist_filter_mode = False
+
+        self.explorer_filter = ""
+        self.explorer_filtered = []
+        self.explorer_filter_mode = False
 
         self.show_help = False
 
@@ -115,7 +113,6 @@ class PlayerApp:
             1: views.draw_explorer,
             2: views.draw_playlist,
             3: views.draw_now_playing,
-            4: views.draw_search,
             0: views.draw_config,
             5: views.draw_keybindings,
             6: views.draw_history,
@@ -399,23 +396,23 @@ class PlayerApp:
         if self.current_view == 3 and self.goto_mode:
             handlers.handle_goto(self, key)
             return True
-        if self.current_view == 4:
-            handlers.handle_search(self, key)
+        if self.current_view == 1 and self.explorer_filter_mode:
+            handlers.handle_explorer(self, key)
             return True
         if self.current_view == 2 and self.playlist_filter_mode:
             handlers.handle_playlist(self, key)
             return True
         if key == ord("/"):
+            if self.current_view == 1:
+                handlers.handle_explorer(self, key)
+                return True
             if self.current_view == 2:
                 handlers.handle_playlist(self, key)
-                return True
-            if self.current_view == 0:
-                handlers.handle_config(self, key)
                 return True
         return False
 
     def _handle_key_view_switch(self, key: int) -> bool:
-        if ord("0") <= key <= ord("4"):
+        if ord("0") <= key <= ord("3"):
             self.current_view = key - ord("0")
             self.cursor = 0
             self.scroll = 0
@@ -429,15 +426,6 @@ class PlayerApp:
                 self.history_cursor = 0
                 self.history_scroll = 0
             curses.flushinp()
-            return True
-        if key == ord("/"):
-            self.current_view = 4
-            self.cursor = 0
-            self.scroll = 0
-            self.search_query = ""
-            self.search_results = []
-            curses.flushinp()
-            curses.curs_set(1)
             return True
         return False
 
@@ -654,7 +642,7 @@ class PlayerApp:
                 self.stdscr.refresh()
                 return
 
-            needs_cursor = (self.current_view == 4
+            needs_cursor = ((self.current_view == 1 and self.explorer_filter_mode)
                             or (self.current_view == 2 and self.playlist_filter_mode)
                             or self.prompt_mode)
             if needs_cursor:
@@ -682,8 +670,9 @@ class PlayerApp:
             if self.show_help:
                 ui.draw_help(self.stdscr, h, w)
 
-            if self.current_view == 4:
-                self.stdscr.move(2, 4 + len(self.search_query))
+            if self.current_view == 1 and self.explorer_filter_mode:
+                y = 3 if self.file_op_mode else 2
+                self.stdscr.move(y, 4 + len(self.explorer_filter))
                 curses.curs_set(1)
             elif self.current_view == 2 and self.playlist_filter_mode:
                 self.stdscr.move(2, 4 + len(self.playlist_filter))

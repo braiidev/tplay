@@ -4,7 +4,6 @@ import curses
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV
 
 LIST_H = 5
-SEARCH_LIST_H = 7
 FILTER_LIST_H = 6
 STATUS_ROW = 3
 NAV_ROW = 1
@@ -45,7 +44,7 @@ def draw_box(win, h: int, w: int, title: str) -> None:
 
 def draw_nav(win, h: int, w: int) -> None:
     nav = curses.color_pair(PAIR_NAV)
-    tabs = " 0:Config │ 1:Expl │ 2:Playlist │ 3:Playing │ H:Hist │ q:Salir "
+    tabs = " 0:Config │ 1:Expl │ 2:Playlist │ 3:Listen │ H:Hist │ q:Salir "
     win.move(h - NAV_ROW, 0)
     win.clrtoeol()
     win.addstr(h - NAV_ROW, max(0, (w - len(tabs)) // 2), tabs, nav)
@@ -145,9 +144,10 @@ def draw_help(win, h: int, w: int) -> None:
         ("    [ / ]        Playlist anterior / siguiente", texto),
         ("", None),
         ("  Vistas", nav),
-        ("    0-4          Cambiar vista", texto),
-        ("    /            Buscar canciones", texto),
+        ("    0-3          Cambiar vista", texto),
+        ("    H            Historial", texto),
         ("    ? / F1       Abrir esta ayuda", texto),
+        ("    /            Filtrar lista actual (Expl/Playlist)", texto),
         ("  Cola Temporal", nav),
         ("    Tab          Ver/ocultar cola (en Now Playing)", texto),
         ("    d / x        Quitar / Limpiar cola", texto),

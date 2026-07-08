@@ -11,6 +11,18 @@ def handle_explorer(app, key: int) -> None:
     if app.file_op_mode:
         _handle_file_op_picker(app, key)
         return
+    if app.explorer_filter_mode:
+        _handle_explorer_filter(app, key)
+        return
+
+    if key == ord("/"):
+        app.explorer_filter_mode = True
+        app.explorer_filter = ""
+        app.explorer_filtered = list(range(len(app.entries)))
+        app.cursor = 0
+        app.scroll = 0
+        curses.curs_set(1)
+        return
 
     if key == curses.KEY_DOWN:
         if app.entries:
@@ -67,6 +79,58 @@ def handle_explorer(app, key: int) -> None:
         app.scroll = app.cursor
     elif app.cursor >= app.scroll + list_h:
         app.scroll = app.cursor - list_h + 1
+
+
+def _handle_explorer_filter(app, key: int) -> None:
+    if key == 27:
+        app.explorer_filter_mode = False
+        app.explorer_filter = ""
+        app.explorer_filtered = []
+        app.cursor = 0
+        app.scroll = 0
+        curses.curs_set(0)
+        return
+    if key in (ord("\n"), 10, 13):
+        if app.explorer_filtered and app.cursor < len(app.explorer_filtered):
+            idx = app.explorer_filtered[app.cursor]
+            name, is_dir, full = app.entries[idx]
+            if is_dir:
+                app.current_dir = full
+                app.entries = _list_dir(full)
+                app.cursor = 0
+                app.scroll = 0
+            else:
+                _play_file_direct(app, full)
+            app.explorer_filter_mode = False
+            app.explorer_filter = ""
+            app.explorer_filtered = []
+            curses.curs_set(0)
+        return
+    if key == curses.KEY_DOWN:
+        if app.explorer_filtered:
+            app.cursor = min(app.cursor + 1, len(app.explorer_filtered) - 1)
+        return
+    if key == curses.KEY_UP:
+        app.cursor = max(app.cursor - 1, 0)
+        return
+    if key in (127, curses.KEY_BACKSPACE):
+        app.explorer_filter = app.explorer_filter[:-1]
+        _do_explorer_filter(app)
+        return
+    if 32 <= key <= 126:
+        app.explorer_filter += chr(key)
+        _do_explorer_filter(app)
+
+
+def _do_explorer_filter(app) -> None:
+    q = app.explorer_filter.lower().strip()
+    if not q:
+        app.explorer_filtered = list(range(len(app.entries)))
+    else:
+        app.explorer_filtered = [i for i, (name, _, _) in enumerate(app.entries)
+                                  if q in name.lower()]
+    app.cursor = 0
+    app.scroll = 0
 
 
 def handle_history(app, key: int) -> None:
@@ -194,38 +258,6 @@ def handle_playlist(app, key: int) -> None:
         app.playlist_scroll = app.playlist_cursor
     elif app.playlist_cursor >= app.playlist_scroll + list_h:
         app.playlist_scroll = app.playlist_cursor - list_h + 1
-
-
-def handle_search(app, key: int) -> None:
-    if key == 27:
-        app.current_view = 1
-        curses.curs_set(0)
-        return
-    if key == ord("\n") or key == 10 or key == 13:
-        if app.search_results:
-            path = app.search_results[app.search_cursor]
-            _play_file_direct(app, path)
-            app.current_view = 3
-        curses.curs_set(0)
-        return
-    if key == curses.KEY_DOWN:
-        if app.search_results:
-            app.search_cursor = min(app.search_cursor + 1, len(app.search_results) - 1)
-    elif key == curses.KEY_UP:
-        app.search_cursor = max(app.search_cursor - 1, 0)
-    elif key == 127 or key == curses.KEY_BACKSPACE:
-        app.search_query = app.search_query[:-1]
-        _do_search(app)
-    elif 32 <= key <= 126:
-        app.search_query += chr(key)
-        _do_search(app)
-
-    h, _ = app.stdscr.getmaxyx()
-    list_h = h - app.SEARCH_LIST_H
-    if app.search_cursor < app.search_scroll:
-        app.search_scroll = app.search_cursor
-    elif app.search_cursor >= app.search_scroll + list_h:
-        app.search_scroll = app.search_cursor - list_h + 1
 
 
 def handle_config(app, key: int) -> None:
@@ -590,40 +622,6 @@ def _handle_playlist_filter(app, key: int) -> None:
         app.playlist_filter += chr(key)
         _do_playlist_filter(app)
         return
-
-
-def _do_search(app) -> None:
-    q = app.search_query.lower().strip()
-    if not q:
-        app.search_results = []
-        app.search_cursor = 0
-        app.search_scroll = 0
-        return
-    results = []
-    limit = 200
-
-    def _walk(path):
-        nonlocal results
-        if len(results) >= limit:
-            return
-        try:
-            with os.scandir(path) as entries:
-                for entry in entries:
-                    if len(results) >= limit:
-                        return
-                    if entry.name.startswith("."):
-                        continue
-                    if entry.is_dir(follow_symlinks=False):
-                        _walk(entry.path)
-                    elif _is_media_file(entry.name) and q in entry.name.lower():
-                        results.append(entry.path)
-        except (PermissionError, OSError):
-            pass
-
-    _walk(app.current_dir)
-    app.search_results = sorted(results)
-    app.search_cursor = 0
-    app.search_scroll = 0
 
 
 def _cycle_theme(app, direction: int) -> None:
