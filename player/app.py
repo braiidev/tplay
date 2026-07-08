@@ -528,7 +528,7 @@ class PlayerApp:
             self.prompt_buf = ""
             curses.curs_set(0)
             if buf and self.prompt_callback:
-                self.prompt_callback(buf)
+                self.prompt_callback(self, buf)
             self.prompt_callback = None
         elif key in (127, curses.KEY_BACKSPACE):
             self.prompt_buf = self.prompt_buf[:-1]

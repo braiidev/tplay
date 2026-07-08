@@ -96,7 +96,7 @@ def draw_prompt(win, h: int, w: int, label: str, buf: str) -> None:
         win.addstr(oy + 1, ox, "│" + " " * (tw - 2) + "│", dest)
         win.addstr(oy + 1, ox + 2, prompt[:tw - 4], texto)
         win.addstr(oy + 2, ox, "╰" + "─" * (tw - 2) + "╯", dest)
-        cx = ox + 2 + len(f" {label}: ")
+        cx = ox + 2 + len(f" {label}: ") + len(buf)
         win.move(oy + 1, min(cx, w - 2))
     except curses.error:
         pass
