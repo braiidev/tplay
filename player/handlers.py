@@ -674,6 +674,7 @@ def _confirm(app, label: str, callback) -> None:
     app.confirm_mode = True
     app.confirm_label = label
     app.confirm_callback = callback
+    app.confirm_is_info = callback is None
     curses.flushinp()
 
 
@@ -721,4 +722,18 @@ def _do_update(app) -> None:
     ok, msg = app._apply_updates()
     if ok:
         app.update_available = False
-    _confirm(app, msg, None)
+        _restart_app(app)
+    else:
+        _confirm(app, msg, None)
+
+
+def _restart_app(app) -> None:
+    import os, sys
+    try:
+        app.audio.player.stop()
+        curses.endwin()
+        repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        app_path = os.path.join(repo, "app.py")
+        os.execv(sys.executable, [sys.executable, app_path])
+    except Exception:
+        _confirm(app, "Error al reiniciar, reiniciá manualmente", None)

@@ -84,6 +84,7 @@ class PlayerApp:
         self.confirm_mode = False
         self.confirm_label = ""
         self.confirm_callback = None
+        self.confirm_is_info = False
         self._setup_keybindings()
         self._build_config_items()
         self._build_action_handlers()
@@ -536,14 +537,16 @@ class PlayerApp:
 
     def _handle_confirm(self, key: int) -> None:
         cb = self.confirm_callback
+        is_info = self.confirm_is_info
         self.confirm_mode = False
         self.confirm_label = ""
         self.confirm_callback = None
+        self.confirm_is_info = False
         curses.curs_set(0)
         curses.flushinp()
-        if not cb:
+        if is_info:
             return
-        if chr(key).lower() in ("s", "y"):
+        if cb and chr(key).lower() in ("s", "y"):
             cb()
 
     def _toggle_sleep_timer(self) -> None:
@@ -582,7 +585,8 @@ class PlayerApp:
 
             self._draw_status(h, w)
             if self.confirm_mode:
-                ui.draw_prompt(self.stdscr, h, w, self.confirm_label, "  s/N  ")
+                buf = "  s/N  " if not self.confirm_is_info else "  OK  "
+                ui.draw_prompt(self.stdscr, h, w, self.confirm_label, buf)
             elif self.prompt_mode:
                 ui.draw_prompt(self.stdscr, h, w, self.prompt_label, self.prompt_buf)
             else:
