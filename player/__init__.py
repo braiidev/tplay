@@ -34,9 +34,34 @@ def _cli_update() -> bool:
         return False
 
 
+def _cli_uninstall() -> bool:
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data = os.path.join(repo, "data")
+    bin_path = "/usr/local/bin/tplay"
+
+    print("▶ Desinstalando tplay...")
+
+    if os.path.isfile(bin_path):
+        print(f"  ↳ Eliminando {bin_path}...")
+        subprocess.run(["sudo", "rm", "-f", bin_path], check=False)
+
+    if os.path.isdir(data):
+        print(f"  ↳ Eliminando datos: {data}...")
+        subprocess.run(["rm", "-rf", data], check=False)
+
+    if os.path.isdir(repo):
+        print(f"  ↳ Eliminando repositorio: {repo}...")
+        subprocess.run(["rm", "-rf", repo], check=False)
+
+    print("✓ tplay desinstalado")
+    return True
+
+
 def main() -> None:
     if "--update" in sys.argv:
         sys.exit(0 if _cli_update() else 1)
+    if "--uninstall" in sys.argv:
+        sys.exit(0 if _cli_uninstall() else 1)
     try:
         curses.wrapper(lambda stdscr: PlayerApp(stdscr).run())
     except KeyboardInterrupt:
