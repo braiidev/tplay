@@ -1,18 +1,33 @@
 #!/usr/bin/env bash
 # install.sh — Instala tplay (reproductor multimedia TUI)
 # Uso: curl -fsSL https://raw.githubusercontent.com/USER/tplay/main/install.sh | bash
-#      bash install.sh
-#      bash install.sh /ruta/personalizada
 
 set -e
 
-REPO_URL="https://github.com/USER/tplay.git"
+REPO_URL="https://github.com/braiidev/tplay.git"
 INSTALL_DIR="${1:-$HOME/.config/tplay}"
 BIN="/usr/local/bin/tplay"
 
+# ── Prerrequisitos ──
+for cmd in git python3; do
+    if ! command -v "$cmd" &>/dev/null; then
+        echo "Error: $cmd no está instalado" >&2
+        exit 1
+    fi
+done
+
+# Verificar Python 3.10+
+PY_VER=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+if python3 -c "import sys; exit(0 if sys.version_info >= (3,10) else 1)"; then
+    :
+else
+    echo "Error: se necesita Python >= 3.10 (actual: $PY_VER)" >&2
+    exit 1
+fi
+
+# ── Instalación ──
 echo "▶ Instalando tplay en $INSTALL_DIR"
 
-# 1. Clonar repositorio
 if [ -d "$INSTALL_DIR" ]; then
     echo "  ↳ $INSTALL_DIR ya existe, actualizando..."
     cd "$INSTALL_DIR" && git pull
@@ -23,27 +38,24 @@ fi
 
 cd "$INSTALL_DIR"
 
-# 2. Instalar dependencias Python
+# ── Dependencias Python ──
 echo "  ↳ Instalando dependencias Python..."
-pip install -r requirements.txt --break-system-packages
+if pip3 install -r requirements.txt 2>/dev/null; then
+    :
+else
+    pip3 install -r requirements.txt --break-system-packages
+fi
 
-# 3. Crear ejecutable en /usr/local/bin
-echo "  ↳ Creando $BIN..."
-sudo tee "$BIN" > /dev/null << 'TSCRIPT'
-#!/usr/bin/env bash
-exec python3 "$(dirname "$(readlink -f "$0")")/../.config/tplay/app.py" "$@"
-TSCRIPT
-
-# Ajustar el path real del binario (el tee de arriba no puede expandir variables)
+# ── Ejecutable ──
+echo "  ↳ Creando $BIN (requiere sudo)..."
 sudo tee "$BIN" > /dev/null << TSCRIPT
 #!/usr/bin/env bash
 exec python3 "$INSTALL_DIR/app.py" "\$@"
 TSCRIPT
-
 sudo chmod +x "$BIN"
 
 echo ""
 echo "✅ tplay instalado correctamente"
 echo "   Ejecutá:  tplay"
-echo "   Config:   $INSTALL_DIR"
-echo "   Datos:    ~/.config/player/"
+echo "   Código:   $INSTALL_DIR"
+echo "   Datos:    $INSTALL_DIR/data/"

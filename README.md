@@ -46,7 +46,7 @@ tplay
 
 ## Personalización
 
-Config persistente: `~/.config/player/config.json`
+Config persistente: `~/.config/tplay/data/config.json`
 
 - Directorio de música
 - Volumen

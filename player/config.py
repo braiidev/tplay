@@ -2,7 +2,7 @@ import os
 import json
 import curses
 
-CONFIG_DIR = os.path.expanduser("~/.config/player")
+CONFIG_DIR = os.path.expanduser("~/.config/tplay/data")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 os.makedirs(CONFIG_DIR, exist_ok=True)
 

@@ -1,7 +1,7 @@
 import os
 import json
 
-PLAYLIST_FILE = os.path.join(os.path.expanduser("~/.config/player"), "playlist.json")
+PLAYLIST_FILE = os.path.join(os.path.expanduser("~/.config/tplay/data"), "playlist.json")
 
 
 def load_all() -> tuple[dict, str]:
