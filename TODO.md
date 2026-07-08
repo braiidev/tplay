@@ -13,3 +13,10 @@
 | F24 | **Gestión archivos explorador** (copiar, mover, renombrar, editar tags) | Media | ▢ |
 | F27 | **Deshacer/Rehacer en playlist** (u/U) | Media | ▢ |
 | F28 | **Streaming/Radio** (URL, M3U, radios guardadas) | Media | ▢ |
+
+## Cleanup
+
+| ID | Descripción | Prioridad |
+|----|-------------|-----------|
+| C1 | `PlayerApp._prompt()` en `app.py:508` — nunca llamado, todo usa `handlers._prompt`. Borrar. | Baja |
+| C2 | `PlayerApp._page_size()` en `app.py:562` — nunca llamado, reemplazado por `_page_size` implícito en handlers. Borrar. | Baja |
