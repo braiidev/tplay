@@ -238,6 +238,27 @@ def draw_config(app, h: int, w: int) -> None:
             app.stdscr.addstr(y, 2, line, attr)
 
 
+def draw_history(app, h: int, w: int) -> None:
+    draw_box(app.stdscr, h, w, "Historial")
+    texto = curses.color_pair(PAIR_TEXTO)
+    destacar = curses.color_pair(PAIR_DESTACAR)
+    if not app.history:
+        app.stdscr.addstr(3, 2, "  Sin historial", texto)
+        return
+    list_h = h - 5
+    start = max(0, min(app.history_scroll, len(app.history) - list_h))
+    visible = app.history[start:start + list_h]
+    for i, (name, path) in enumerate(visible):
+        y = 3 + i
+        idx = start + i
+        line = f"  {name}"
+        attr = destacar if idx == app.history_cursor else texto
+        if idx == app.history_cursor:
+            app.stdscr.addstr(y, 2, line, attr | curses.A_REVERSE)
+        else:
+            app.stdscr.addstr(y, 2, line, attr)
+
+
 def draw_keybindings(app, h: int, w: int) -> None:
     draw_box(app.stdscr, h, w, "Keybindings")
     texto = curses.color_pair(PAIR_TEXTO)

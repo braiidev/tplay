@@ -45,7 +45,7 @@ def draw_box(win, h: int, w: int, title: str) -> None:
 
 def draw_nav(win, h: int, w: int) -> None:
     nav = curses.color_pair(PAIR_NAV)
-    tabs = " 0:Config │ 1:Expl │ 2:Playlist │ 3:Playing │ q:Salir "
+    tabs = " 0:Config │ 1:Expl │ 2:Playlist │ 3:Playing │ H:Hist │ q:Salir "
     win.move(h - NAV_ROW, 0)
     win.clrtoeol()
     win.addstr(h - NAV_ROW, max(0, (w - len(tabs)) // 2), tabs, nav)
@@ -54,7 +54,7 @@ def draw_nav(win, h: int, w: int) -> None:
 def draw_status(win, h: int, w: int, audio, playing: bool, current_file, volume: int,
                 shuffle: bool, repeat: bool, active_name: str, current_view: int,
                 temp_queue: list = None) -> None:
-    if current_view in (3, 5):
+    if current_view in (3, 5, 6):
         return
     status = curses.color_pair(PAIR_DESTACAR)
     if playing:

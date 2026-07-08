@@ -56,9 +56,46 @@ def handle_explorer(app, key: int) -> None:
         app.scroll = app.cursor - list_h + 1
 
 
+def handle_history(app, key: int) -> None:
+    if key == 27:
+        app.current_view = 3
+        curses.flushinp()
+        return
+    if not app.history:
+        return
+    if key in (ord("\n"), 10, 13):
+        _, path = app.history[app.history_cursor]
+        app.audio.play_file(path)
+        app.current_view = 3
+        return
+    if key == ord("x"):
+        app.history.clear()
+        app.history_cursor = 0
+        app.history_scroll = 0
+        return
+    if key == curses.KEY_DOWN:
+        app.history_cursor = min(app.history_cursor + 1, len(app.history) - 1)
+    elif key == curses.KEY_UP:
+        app.history_cursor = max(app.history_cursor - 1, 0)
+    h, _ = app.stdscr.getmaxyx()
+    list_h = h - 5
+    if app.history_cursor < app.history_scroll:
+        app.history_scroll = app.history_cursor
+    elif app.history_cursor >= app.history_scroll + list_h:
+        app.history_scroll = app.history_cursor - list_h + 1
+
+
 def handle_playlist(app, key: int) -> None:
     if app.playlist_filter_mode:
         _handle_playlist_filter(app, key)
+        return
+
+    if key in (ord("u"), ord("U")):
+        if key == ord("u"):
+            app._undo()
+        else:
+            app._redo()
+        _save_playlist(app)
         return
 
     if key == ord("/"):
@@ -78,10 +115,12 @@ def handle_playlist(app, key: int) -> None:
         if app.playlist:
             _play_playlist_idx(app, app.playlist_cursor)
     elif key == ord("d"):
+        app._push_snapshot()
         _playlist_remove(app, app.playlist_cursor)
         if app.playlist_cursor >= len(app.playlist) and app.playlist_cursor > 0:
             app.playlist_cursor -= 1
     elif key == ord("x"):
+        app._push_snapshot()
         app.playlist.clear()
         app.playlist_idx = -1
         app.playlist_cursor = 0
@@ -90,24 +129,30 @@ def handle_playlist(app, key: int) -> None:
     elif key == ord("["):
         names = list(app.playlist_data.keys())
         if len(names) > 1:
+            app._push_snapshot()
             idx = names.index(app.active_name)
             _switch_playlist(app, names[(idx - 1) % len(names)])
     elif key == ord("]"):
         names = list(app.playlist_data.keys())
         if len(names) > 1:
+            app._push_snapshot()
             idx = names.index(app.active_name)
             _switch_playlist(app, names[(idx + 1) % len(names)])
     elif key == ord("C"):
+        app._push_snapshot()
         _prompt(app, "Nombre de la nueva playlist", _create_playlist_cb)
     elif key == ord("E"):
         if app.active_name == "default":
             return
+        app._push_snapshot()
         _prompt(app, f"Renombrar '{app.active_name}' a", _rename_playlist_cb)
     elif key == ord("D"):
         if len(app.playlist_data) > 1 and app.active_name != "default":
+            app._push_snapshot()
             _confirm(app, f"¿Borrar '{app.active_name}'?", lambda: _do_delete_playlist(app))
     elif key == ord("K"):
         if app.playlist_cursor > 0:
+            app._push_snapshot()
             i = app.playlist_cursor
             pl = app.playlist
             pl[i], pl[i - 1] = pl[i - 1], pl[i]
@@ -119,6 +164,7 @@ def handle_playlist(app, key: int) -> None:
             _save_playlist(app)
     elif key == ord("J"):
         if app.playlist_cursor < len(app.playlist) - 1:
+            app._push_snapshot()
             i = app.playlist_cursor
             pl = app.playlist
             pl[i], pl[i + 1] = pl[i + 1], pl[i]
@@ -229,6 +275,13 @@ def handle_now_playing(app, key: int) -> None:
 
 
 def handle_temp_queue(app, key: int) -> None:
+    if key in (ord("u"), ord("U")):
+        if key == ord("u"):
+            app._undo()
+        else:
+            app._redo()
+        _save_playlist(app)
+        return
     if key in (ord("\t"), 27):
         app.show_temp_queue = False
         curses.flushinp()
@@ -268,6 +321,7 @@ def handle_temp_queue(app, key: int) -> None:
     elif key in (curses.KEY_UP, ord("k")):
         app.tq_cursor = max(app.tq_cursor - 1, 0)
     elif key == ord("d"):
+        app._push_snapshot()
         app.temp_queue.pop(app.tq_cursor)
         if app.tq_cursor >= len(app.temp_queue) and app.tq_cursor > 0:
             app.tq_cursor -= 1
@@ -276,12 +330,14 @@ def handle_temp_queue(app, key: int) -> None:
         if app.tq_cursor <= app.tq_playhead and app.tq_playhead >= 0:
             app.tq_playhead -= 1
     elif key == ord("x"):
+        app._push_snapshot()
         app.temp_queue.clear()
         app.tq_cursor = 0
         app.tq_playhead = -1
         app.tq_scroll = 0
     elif key == ord("K"):
         if app.tq_cursor > 0:
+            app._push_snapshot()
             i = app.tq_cursor
             app.temp_queue[i], app.temp_queue[i - 1] = app.temp_queue[i - 1], app.temp_queue[i]
             app.tq_cursor -= 1
@@ -291,6 +347,7 @@ def handle_temp_queue(app, key: int) -> None:
                 app.tq_playhead = i
     elif key == ord("J"):
         if app.tq_cursor < len(app.temp_queue) - 1:
+            app._push_snapshot()
             i = app.tq_cursor
             app.temp_queue[i], app.temp_queue[i + 1] = app.temp_queue[i + 1], app.temp_queue[i]
             app.tq_cursor += 1
@@ -302,6 +359,7 @@ def handle_temp_queue(app, key: int) -> None:
         if app.temp_queue:
             _prompt(app, "Guardar cola como playlist", _save_temp_queue_cb)
     elif key == ord("N"):
+        app._push_snapshot()
         item = app.temp_queue.pop(app.tq_cursor)
         app.temp_queue.insert(0, (item[0], True))
         if app.tq_cursor == app.tq_playhead:
@@ -423,6 +481,7 @@ def _play_playlist_idx(app, idx: int) -> None:
 
 
 def _playlist_append(app, path: str) -> None:
+    app._push_snapshot()
     name = os.path.basename(path)
     app.playlist.append((name, path))
     _save_playlist(app)

@@ -2,6 +2,7 @@ import curses
 import os
 import subprocess
 import time
+import copy
 
 from .audio import AudioEngine
 from .config import load as load_config, save as save_config, apply_theme
@@ -82,6 +83,14 @@ class PlayerApp:
         self.update_check_done = False
         self.update_behind = 0
 
+        self.history = []
+        self.history_cursor = 0
+        self.history_scroll = 0
+        self._history_last = None
+
+        self.undo_stack = []
+        self.redo_stack = []
+
         self.confirm_mode = False
         self.confirm_label = ""
         self.confirm_callback = None
@@ -96,6 +105,7 @@ class PlayerApp:
             3: handlers.handle_now_playing,
             0: handlers.handle_config,
             5: handlers.handle_keybindings,
+            6: handlers.handle_history,
         }
         self._view_drawers = {
             1: views.draw_explorer,
@@ -104,6 +114,7 @@ class PlayerApp:
             4: views.draw_search,
             0: views.draw_config,
             5: views.draw_keybindings,
+            6: views.draw_history,
         }
 
         curses.curs_set(0)
@@ -323,10 +334,21 @@ class PlayerApp:
             return
         self.audio.auto_next(self.playlist)
 
+    def _add_history(self, path: str) -> None:
+        name = os.path.basename(path)
+        self.history = [(n, p) for n, p in self.history if p != path]
+        self.history.insert(0, (name, path))
+        if len(self.history) > 100:
+            self.history.pop()
+
     def run(self) -> None:
         while self.running:
             self._check_playback_end()
             self.audio.check_sleep_timer()
+            cur = self.audio.current_file
+            if cur and cur != self._history_last:
+                self._add_history(cur)
+                self._history_last = cur
             key = self.stdscr.getch()
             if key != -1:
                 if self.confirm_mode:
@@ -393,6 +415,15 @@ class PlayerApp:
             self.current_view = key - ord("0")
             self.cursor = 0
             self.scroll = 0
+            curses.flushinp()
+            return True
+        if key == ord("H"):
+            if self.current_view == 6:
+                self.current_view = 3
+            else:
+                self.current_view = 6
+                self.history_cursor = 0
+                self.history_scroll = 0
             curses.flushinp()
             return True
         if key == ord("/"):
@@ -505,6 +536,47 @@ class PlayerApp:
             self.tq_playhead = 0
             self.audio.play_file(self.temp_queue[0][0])
             self.current_view = 3
+
+    # ── Undo / Redo ──
+
+    def _playlist_snapshot(self) -> dict:
+        return {
+            "data": copy.deepcopy(self.playlist_data),
+            "active": self.active_name,
+            "idx": self.playlist_idx,
+            "tq": list(self.temp_queue),
+            "tq_head": self.tq_playhead,
+        }
+
+    def _push_snapshot(self) -> None:
+        self.undo_stack.append(self._playlist_snapshot())
+        if len(self.undo_stack) > 50:
+            self.undo_stack.pop(0)
+        self.redo_stack.clear()
+
+    def _undo(self) -> None:
+        if not self.undo_stack:
+            return
+        self.redo_stack.append(self._playlist_snapshot())
+        snap = self.undo_stack.pop()
+        self.playlist_data = snap["data"]
+        self.active_name = snap["active"]
+        self.playlist_idx = snap["idx"]
+        self.temp_queue = snap["tq"]
+        self.tq_playhead = snap["tq_head"]
+        self.playlist_cursor = max(0, min(self.playlist_cursor, len(self.playlist) - 1))
+
+    def _redo(self) -> None:
+        if not self.redo_stack:
+            return
+        self.undo_stack.append(self._playlist_snapshot())
+        snap = self.redo_stack.pop()
+        self.playlist_data = snap["data"]
+        self.active_name = snap["active"]
+        self.playlist_idx = snap["idx"]
+        self.temp_queue = snap["tq"]
+        self.tq_playhead = snap["tq_head"]
+        self.playlist_cursor = max(0, min(self.playlist_cursor, len(self.playlist) - 1))
 
     # ── Prompt ──
 
