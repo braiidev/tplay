@@ -28,9 +28,13 @@ fi
 # ── Instalación ──
 echo "▶ Instalando tplay en $INSTALL_DIR"
 
-if [ -d "$INSTALL_DIR" ]; then
+if [ -d "$INSTALL_DIR/.git" ]; then
     echo "  ↳ $INSTALL_DIR ya existe, actualizando..."
     cd "$INSTALL_DIR" && git pull
+elif [ -d "$INSTALL_DIR" ]; then
+    echo "  ↳ $INSTALL_DIR ya existe pero no es un repo, respaldando como tplay.bak..."
+    mv "$INSTALL_DIR" "${INSTALL_DIR}.bak"
+    git clone "$REPO_URL" "$INSTALL_DIR"
 else
     mkdir -p "$(dirname "$INSTALL_DIR")"
     git clone "$REPO_URL" "$INSTALL_DIR"
