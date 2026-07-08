@@ -220,9 +220,13 @@ def draw_config(app, h: int, w: int) -> None:
         y = 2 + i
         if ctype == "color":
             line = f"  {label}: {cc.get(key, 'Blanco')}"
-        elif ctype == "action":
+        elif key == "keybindings":
             mode_label = "Default" if app.keybinding_mode == "default" else "Custom"
             line = f"  {label}  [{mode_label}]"
+        elif key == "update":
+            line = f"  {label}  [Enter]"
+            if app.update_available:
+                line += " ⚡"
         else:
             line = f"  {labels.get(key, key)}"
         attr = texto
