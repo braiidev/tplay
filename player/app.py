@@ -303,7 +303,7 @@ class PlayerApp:
             return
         handler = self._view_handlers.get(self.current_view)
         if handler:
-            handler(key)
+            handler(self, key)
 
     def _handle_key_help(self, key: int) -> bool:
         if key in (ord("?"), curses.KEY_F1, getattr(curses, "KEY_HELP", -1)):
