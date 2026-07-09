@@ -183,124 +183,271 @@ def draw_dialog(win, h: int, w: int, title: str, text: str,
         pass
 
 
-HELP_LINES = [
-    ("", None),
-    ("  A Y U D A   D E   T E C L A S", 3),
-    ("", None),
-    ("  Navegacion", 4),
-    ("    ^ v / j k    Desplazarse", 2),
-    ("    < > / h l    Retroceder / Avanzar", 2),
-    ("    Enter        Reproducir / entrar carpeta", 2),
-    ("    ~            Ir al home", 2),
-    ("    g / G        Ir al inicio / fin del listado", 2),
-    ("", None),
-    ("  Reproduccion (Listen)", 4),
-    ("    Space        ▶ / ||", 2),
-    ("    s            ◼ Stop", 2),
-    ("    n / b        ►► / ◄◄", 2),
-    ("    + / k        Subir volumen", 2),
-    ("    - / j        Bajar volumen", 2),
-    ("    h / l        Seek -5s / +5s", 2),
-    ("    m            Mute", 2),
-    ("    r / R        Shuffle / Repeat global", 2),
-    ("    g            Ir a tiempo", 2),
-    ("    t / T        Sleep timer: toggle / configurar", 2),
-    ("    Tab          Ver Stack", 2),
-    ("", None),
-    ("  Ir a tiempo (Goto)", 4),
-    ("    ^ v / j k    Ajustar valor", 2),
-    ("    < > / h l    Cambiar campo (min / seg)", 2),
-    ("    Enter        Saltar", 2),
-    ("    Esc          Cancelar", 2),
-    ("", None),
-    ("  Vista Stack (Tab en Listen)", 4),
-    ("    Enter        Mover playhead al item", 2),
-    ("    d / x        Eliminar item / Limpiar todo", 2),
-    ("    J / K        Reordenar", 2),
-    ("    s            Guardar como playlist", 2),
-    ("    r / R        Modo item: normal / 1x / ∞", 2),
-    ("", None),
-    ("  Historial (vista 4)", 4),
-    ("    Enter        Reproducir archivo", 2),
-    ("    d            Eliminar entrada", 2),
-    ("    x            Limpiar historial", 2),
-    ("    a / A        Añadir a Stack (final / tras actual)", 2),
-    ("", None),
-    ("  Archivos (Explorer)", 4),
-    ("    a / A        Añadir a Stack (final / tras actual)", 2),
-    ("    Enter        Entrar directorio / Reproducir", 2),
-    ("    C / V        Copiar / Mover", 2),
-    ("    E            Renombrar", 2),
-    ("    I            Editar tags ID3", 2),
-    ("    d            Eliminar (con confirmación)", 2),
-    ("    M            Crear directorio", 2),
-    ("    u            Undo file op", 2),
-    ("    R            Refrescar vista", 2),
-    ("", None),
-    ("  File ops (Copiar/Mover)", 4),
-    ("    Enter / C/V  Pegar en directorio", 2),
-    ("    u            Undo última operación", 2),
-    ("    Esc          Cancelar", 2),
-    ("", None),
-    ("  Editor de metadata", 4),
-    ("    ^ v / j k    Navegar campos", 2),
-    ("    Enter        Editar campo", 2),
-    ("    s            Guardar cambios", 2),
-    ("    q / Esc      Cancelar", 2),
-    ("", None),
-    ("  Playlist", 4),
-    ("    c / D        Crear / Eliminar playlist", 2),
-    ("    e            Renombrar playlist", 2),
-    ("    d            Quitar item", 2),
-    ("    x            Limpiar playlist", 2),
-    ("    J / K        Reordenar items", 2),
-    ("    [ / ]        Playlist anterior / siguiente", 2),
-    ("    s            Guardar playlist", 2),
-    ("", None),
-    ("  Configuración", 4),
-    ("    < > / h l    Cambiar valor", 2),
-    ("", None),
-    ("  Vistas", 4),
-    ("    0-4          Cambiar vista", 2),
-    ("    ? / F1       Abrir esta ayuda", 2),
-    ("    /            Filtrar lista actual", 2),
-    ("    q            Salir (guarda todo)", 2),
-    ("    Esc          Cancelar / cerrar", 2),
-    ("", None),
-    ("  Navegacion en ayuda", 4),
-    ("    j / k / ▼ / ▲  Desplazar línea", 2),
-    ("    h / l / ◄ / ►  Página arriba / abajo", 2),
-    ("    cualquier otra  Cerrar ayuda", 2),
-    ("", None),
+HELP_TABS = [
+    {
+        "name": "General",
+        "lines": [
+            ("", None),
+            ("  GENERAL", 3),
+            ("", None),
+            ("    0-4       Cambiar vista", 2),
+            ("    ? / F1    Abrir ayuda", 2),
+            ("    /         Filtrar lista", 2),
+            ("    q         Salir (guarda todo)", 2),
+            ("    Esc       Cancelar / cerrar", 2),
+            ("", None),
+            ("  NAVEGACION", 3),
+            ("", None),
+            ("    j / ↓     Abajo", 2),
+            ("    k / ↑     Arriba", 2),
+            ("    h / ←     Retroceder / subir", 2),
+            ("    l / →     Avanzar / bajar", 2),
+            ("    Enter     Reproducir / abrir", 2),
+            ("    g / G     Inicio / Fin lista", 2),
+            ("    ~         Ir al home", 2),
+            ("", None),
+            ("  EN AYUDA", 3),
+            ("", None),
+            ("    j / k     Scroll vertical", 2),
+            ("    h / l     Cambiar pestaña", 2),
+            ("    Esc / ?   Cerrar ayuda", 2),
+        ]
+    },
+    {
+        "name": "Listen",
+        "lines": [
+            ("", None),
+            ("  REPRODUCCION", 3),
+            ("", None),
+            ("    Space     ▶ / || pausa", 2),
+            ("    s         ◼ Stop", 2),
+            ("    n / b     ►► siguiente / ◄◄ anterior", 2),
+            ("    h / l     Seek -5s / +5s", 2),
+            ("", None),
+            ("  VOLUMEN", 3),
+            ("", None),
+            ("    + / -     Subir / bajar volumen", 2),
+            ("    m         Mute", 2),
+            ("", None),
+            ("  MODO", 3),
+            ("", None),
+            ("    r / R     Shuffle / Repeat global", 2),
+            ("", None),
+            ("  TIEMPO", 3),
+            ("", None),
+            ("    g         Ir a tiempo (Goto)", 2),
+            ("    t / T     Sleep timer toggle / configurar", 2),
+            ("", None),
+            ("  STACK / URL", 3),
+            ("", None),
+            ("    Tab       Ver stack de reproducción", 2),
+            ("    o         Agregar URL de stream", 2),
+            ("", None),
+            ("  GOTO (ir a tiempo)", 3),
+            ("", None),
+            ("    ↑ / ↓     Valor min/seg", 2),
+            ("    ← / →     Campo min/seg", 2),
+            ("    Enter     Saltar a tiempo", 2),
+            ("    Esc       Cancelar", 2),
+            ("", None),
+            ("  STACK (vista)", 3),
+            ("", None),
+            ("    Enter     Mover playhead al item", 2),
+            ("    d / x     Eliminar item / limpiar", 2),
+            ("    J / K     Reordenar item", 2),
+            ("    s         Guardar stack como playlist", 2),
+            ("    r / R     Modo item (normal/1x/∞)", 2),
+            ("    Tab/Esc   Volver", 2),
+        ]
+    },
+    {
+        "name": "Explorer",
+        "lines": [
+            ("", None),
+            ("  ARCHIVOS", 3),
+            ("", None),
+            ("    Enter     Abrir dir / reproducir", 2),
+            ("    a / A     Añadir a stack (final/tras)", 2),
+            ("    ~         Ir al home", 2),
+            ("    g / G     Ir al inicio / fin", 2),
+            ("    ← / →     Subir / entrar directorio", 2),
+            ("    R         Refrescar vista", 2),
+            ("    /         Filtrar archivos", 2),
+            ("", None),
+            ("  OPERACIONES", 3),
+            ("", None),
+            ("    C / V     Copiar / Mover archivo", 2),
+            ("    E         Renombrar archivo", 2),
+            ("    I         Editar tags ID3", 2),
+            ("    d         Eliminar archivo (confirma)", 2),
+            ("    M         Crear directorio", 2),
+            ("    u         Undo file op", 2),
+            ("", None),
+            ("  COPIAR/MOVER", 3),
+            ("", None),
+            ("    Enter/C/V  Pegar en directorio", 2),
+            ("    u          Undo última op", 2),
+            ("    Esc        Cancelar", 2),
+            ("", None),
+            ("  METADATA", 3),
+            ("", None),
+            ("    ↑ / ↓     Navegar campos", 2),
+            ("    Enter     Editar campo", 2),
+            ("    s         Guardar cambios", 2),
+            ("    q / Esc   Cancelar", 2),
+        ]
+    },
+    {
+        "name": "Playlist",
+        "lines": [
+            ("", None),
+            ("  PLAYLIST", 3),
+            ("", None),
+            ("    c         Crear nueva playlist", 2),
+            ("    D         Eliminar playlist", 2),
+            ("    e         Renombrar playlist", 2),
+            ("    [ / ]     Playlist ant / sig", 2),
+            ("    s         Guardar playlist", 2),
+            ("", None),
+            ("  ITEMS", 3),
+            ("", None),
+            ("    Enter     Reproducir item", 2),
+            ("    d         Quitar item", 2),
+            ("    x         Limpiar playlist", 2),
+            ("    a / A     Añadir a stack (final/tras)", 2),
+            ("    J / K     Reordenar items", 2),
+            ("    /         Filtrar items", 2),
+        ]
+    },
+    {
+        "name": "History",
+        "lines": [
+            ("", None),
+            ("  HISTORIAL", 3),
+            ("", None),
+            ("    Enter     Reproducir archivo", 2),
+            ("    d         Eliminar entrada", 2),
+            ("    x         Limpiar todo", 2),
+            ("    a / A     Añadir a stack (final/tras)", 2),
+        ]
+    },
+    {
+        "name": "Config",
+        "lines": [
+            ("", None),
+            ("  CONFIGURACION", 3),
+            ("", None),
+            ("    [ / ]     Cambiar pestaña", 2),
+            ("    ← / →     Cambiar valor", 2),
+            ("    Enter     Activar item", 2),
+            ("", None),
+            ("  KEYBINDINGS", 3),
+            ("", None),
+            ("    ← / →     Cambiar default/custom", 2),
+            ("    Enter     Asignar tecla", 2),
+            ("    ↑ / ↓     Navegar acciones", 2),
+            ("    Esc       Volver", 2),
+        ]
+    },
 ]
 
+VIEW_TO_HELP_TAB = {1: 1, 2: 2, 3: 3, 4: 4, 0: 5}
 
-def draw_help(win, h: int, w: int, scroll: int = 0) -> None:
+
+def draw_help(win, h: int, w: int, scroll: int = 0, tab: int = 0) -> None:
     marco = curses.color_pair(PAIR_MARCO)
     texto = curses.color_pair(PAIR_TEXTO)
     dest = curses.color_pair(PAIR_DESTACAR)
-    inner_w = 37
-    box_w = min(inner_w + 2, w - 2)
-    list_h = max(1, h - 7)
-    total = len(HELP_LINES)
-    scroll = max(0, min(scroll, total - list_h))
-    visible = HELP_LINES[scroll:scroll + list_h]
-    ox = max(0, (w - box_w) // 2)
-    oy = max(0, (h - list_h - 4) // 2)
+    nav = curses.color_pair(PAIR_NAV)
+
+    box_w = min(56, w - 4)
+    ox = max(1, (w - box_w) // 2)
+    tab_data = HELP_TABS[tab]
+    lines = tab_data["lines"]
+    total = len(lines)
+    compact = h < 12
+
+    if compact:
+        list_h = max(2, h - 2)  # rows 1 to h-2 (no tab bar)
+    else:
+        list_h = max(2, h - 4)  # rows 2 to h-3 (tab bar at 1, footer at h-2)
+
+    max_scroll = max(0, total - list_h)
+    scroll = max(0, min(scroll, max_scroll))
+    visible = lines[scroll:scroll + list_h]
+
     try:
-        win.addstr(oy, ox, "╔" + "═" * (box_w - 2) + "╗", marco)
-        for y in range(1, list_h + 1):
-            win.addstr(oy + y, ox, "║" + " " * (box_w - 2) + "║", marco)
-        win.addstr(oy + list_h + 1, ox, "╚" + "═" * (box_w - 2) + "╝", marco)
-        for i, (text, attr) in enumerate(visible):
-            y = oy + 1 + i
-            if attr is not None:
-                win.addstr(y, ox + 2, text[:box_w - 4], curses.color_pair(attr))
-        footer = ""
-        if scroll > 0:
-            footer += "  ▲"
-        if scroll + list_h < total:
-            footer += "  ▼"
-        win.addstr(oy + list_h + 2, ox + 2, footer, texto)
+        # Top border
+        win.addstr(0, ox, "┌" + "─" * (box_w - 2) + "┐", marco)
+        max_tw = box_w - 4
+
+        if compact:
+            # Tab name as title in top border
+            title = f" {tab_data['name']} "
+            if len(title) <= box_w - 4:
+                tx = 2 + (box_w - 2 - len(title)) // 2
+                win.addstr(0, ox + tx, title, dest)
+
+            # Vertical bars
+            for y in range(1, h - 1):
+                win.addstr(y, ox, "│", marco)
+                win.addstr(y, ox + box_w - 1, "│", marco)
+
+            # Content with scroll indicator on last line
+            for i, (text, attr) in enumerate(visible):
+                y = 1 + i
+                if attr is not None:
+                    display = text[:max_tw]
+                    if i == list_h - 1 and scroll + list_h < total:
+                        ind = "▼"
+                        if scroll > 0:
+                            ind = "▲▼"
+                        display = display[:max_tw - len(ind)] + ind
+                    win.addstr(y, ox + 2, display, curses.color_pair(attr))
+        else:
+            # Tab bar at row 1
+            tab_names = [t["name"] for t in HELP_TABS]
+            x = ox + 1
+            ti = 0
+            while ti < len(tab_names) and x < ox + box_w - 2:
+                name = tab_names[ti]
+                remaining = ox + box_w - 2 - x
+                attr = dest | curses.A_REVERSE if ti == tab else texto
+                if len(name) > remaining:
+                    name = name[:max(1, remaining - 1)] + "…"
+                win.addstr(1, x, name, attr)
+                x += len(name)
+                ti += 1
+                if ti < len(tab_names) and x + 1 < ox + box_w - 2:
+                    win.addstr(1, x, "│", nav)
+                    x += 1
+
+            if x < ox + box_w - 1:
+                win.addstr(1, x, "─" * (ox + box_w - 1 - x), marco)
+
+            # Vertical bars
+            for y in range(2, h - 1):
+                win.addstr(y, ox, "│", marco)
+                win.addstr(y, ox + box_w - 1, "│", marco)
+
+            # Content
+            for i, (text, attr) in enumerate(visible):
+                y = 2 + i
+                if attr is not None:
+                    clipped = text[:max_tw] if len(text) <= max_tw else text[:max_tw - 1] + "…"
+                    win.addstr(y, ox + 2, clipped, curses.color_pair(attr))
+
+            # Footer (scroll indicators)
+            footer = ""
+            if scroll > 0:
+                footer += "▲ "
+            if scroll + list_h < total:
+                footer += "▼"
+            if footer:
+                win.addstr(h - 2, ox + 2, footer, texto)
+
+        # Bottom border
+        win.addstr(h - 1, ox, "└" + "─" * (box_w - 2) + "┘", marco)
+
     except curses.error:
         pass

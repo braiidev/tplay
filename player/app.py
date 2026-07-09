@@ -74,6 +74,8 @@ class PlayerApp:
         self.explorer_filter_mode = False
 
         self.show_help = False
+        self.help_tab = 0
+        self.help_scroll = 0
 
         self.goto_mode = False
         self.goto_field = 0
@@ -496,6 +498,7 @@ class PlayerApp:
         if key in (ord("?"), curses.KEY_F1, getattr(curses, "KEY_HELP", -1)):
             self.show_help = not self.show_help
             self.help_scroll = 0
+            self.help_tab = ui.VIEW_TO_HELP_TAB.get(self.current_view, 0)
             curses.flushinp()
             return True
         if self.show_help:
@@ -503,17 +506,25 @@ class PlayerApp:
                 self.show_help = False
                 self.help_scroll = 0
             elif key in (curses.KEY_DOWN, ord("j")):
-                self.help_scroll = min(self.help_scroll + 1, len(ui.HELP_LINES) - 1)
+                total = len(ui.HELP_TABS[self.help_tab]["lines"])
+                self.help_scroll = min(self.help_scroll + 1, total - 1)
             elif key in (curses.KEY_UP, ord("k")):
                 self.help_scroll = max(self.help_scroll - 1, 0)
-            elif key in (curses.KEY_NPAGE, ord("l"), curses.KEY_RIGHT):
-                ph, _ = self.stdscr.getmaxyx()
-                list_h = max(1, ph - 7)
-                self.help_scroll = min(self.help_scroll + list_h, len(ui.HELP_LINES) - 1)
-            elif key in (curses.KEY_PPAGE, ord("h"), curses.KEY_LEFT):
-                ph, _ = self.stdscr.getmaxyx()
-                list_h = max(1, ph - 7)
+            elif key in (curses.KEY_NPAGE, ord(" ")):
+                h, _ = self.stdscr.getmaxyx()
+                list_h = max(2, h - 4) if h >= 12 else max(2, h - 2)
+                total = len(ui.HELP_TABS[self.help_tab]["lines"])
+                self.help_scroll = min(self.help_scroll + list_h, total - 1)
+            elif key in (curses.KEY_PPAGE, ord("b")):
+                h, _ = self.stdscr.getmaxyx()
+                list_h = max(2, h - 4) if h >= 12 else max(2, h - 2)
                 self.help_scroll = max(self.help_scroll - list_h, 0)
+            elif key in (curses.KEY_RIGHT, ord("l")):
+                self.help_tab = (self.help_tab + 1) % len(ui.HELP_TABS)
+                self.help_scroll = 0
+            elif key in (curses.KEY_LEFT, ord("h")):
+                self.help_tab = (self.help_tab - 1) % len(ui.HELP_TABS)
+                self.help_scroll = 0
             else:
                 self.show_help = False
                 self.help_scroll = 0
@@ -949,7 +960,7 @@ class PlayerApp:
                         except curses.error:
                             pass
             if self.show_help:
-                ui.draw_help(self.stdscr, h, w, self.help_scroll)
+                ui.draw_help(self.stdscr, h, w, self.help_scroll, self.help_tab)
 
             if self.meta_edit_editing:
                 cur = self.meta_edit_cursor
