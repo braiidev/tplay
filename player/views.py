@@ -533,7 +533,7 @@ def draw_config(app, h: int, w: int) -> None:
         if ti == app.config_tab_idx:
             safe_addstr(app.stdscr, 1, x, "[", nav, h, w)
             x += 1
-            safe_addstr(app.stdscr, 1, x, display_name, dest | curses.A_REVERSE, h, w)
+            safe_addstr(app.stdscr, 1, x, display_name, dest, h, w)
             x += len(display_name)
             safe_addstr(app.stdscr, 1, x, "]", nav, h, w)
             x += 1
