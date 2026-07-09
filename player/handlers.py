@@ -916,7 +916,7 @@ def _handle_file_op_picker(app, key: int) -> None:
         return
 
     h, _ = app.stdscr.getmaxyx()
-    list_h = h - app.LIST_H
+    list_h = h - app.LIST_H - (1 if app.file_op_mode else 0)
     if app.cursor < app.scroll:
         app.scroll = app.cursor
     elif app.cursor >= app.scroll + list_h:
