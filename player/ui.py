@@ -107,6 +107,83 @@ def draw_prompt(win, h: int, w: int, label: str, buf: str) -> None:
         pass
 
 
+def draw_dialog(win, h: int, w: int, title: str, text: str,
+                is_confirm: bool = False, compact: bool = False,
+                prompt_buf: str = "", prompt_scroll: int = 0) -> None:
+    texto = curses.color_pair(PAIR_TEXTO)
+    dest = curses.color_pair(PAIR_DESTACAR)
+
+    DH = 5
+    oy = max(1, (h - DH) // 2)
+
+    if compact:
+        box_w = w - 2
+        ox = 1
+        tl, bl, vb = "┌┐", "└┘", "│"
+    else:
+        box_w = min(60, w - 10)
+        ox = max(1, (w - box_w) // 2)
+        tl, bl, vb = "╔╗", "╚╝", "║"
+
+    ih = box_w - 2  # inner width (between vertical bars)
+
+    try:
+        # Row 0: top border + title
+        top = vb + "─" * ih if compact else "═" * ih
+        win.addstr(oy, ox, tl[0] + top + tl[1], dest)
+        ttl = f" {title} "
+        if len(ttl) > ih:
+            ttl = ttl[:ih - 1] + "…"
+        win.addstr(oy, ox + 2, ttl, dest)
+
+        def rline(body: str = "") -> None:
+            s = body[:ih] if body else ""
+            l = len(s)
+            if l < ih:
+                s += " " * (ih - l)
+            win.addstr(oy, ox, vb + s + vb, dest)
+
+        # Row 1: empty
+        oy += 1
+        rline()
+
+        # Row 2: content (message or input)
+        oy += 1
+        if is_confirm:
+            content = f"  {text}  "
+            pad_l = max(0, (ih - len(content)) // 2)
+            rline(" " * pad_l + content)
+        else:
+            field_w = max(1, ih - len(text) - 6)
+            visible = prompt_buf[prompt_scroll:prompt_scroll + field_w]
+            if len(prompt_buf) > prompt_scroll + field_w:
+                visible += "…"
+            rline(f"  {text}: {visible}")
+            vlen = len(visible)
+            if visible.endswith("…"):
+                vlen -= 1
+            cx = ox + 1 + len(f"  {text}: ") + vlen
+            win.move(oy, min(cx, w - 2))
+            curses.curs_set(1)
+
+        # Row 3: buttons or empty
+        oy += 1
+        if is_confirm:
+            btns = "  [S]í    [N]o  "
+            pad_l = max(0, (ih - len(btns)) // 2)
+            rline(" " * pad_l + btns)
+        else:
+            rline()
+
+        # Row 4: bottom border
+        oy += 1
+        bot = vb + "─" * ih if compact else "═" * ih
+        win.addstr(oy, ox, bl[0] + bot + bl[1], dest)
+
+    except curses.error:
+        pass
+
+
 HELP_LINES = [
     ("", None),
     ("  A Y U D A   D E   T E C L A S", 3),

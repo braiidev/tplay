@@ -57,6 +57,7 @@ class PlayerApp:
         self.prompt_buf = ""
         self.prompt_label = ""
         self.prompt_callback = None
+        self.prompt_scroll = 0
 
         self.meta_cache = MetadataCache()
         self.stack = Stack()
@@ -743,6 +744,7 @@ class PlayerApp:
             self.prompt_buf = ""
             self.prompt_label = ""
             self.prompt_callback = None
+            self.prompt_scroll = 0
             curses.curs_set(0)
             curses.flushinp()
         elif key in (ord("\n"), 10, 13):
@@ -750,6 +752,7 @@ class PlayerApp:
             self.prompt_mode = False
             self.prompt_label = ""
             self.prompt_buf = ""
+            self.prompt_scroll = 0
             curses.curs_set(0)
             cb = self.prompt_callback
             self.prompt_callback = None
@@ -757,8 +760,29 @@ class PlayerApp:
                 cb(self, buf)
         elif key in (127, curses.KEY_BACKSPACE):
             self.prompt_buf = self.prompt_buf[:-1]
+            self._clamp_prompt_scroll()
+        elif key == curses.KEY_LEFT:
+            self.prompt_scroll = max(0, self.prompt_scroll - 5)
+        elif key == curses.KEY_RIGHT:
+            self.prompt_scroll = min(len(self.prompt_buf), self.prompt_scroll + 5)
         elif 32 <= key <= 126 and len(self.prompt_buf) < 60:
             self.prompt_buf += chr(key)
+            self._clamp_prompt_scroll()
+
+    def _clamp_prompt_scroll(self) -> None:
+        if not self.prompt_mode:
+            self.prompt_scroll = 0
+            return
+        h, w = self.stdscr.getmaxyx()
+        compact = h < 16
+        box_w = min(w - 2, w - 2) if compact else min(60, w - 10)
+        inner_w = box_w - 2
+        field_w = max(1, inner_w - len(self.prompt_label) - 6)
+        if len(self.prompt_buf) <= field_w:
+            self.prompt_scroll = 0
+        else:
+            max_scroll = len(self.prompt_buf) - field_w
+            self.prompt_scroll = max(0, min(self.prompt_scroll, max_scroll))
 
     def _handle_confirm(self, key: int) -> None:
         cb = self.confirm_callback
@@ -863,10 +887,12 @@ class PlayerApp:
             else:
                 self._draw_status(h, w)
             if self.confirm_mode:
-                buf = "  s/Enter  " if not self.confirm_is_info else "  OK  "
-                ui.draw_prompt(self.stdscr, h, w, self.confirm_label, buf)
+                ui.draw_dialog(self.stdscr, h, w, "Confirmar", self.confirm_label,
+                               is_confirm=not self.confirm_is_info, compact=compact)
             elif self.prompt_mode:
-                ui.draw_prompt(self.stdscr, h, w, self.prompt_label, self.prompt_buf)
+                ui.draw_dialog(self.stdscr, h, w, "Entrada", self.prompt_label,
+                               compact=compact, prompt_buf=self.prompt_buf,
+                               prompt_scroll=self.prompt_scroll)
             elif not self.meta_edit_mode and not compact:
                 ui.draw_nav(self.stdscr, h, w)
             if self.toast_ticks > 0:
