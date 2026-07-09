@@ -1,3 +1,4 @@
+import os
 import time
 import random
 import vlc
@@ -5,9 +6,12 @@ import vlc
 
 class AudioEngine:
     def __init__(self):
-        self.instance = vlc.Instance("--no-video", "--quiet",
-                                      "--msg-level=mpg123=0",
-                                      "--no-stderr")
+        self._saved_stderr = os.dup(2)
+        null = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(null, 2)
+        os.close(null)
+
+        self.instance = vlc.Instance("--no-video", "--quiet")
         self.player = self.instance.media_player_new()
         self.playing = False
         self.paused = False
@@ -161,3 +165,9 @@ class AudioEngine:
             return self.player.get_length()
         except Exception:
             return 0
+
+    def close(self) -> None:
+        if hasattr(self, '_saved_stderr') and self._saved_stderr is not None:
+            os.dup2(self._saved_stderr, 2)
+            os.close(self._saved_stderr)
+            self._saved_stderr = None

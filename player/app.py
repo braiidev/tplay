@@ -553,6 +553,7 @@ class PlayerApp:
             save_config(self.config)
             self._save_all_playlists()
             self.audio.player.stop()
+            self.audio.close()
             self.running = False
             return True
         if key == 27:
