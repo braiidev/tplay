@@ -496,24 +496,34 @@ def draw_keybindings(app, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
 
+    compact = h < 16
     is_custom = app.keybinding_mode == "custom"
     mode = "CUSTOM" if is_custom else "DEFAULT"
-    safe_addstr(app.stdscr, 2, 2, f"  Modo: {mode}  ← → cambiar", destacar, h, w)
 
-    if not is_custom:
-        safe_addstr(app.stdscr, 4, 2, "  Cambiá a modo Custom para personalizar las teclas", texto, h, w)
-        safe_addstr(app.stdscr, h - 3, 2, "  [Esc] Volver", texto, h, w)
-        return
-
-    safe_addstr(app.stdscr, 3, 2, "  Enter para cambiar una tecla, Esc para volver", texto, h, w)
+    if compact:
+        safe_addstr(app.stdscr, 2, 2, f"Modo:{mode}  ←→cambiar  Esc:volver", destacar, h, w)
+        if not is_custom:
+            safe_addstr(app.stdscr, 3, 2, "Pasá a Custom para editar", texto, h, w)
+            return
+        safe_addstr(app.stdscr, 3, 2, "Enter:asignar tecla", texto, h, w)
+        list_h = h - 4
+        y0 = 4
+    else:
+        safe_addstr(app.stdscr, 2, 2, f"  Modo: {mode}  ← → cambiar", destacar, h, w)
+        if not is_custom:
+            safe_addstr(app.stdscr, 4, 2, "  Cambiá a modo Custom para personalizar las teclas", texto, h, w)
+            safe_addstr(app.stdscr, h - 3, 2, "  [Esc] Volver", texto, h, w)
+            return
+        safe_addstr(app.stdscr, 3, 2, "  Enter para cambiar una tecla, Esc para volver", texto, h, w)
+        list_h = h - 7
+        y0 = 5
 
     actions = kb.BINDABLE_ACTIONS
-    list_h = h - 7
     start = max(0, min(app.kb_cursor, len(actions) - list_h))
     visible = actions[start:start + list_h]
 
     for i, action in enumerate(visible):
-        y = 5 + i
+        y = y0 + i
         idx = start + i
         keycode = _get_current_key(app, action)
         kname = kb.key_name(keycode)
@@ -526,9 +536,10 @@ def draw_keybindings(app, h: int, w: int) -> None:
         else:
             safe_addstr(app.stdscr, y, 2, line, attr, h, w)
 
-    if app.kb_conflict_msg:
-        safe_addstr(app.stdscr, h - 3, 2, f"  {app.kb_conflict_msg}", texto, h, w)
-    safe_addstr(app.stdscr, h - 4, 2, "  [Esc] Volver", texto, h, w)
+    if not compact:
+        if app.kb_conflict_msg:
+            safe_addstr(app.stdscr, h - 3, 2, f"  {app.kb_conflict_msg}", texto, h, w)
+        safe_addstr(app.stdscr, h - 4, 2, "  [Esc] Volver", texto, h, w)
 
 
 def draw_meta_editor(app, win, h: int, w: int) -> None:

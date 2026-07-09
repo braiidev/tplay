@@ -643,6 +643,8 @@ class PlayerApp:
             self.running = False
             return True
         if key == 27:
+            if self.file_op_mode:
+                return False  # Let view handler (_handle_file_op_picker) handle it
             self.show_stack_view = False
             self.goto_mode = False
             self.kb_keybinding_view = False
@@ -875,6 +877,8 @@ class PlayerApp:
 
             if self.meta_edit_mode:
                 views.draw_meta_editor(self, self.stdscr, h, w)
+            elif self.current_view == self.V_CONFIG and self.kb_keybinding_view:
+                views.draw_keybindings(self, h, w)
             elif compact and self.current_view == self.V_LISTEN:
                 views.draw_listen_compact(self, h, w)
             else:
@@ -887,7 +891,8 @@ class PlayerApp:
             else:
                 self._draw_status(h, w)
             if self.confirm_mode:
-                ui.draw_dialog(self.stdscr, h, w, "Confirmar", self.confirm_label,
+                title = "Información" if self.confirm_is_info else "Confirmar"
+                ui.draw_dialog(self.stdscr, h, w, title, self.confirm_label,
                                is_confirm=not self.confirm_is_info, compact=compact)
             elif self.prompt_mode:
                 ui.draw_dialog(self.stdscr, h, w, "Entrada", self.prompt_label,
