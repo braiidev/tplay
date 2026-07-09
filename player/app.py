@@ -932,19 +932,22 @@ class PlayerApp:
                 self.toast_ticks -= 1
             if self.awaiting_dest:
                 msg = " ¿Destino?  s:stack  |  p:playlist  |  Esc:cancelar "
-                if w > len(msg) + 1:
+                if len(msg) >= w:
+                    msg = " s:stack  p:playlist  Esc:cancelar "
+                if len(msg) < w:
                     try:
                         self.stdscr.addstr(h - 2, (w - len(msg)) // 2, msg, curses.A_REVERSE)
                     except curses.error:
                         pass
             if self.update_available and not self.confirm_mode and not self.prompt_mode and not self.show_help:
-                msg = " ! Actualización disponible "
-                if w > len(msg) + 2:
-                    try:
-                        self.stdscr.addstr(0, w - len(msg) - 1, msg,
-                                           curses.color_pair(1))
-                    except curses.error:
-                        pass
+                if not compact:
+                    msg = " ! Actualización disponible "
+                    if w > len(msg) + 2:
+                        try:
+                            self.stdscr.addstr(0, w - len(msg) - 1, msg,
+                                               curses.color_pair(1))
+                        except curses.error:
+                            pass
             if self.show_help:
                 ui.draw_help(self.stdscr, h, w, self.help_scroll)
 
