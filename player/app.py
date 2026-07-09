@@ -508,6 +508,20 @@ class PlayerApp:
             self.explorer_filter_mode = False
             self.playlist_filter_mode = False
             self.kb_keybinding_view = False
+            self.confirm_mode = False
+            self.confirm_label = ""
+            self.confirm_callback = None
+            self.prompt_mode = False
+            self.prompt_buf = ""
+            self.prompt_label = ""
+            self.prompt_callback = None
+            self.meta_edit_mode = False
+            self.meta_edit_editing = False
+            self.meta_edit_changed = {}
+            self.file_op_mode = None
+            self.file_op_source = None
+            self.awaiting_dest = False
+            curses.curs_set(0)
             curses.flushinp()
             return True
         return False

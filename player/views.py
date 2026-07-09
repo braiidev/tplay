@@ -15,7 +15,7 @@ def draw_listen(app, h: int, w: int) -> None:
     if app.show_stack_view:
         draw_box(app.stdscr, h, w, f"Stack ({len(app.stack.items)})")
         if not app.stack.items:
-            app.stdscr.addstr(h // 2, 2, "  Stack vacío — usá [2] Explorer para añadir", texto)
+            safe_addstr(app.stdscr, h // 2, 2, "  Stack vacío — usá [2] Explorer para añadir", texto, h, w)
         else:
             list_h = h - 8
             visible = app.stack.items[app.stack_scroll:app.stack_scroll + list_h]
@@ -43,13 +43,13 @@ def draw_listen(app, h: int, w: int) -> None:
                     line = line[:max_w - 1] + "…"
                 attr = dest if is_playing else texto
                 if idx == app.stack_cursor:
-                    app.stdscr.addstr(y, 2, line, attr | curses.A_REVERSE)
+                    safe_addstr(app.stdscr, y, 2, line, attr | curses.A_REVERSE, h, w)
                 else:
-                    app.stdscr.addstr(y, 2, line, attr)
+                    safe_addstr(app.stdscr, y, 2, line, attr, h, w)
                 dur = meta.get('length', 0) if meta else 0
                 dur_str = time_str(dur) if dur > 0 else ""
                 if dur_str:
-                    app.stdscr.addstr(y, w - len(dur_str) - 2, dur_str, attr)
+                    safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, attr, h, w)
             safe_addstr(app.stdscr, h - 4, 2,
                         "  [Enter]►  [Tab] Volver  [d]el  [x]clear  [J/K]orden  [s]guardar", texto, h, w)
             safe_addstr(app.stdscr, h - 3, 2,
@@ -136,15 +136,15 @@ def draw_explorer(app, h: int, w: int) -> None:
     if app.file_op_mode:
         mode_label = "Copiar" if app.file_op_mode == "copy" else "Mover"
         src_name = os.path.basename(app.file_op_source) if app.file_op_source else ""
-        app.stdscr.addstr(2, 2, f"  {mode_label}: {src_name}  Enter/C/V=pegar bajo directorio  Esc=cancelar  u=deshacer", destacar)
+        safe_addstr(app.stdscr, 2, 2, f"  {mode_label}: {src_name}  Enter/C/V=pegar bajo directorio  Esc=cancelar  u=deshacer", destacar, h, w)
         offset = 1
 
     if app.explorer_filter_mode:
-        app.stdscr.addstr(2 + offset, 2, f"> {app.explorer_filter}", destacar)
+        safe_addstr(app.stdscr, 2 + offset, 2, f"> {app.explorer_filter}", destacar, h, w)
         offset += 1
 
     if not app.entries and not app.explorer_filter_mode:
-        app.stdscr.addstr(h // 2, 2, "  Sin archivos multimedia en este directorio", texto)
+        safe_addstr(app.stdscr, h // 2, 2, "  Sin archivos multimedia en este directorio", texto, h, w)
         return
 
     list_h = h - LIST_H - offset
@@ -168,15 +168,15 @@ def draw_explorer(app, h: int, w: int) -> None:
         cur = app.cursor
         is_cursor = (cur < len(indices) and abs_idx == indices[cur])
         if is_cursor:
-            app.stdscr.addstr(y, 2, line, attr | curses.A_REVERSE)
+            safe_addstr(app.stdscr, y, 2, line, attr | curses.A_REVERSE, h, w)
         else:
-            app.stdscr.addstr(y, 2, line, attr)
+            safe_addstr(app.stdscr, y, 2, line, attr, h, w)
         if not is_dir:
             meta = app.meta_cache.get(full)
             dur = meta.get('length', 0) if meta else 0
             dur_str = time_str(dur) if dur > 0 else ""
             if dur_str:
-                app.stdscr.addstr(y, w - len(dur_str) - 2, dur_str, texto)
+                safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, texto, h, w)
 
 
 def draw_playlist(app, h: int, w: int) -> None:
@@ -186,11 +186,11 @@ def draw_playlist(app, h: int, w: int) -> None:
     destacar = curses.color_pair(PAIR_DESTACAR)
 
     if app.playlist_filter_mode:
-        app.stdscr.addstr(2, 2, f"> {app.playlist_filter}", destacar)
+        safe_addstr(app.stdscr, 2, 2, f"> {app.playlist_filter}", destacar, h, w)
 
     if not app.playlist:
-        app.stdscr.addstr(h // 2, 2,
-                          "  Sin playlists — presioná [c] para crear una", texto)
+        safe_addstr(app.stdscr, h // 2, 2,
+                          "  Sin playlists — presioná [c] para crear una", texto, h, w)
         return
 
     list_h = h - LIST_H - (1 if app.playlist_filter_mode else 0)
@@ -198,7 +198,7 @@ def draw_playlist(app, h: int, w: int) -> None:
     visible = indices[app.playlist_scroll:app.playlist_scroll + list_h]
 
     if app.playlist_filter_mode and not indices:
-        app.stdscr.addstr(4, 2, "  Sin resultados", texto)
+        safe_addstr(app.stdscr, 4, 2, "  Sin resultados", texto, h, w)
         return
 
     for row, abs_idx in enumerate(visible):
@@ -215,13 +215,13 @@ def draw_playlist(app, h: int, w: int) -> None:
         cur = app.playlist_cursor
         is_cursor = (cur < len(indices) and abs_idx == indices[cur])
         if is_cursor:
-            app.stdscr.addstr(y, 2, line, attr | curses.A_REVERSE)
+            safe_addstr(app.stdscr, y, 2, line, attr | curses.A_REVERSE, h, w)
         else:
-            app.stdscr.addstr(y, 2, line, attr)
+            safe_addstr(app.stdscr, y, 2, line, attr, h, w)
         dur = meta.get('length', 0) if meta else 0
         dur_str = time_str(dur) if dur > 0 else ""
         if dur_str:
-            app.stdscr.addstr(y, w - len(dur_str) - 2, dur_str, attr)
+            safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, attr, h, w)
 
 
 def draw_history(app, h: int, w: int) -> None:
@@ -229,7 +229,7 @@ def draw_history(app, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
     if not app.history:
-        app.stdscr.addstr(h // 2, 2, "  Sin historial", texto)
+        safe_addstr(app.stdscr, h // 2, 2, "  Sin historial", texto, h, w)
         return
     list_h = h - 5
     start = max(0, min(app.history_scroll, len(app.history) - list_h))
@@ -248,15 +248,15 @@ def draw_history(app, h: int, w: int) -> None:
             line = f"  ~ Archivo Inexistente  ({count}x)"
         attr = destacar if idx == app.history_cursor else texto
         if idx == app.history_cursor:
-            app.stdscr.addstr(y, 2, line, attr | curses.A_REVERSE)
+            safe_addstr(app.stdscr, y, 2, line, attr | curses.A_REVERSE, h, w)
         else:
-            app.stdscr.addstr(y, 2, line, attr)
+            safe_addstr(app.stdscr, y, 2, line, attr, h, w)
         if exists:
             meta = app.meta_cache.get(path)
             dur = meta.get('length', 0) if meta else 0
             dur_str = time_str(dur) if dur > 0 else ""
             if dur_str:
-                app.stdscr.addstr(y, w - len(dur_str) - 2, dur_str, texto)
+                safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, texto, h, w)
 
 
 def draw_config(app, h: int, w: int) -> None:
@@ -289,9 +289,9 @@ def draw_config(app, h: int, w: int) -> None:
         if ctype in ("choice", "color", "int"):
             line += "  ← →"
         if i == app.config_cursor:
-            app.stdscr.addstr(y, 2, line, destacar | curses.A_REVERSE)
+            safe_addstr(app.stdscr, y, 2, line, destacar | curses.A_REVERSE, h, w)
         else:
-            app.stdscr.addstr(y, 2, line, attr)
+            safe_addstr(app.stdscr, y, 2, line, attr, h, w)
 
 
 def draw_keybindings(app, h: int, w: int) -> None:
@@ -301,14 +301,14 @@ def draw_keybindings(app, h: int, w: int) -> None:
 
     is_custom = app.keybinding_mode == "custom"
     mode = "CUSTOM" if is_custom else "DEFAULT"
-    app.stdscr.addstr(2, 2, f"  Modo: {mode}  ← → cambiar", destacar)
+    safe_addstr(app.stdscr, 2, 2, f"  Modo: {mode}  ← → cambiar", destacar, h, w)
 
     if not is_custom:
-        app.stdscr.addstr(4, 2, "  Cambiá a modo Custom para personalizar las teclas", texto)
-        app.stdscr.addstr(h - 3, 2, "  [Esc] Volver", texto)
+        safe_addstr(app.stdscr, 4, 2, "  Cambiá a modo Custom para personalizar las teclas", texto, h, w)
+        safe_addstr(app.stdscr, h - 3, 2, "  [Esc] Volver", texto, h, w)
         return
 
-    app.stdscr.addstr(3, 2, "  Enter para cambiar una tecla, Esc para volver", texto)
+    safe_addstr(app.stdscr, 3, 2, "  Enter para cambiar una tecla, Esc para volver", texto, h, w)
 
     actions = kb.BINDABLE_ACTIONS
     list_h = h - 7
@@ -325,13 +325,13 @@ def draw_keybindings(app, h: int, w: int) -> None:
             line += "  ⏎ esperando tecla..."
         attr = destacar if idx == app.kb_cursor else texto
         if idx == app.kb_cursor:
-            app.stdscr.addstr(y, 2, line, attr | curses.A_REVERSE)
+            safe_addstr(app.stdscr, y, 2, line, attr | curses.A_REVERSE, h, w)
         else:
-            app.stdscr.addstr(y, 2, line, attr)
+            safe_addstr(app.stdscr, y, 2, line, attr, h, w)
 
     if app.kb_conflict_msg:
-        app.stdscr.addstr(h - 3, 2, f"  {app.kb_conflict_msg}", texto)
-    app.stdscr.addstr(h - 4, 2, "  [Esc] Volver", texto)
+        safe_addstr(app.stdscr, h - 3, 2, f"  {app.kb_conflict_msg}", texto, h, w)
+    safe_addstr(app.stdscr, h - 4, 2, "  [Esc] Volver", texto, h, w)
 
 
 def draw_meta_editor(app, win, h: int, w: int) -> None:

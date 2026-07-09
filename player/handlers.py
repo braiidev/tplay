@@ -134,6 +134,8 @@ def handle_explorer(app, key: int) -> None:
     if app.explorer_filter_mode:
         _handle_explorer_filter(app, key)
         return
+    if not app.entries:
+        return
 
     if key == ord("/"):
         app.explorer_filter_mode = True
@@ -830,6 +832,8 @@ def _confirm_file_op(app, dest_dir: str) -> None:
 
 
 def _handle_file_op_picker(app, key: int) -> None:
+    if not app.entries:
+        return
     if key == 27:
         app.file_op_mode = None
         app.file_op_source = None
@@ -893,7 +897,10 @@ def _handle_file_op_picker(app, key: int) -> None:
 # ── Config helpers ──
 
 def _cycle_theme(app, direction: int) -> None:
-    idx = THEME_NAMES.index(app.config["theme"])
+    try:
+        idx = THEME_NAMES.index(app.config["theme"])
+    except ValueError:
+        idx = 0
     new_theme = THEME_NAMES[(idx + direction) % len(THEME_NAMES)]
     app.config["theme"] = new_theme
     app._build_config_items()
@@ -907,7 +914,10 @@ def _cycle_color(app, key_name: str, direction: int) -> None:
     colors = list(COLORS.keys())
     cc = app.config.setdefault("custom_colors", {})
     current = cc.get(key_name, "Blanco")
-    idx = colors.index(current)
+    try:
+        idx = colors.index(current)
+    except ValueError:
+        idx = 0
     cc[key_name] = colors[(idx + direction) % len(colors)]
     app._apply_theme()
     from .config import save as save_config

@@ -21,7 +21,7 @@ def load_all() -> tuple[dict, str]:
         songs = pl.get("songs", [])
         valid = []
         for s in songs:
-            if os.path.exists(s):
+            if isinstance(s, str) and os.path.exists(s):
                 valid.append((os.path.basename(s), s))
         result[name] = valid
     if active not in result:
