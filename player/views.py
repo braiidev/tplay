@@ -552,7 +552,7 @@ def draw_keybindings(app, h: int, w: int) -> None:
             safe_addstr(app.stdscr, 3, 2, "Pasá a Custom para editar", texto, h, w)
             return
         safe_addstr(app.stdscr, 3, 2, "Enter:asignar tecla", texto, h, w)
-        list_h = h - 4
+        list_h = max(1, h - 5)
         y0 = 4
     else:
         safe_addstr(app.stdscr, 2, 2, f"  Modo: {mode}  ← → cambiar", destacar, h, w)
