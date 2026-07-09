@@ -11,6 +11,9 @@ from . import keybindings as kb
 def handle_listen(app, key: int) -> None:
     SEEK_STEP = 5000
     if key in (ord("\t"),):
+        h, w = app.stdscr.getmaxyx()
+        if h < 16 or w < 61:
+            return
         app.show_stack_view = True
         app.stack_cursor = max(0, min(app.stack_cursor, len(app.stack.items) - 1)) if app.stack.items else 0
         app.stack_scroll = 0
@@ -24,6 +27,9 @@ def handle_listen(app, key: int) -> None:
         dur = app.audio.get_length()
         app.audio.player.set_time(min(dur, cur + SEEK_STEP))
     elif key == ord("g"):
+        h, w = app.stdscr.getmaxyx()
+        if h < 16 or w < 61:
+            return
         if app.audio.get_length() > 0:
             cur_s = app.audio.get_time() // 1000
             app.goto_mins = cur_s // 60

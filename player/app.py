@@ -505,10 +505,18 @@ class PlayerApp:
         return False
 
     def _handle_key_mode_specific(self, key: int) -> bool:
+        h, w = self.stdscr.getmaxyx()
+        _compact = h < 16 or w < 61
         if self.current_view == self.V_LISTEN and self.show_stack_view:
+            if _compact:
+                self.show_stack_view = False
+                return True
             handlers.handle_stack_view(self, key)
             return True
         if self.current_view == self.V_LISTEN and self.goto_mode:
+            if _compact:
+                self.goto_mode = False
+                return True
             handlers.handle_goto(self, key)
             return True
         if self.current_view == self.V_EXPLORER and self.explorer_filter_mode:
@@ -810,8 +818,12 @@ class PlayerApp:
             h, w = self.stdscr.getmaxyx()
             self.stdscr.erase()
 
-            if h < 6 or w < 20:
-                self.stdscr.addstr(0, 0, f"Terminal muy pequeña ({h}x{w}) — necesito al menos 20x6")
+            compact = h < 16 or (self.current_view == self.V_LISTEN and w < 61)
+
+            if h < 8 or w < 40:
+                err = f"Terminal muy pequeña ({h}x{w}) — mínimo 40x8"
+                if w >= len(err):
+                    self.stdscr.addstr(0, 0, err)
                 self.stdscr.refresh()
                 return
 
@@ -824,18 +836,23 @@ class PlayerApp:
 
             if self.meta_edit_mode:
                 views.draw_meta_editor(self, self.stdscr, h, w)
+            elif compact and self.current_view == self.V_LISTEN:
+                views.draw_listen_compact(self, h, w)
             else:
                 drawer = self._view_drawers.get(self.current_view)
                 if drawer:
                     drawer(self, h, w)
 
-            self._draw_status(h, w)
+            if compact:
+                self.toast_ticks = 0
+            else:
+                self._draw_status(h, w)
             if self.confirm_mode:
                 buf = "  s/Enter  " if not self.confirm_is_info else "  OK  "
                 ui.draw_prompt(self.stdscr, h, w, self.confirm_label, buf)
             elif self.prompt_mode:
                 ui.draw_prompt(self.stdscr, h, w, self.prompt_label, self.prompt_buf)
-            elif not self.meta_edit_mode:
+            elif not self.meta_edit_mode and not compact:
                 ui.draw_nav(self.stdscr, h, w)
             if self.toast_ticks > 0:
                 try:
