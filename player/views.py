@@ -2,7 +2,7 @@ import os
 import curses
 
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV
-from .file_utils import time_str, ext_label
+from .file_utils import time_str, ext_label, is_url as _is_url
 from .ui import safe_addstr, draw_box, LIST_H, STATUS_ROW, EXPLORER_MARGIN, PLAYLIST_MARGIN
 from . import keybindings as kb
 from .handlers import _get_current_key
@@ -22,8 +22,14 @@ def draw_listen(app, h: int, w: int) -> None:
             for row, item in enumerate(visible):
                 y = 2 + row
                 idx = app.stack_scroll + row
-                meta = app.meta_cache.get(item.path)
-                display_name = f"{meta.get('artist', '?')} - {meta.get('title', item.name)}" if (meta and meta.get('title')) else item.name
+                meta = app.meta_cache.get(item.path) if not _is_url(item.path) else None
+                is_stream = _is_url(item.path)
+                if is_stream:
+                    display_name = f"📻 {item.name}"
+                elif meta and meta.get('title'):
+                    display_name = f"{meta.get('artist', '?')} - {meta.get('title', item.name)}"
+                else:
+                    display_name = item.name
                 is_playing = (app.stack.playhead == idx) and app.audio.playing
                 icon = "►" if is_playing else "♪"
                 mode_tag = ""
@@ -45,9 +51,9 @@ def draw_listen(app, h: int, w: int) -> None:
                 if dur_str:
                     app.stdscr.addstr(y, w - len(dur_str) - 2, dur_str, attr)
             safe_addstr(app.stdscr, h - 4, 2,
-                        "  [Enter]►  [Tab] Volver  [d]el  [x]clear  [J/K]ordenar  [s]guardar", texto, h, w)
+                        "  [Enter]►  [Tab] Volver  [d]el  [x]clear  [J/K]orden  [s]guardar", texto, h, w)
             safe_addstr(app.stdscr, h - 3, 2,
-                        "  [r/R]modo item  [g]Inicio  [G]Fin", texto, h, w)
+                        "  [r/R]modo item  [g]Inicio  [G]Fin  [o]URL", texto, h, w)
         return
 
     draw_box(app.stdscr, h, w, "Listen")
@@ -62,15 +68,21 @@ def draw_listen(app, h: int, w: int) -> None:
     if not cur_item:
         return
 
-    meta = app.meta_cache.get(cur_item.path)
+    is_stream = _is_url(cur_item.path)
+    meta = app.meta_cache.get(cur_item.path) if not is_stream else None
     estado = "► PLAY" if not app.paused else "⏸ PAUSE"
-    artist = (meta.get('artist') if meta else None) or "Artista desconocido"
-    album = (meta.get('album') if meta else None) or "Álbum desconocido"
-    title = (meta.get('title') if meta else None) or cur_item.name
 
-    safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}", dest, h, w)
-    safe_addstr(app.stdscr, mid - 1, 2, f"  {title}", texto, h, w)
-    safe_addstr(app.stdscr, mid, 2, f"  {artist}  —  {album}", texto, h, w)
+    if is_stream:
+        safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}  📻 STREAM", dest, h, w)
+        safe_addstr(app.stdscr, mid - 1, 2, f"  {cur_item.name}", texto, h, w)
+        safe_addstr(app.stdscr, mid, 2, f"  {cur_item.path}", texto, h, w)
+    else:
+        artist = (meta.get('artist') if meta else None) or "Artista desconocido"
+        album = (meta.get('album') if meta else None) or "Álbum desconocido"
+        title = (meta.get('title') if meta else None) or cur_item.name
+        safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}", dest, h, w)
+        safe_addstr(app.stdscr, mid - 1, 2, f"  {title}", texto, h, w)
+        safe_addstr(app.stdscr, mid, 2, f"  {artist}  —  {album}", texto, h, w)
 
     length = app.audio.get_length()
     pos = app.audio.get_time()
@@ -108,7 +120,7 @@ def draw_listen(app, h: int, w: int) -> None:
         safe_addstr(app.stdscr, mid + 8, 16, "]", texto, h, w)
         safe_addstr(app.stdscr, mid + 9, 2, "  ← → campo  ↑ ↓ valor  Enter saltar", texto, h, w)
 
-    hint = "  [Space] ▶||  [s] ◼  [n] ►►  [b] ◄◄  [h/l] ±5s  [g] Ir a"
+    hint = "  [Space] ▶||  [s] ◼  [n] ►►  [b] ◄◄  [h/l] ±5s  [g] Ir a  [o] URL"
     if app.stack.items:
         hint += "  [Tab] Stack"
     safe_addstr(app.stdscr, h - STATUS_ROW, 2, hint, texto, h, w)

@@ -53,3 +53,10 @@ def time_str(secs: int | None) -> str:
 def ext_label(name: str) -> str:
     _, ext = os.path.splitext(name)
     return EXT_LABEL.get(ext.lower(), "??")
+
+
+_URL_SCHEMES = ("http://", "https://", "rtmp://", "mms://", "rtsp://", "ftp://")
+
+
+def is_url(path: str) -> bool:
+    return path.lower().startswith(_URL_SCHEMES)

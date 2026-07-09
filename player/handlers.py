@@ -3,7 +3,7 @@ import os
 import shutil
 
 from .config import THEME_NAMES, COLORS
-from .file_utils import list_dir as _list_dir, is_media as _is_media_file
+from .file_utils import list_dir as _list_dir, is_media as _is_media_file, is_url as _is_url
 from .stack import StackItem
 from . import keybindings as kb
 
@@ -31,6 +31,19 @@ def handle_listen(app, key: int) -> None:
             app.goto_field = 0
             app.goto_mode = True
             curses.curs_set(0)
+    elif key == ord("o"):
+        _prompt(app, "URL de stream", _add_url_cb)
+
+
+def _add_url_cb(app, url: str) -> None:
+    url = url.strip()
+    if not url or not _is_url(url):
+        return
+    name = url.split("//", 1)[-1].split("/")[0] if "//" in url else url
+    item = StackItem(path=url, name=name)
+    app.stack.append(item)
+    if app.stack.playhead == 0 and not app.audio.playing:
+        app._play_current()
 
 
 def handle_stack_view(app, key: int) -> None:
@@ -55,6 +68,9 @@ def handle_stack_view(app, key: int) -> None:
         return
     if key == ord("-"):
         app.audio.set_volume(app.audio.volume - 5)
+        return
+    if key == ord("o"):
+        _prompt(app, "URL de stream", _add_url_cb)
         return
     if not app.stack.items:
         return
@@ -171,6 +187,8 @@ def handle_explorer(app, key: int) -> None:
         app.entries = _list_dir(app.current_dir)
         app.cursor = 0
         app.scroll = 0
+    elif key == ord("P"):
+        _play_folder(app)
     elif key in (curses.KEY_LEFT, 127, curses.KEY_BACKSPACE):
         parent = os.path.dirname(app.current_dir)
         if parent and parent != app.current_dir:
@@ -535,6 +553,20 @@ def _do_mkdir(app, buf: str) -> None:
         app.entries = _list_dir(app.current_dir)
     except Exception as e:
         _confirm(app, f"Error al crear directorio: {e}", None)
+
+
+def _play_folder(app) -> None:
+    if not app.entries:
+        return
+    _, is_dir, full = app.entries[app.cursor]
+    if not is_dir:
+        return
+    items = _list_dir(full)
+    media = [StackItem(path=p, name=n) for n, d, p in items if not d]
+    if not media:
+        return
+    app.stack.items = media
+    app._play_current()
 
 
 def _start_rename(app) -> None:
