@@ -38,7 +38,10 @@ def draw_listen(app, h: int, w: int) -> None:
                 elif item.mode == "repeat_inf":
                     mode_tag = " [∞]"
                 line = f"  {icon} {display_name}{mode_tag}"
-                max_w = w - 8
+                dur = meta.get('length', 0) if meta else 0
+                dur_str = time_str(dur) if dur > 0 else ""
+                dur_w = len(dur_str) + 3 if dur_str else 0
+                max_w = w - 8 - dur_w
                 if len(line) > max_w:
                     line = line[:max_w - 1] + "…"
                 attr = dest if is_playing else texto
@@ -46,8 +49,6 @@ def draw_listen(app, h: int, w: int) -> None:
                     safe_addstr(app.stdscr, y, 2, line, attr | curses.A_REVERSE, h, w)
                 else:
                     safe_addstr(app.stdscr, y, 2, line, attr, h, w)
-                dur = meta.get('length', 0) if meta else 0
-                dur_str = time_str(dur) if dur > 0 else ""
                 if dur_str:
                     safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, attr, h, w)
             safe_addstr(app.stdscr, h - 4, 2,
@@ -143,12 +144,15 @@ def draw_explorer(app, h: int, w: int) -> None:
         safe_addstr(app.stdscr, 2 + offset, 2, f"> {app.explorer_filter}", destacar, h, w)
         offset += 1
 
+    list_h = h - LIST_H - offset
+    indices = app.explorer_filtered if app.explorer_filter_mode else list(range(len(app.entries)))
+
+    if app.explorer_filter_mode and not indices:
+        safe_addstr(app.stdscr, 3 + offset, 2, "  Sin resultados", texto, h, w)
+        return
     if not app.entries and not app.explorer_filter_mode:
         safe_addstr(app.stdscr, h // 2, 2, "  Sin archivos multimedia en este directorio", texto, h, w)
         return
-
-    list_h = h - LIST_H - offset
-    indices = app.explorer_filtered if app.explorer_filter_mode else list(range(len(app.entries)))
     visible = indices[app.scroll:app.scroll + list_h]
 
     for i, abs_idx in enumerate(visible):
@@ -158,11 +162,16 @@ def draw_explorer(app, h: int, w: int) -> None:
         if is_dir:
             line = f"  [+]/ {name}"
             attr = destacar
+            dur_str = ""
         else:
             base = name.rsplit('.', 1)[0] if '.' in name else name
             line = f"  ♪ {base}  [{label}]"
             attr = texto
-        max_w = w - EXPLORER_MARGIN
+            meta = app.meta_cache.get(full)
+            dur = meta.get('length', 0) if meta else 0
+            dur_str = time_str(dur) if dur > 0 else ""
+        dur_w = len(dur_str) + 3 if dur_str else 0
+        max_w = w - EXPLORER_MARGIN - dur_w
         if len(line) > max_w:
             line = line[:max_w - 1] + "…"
         cur = app.cursor
@@ -171,12 +180,8 @@ def draw_explorer(app, h: int, w: int) -> None:
             safe_addstr(app.stdscr, y, 2, line, attr | curses.A_REVERSE, h, w)
         else:
             safe_addstr(app.stdscr, y, 2, line, attr, h, w)
-        if not is_dir:
-            meta = app.meta_cache.get(full)
-            dur = meta.get('length', 0) if meta else 0
-            dur_str = time_str(dur) if dur > 0 else ""
-            if dur_str:
-                safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, texto, h, w)
+        if dur_str:
+            safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, texto, h, w)
 
 
 def draw_playlist(app, h: int, w: int) -> None:
@@ -206,9 +211,12 @@ def draw_playlist(app, h: int, w: int) -> None:
         name, path = app.playlist[abs_idx]
         meta = app.meta_cache.get(path)
         display_name = f"{meta.get('artist', '?')} - {meta.get('title', name)}" if (meta and meta.get('title')) else name
-        icon = "►" if abs_idx == 0 and app.audio.playing and app.stack.current and app.stack.current.path == path else "♪"
+        icon = "►" if app.stack.current and app.stack.current.path == path and app.audio.playing else "♪"
         line = f"  {icon} {display_name}"
-        max_w = w - PLAYLIST_MARGIN
+        dur = meta.get('length', 0) if meta else 0
+        dur_str = time_str(dur) if dur > 0 else ""
+        dur_w = len(dur_str) + 3 if dur_str else 0
+        max_w = w - PLAYLIST_MARGIN - dur_w
         if len(line) > max_w:
             line = line[:max_w - 1] + "…"
         attr = texto
@@ -218,8 +226,6 @@ def draw_playlist(app, h: int, w: int) -> None:
             safe_addstr(app.stdscr, y, 2, line, attr | curses.A_REVERSE, h, w)
         else:
             safe_addstr(app.stdscr, y, 2, line, attr, h, w)
-        dur = meta.get('length', 0) if meta else 0
-        dur_str = time_str(dur) if dur > 0 else ""
         if dur_str:
             safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, attr, h, w)
 

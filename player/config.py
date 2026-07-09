@@ -64,8 +64,9 @@ def save(cfg: dict) -> None:
 def apply_theme(config: dict) -> None:
     theme_name = config.get("theme", "clasico")
     if theme_name == "custom":
-        cc = config.get("custom_colors", DEFAULT_CONFIG["custom_colors"])
-        t = {k: COLORS.get(v, curses.COLOR_WHITE) for k, v in cc.items()}
+        cc = config.get("custom_colors", {})
+        merged = {**DEFAULT_CONFIG["custom_colors"], **cc}
+        t = {k: COLORS.get(v, curses.COLOR_WHITE) for k, v in merged.items()}
     else:
         t = THEMES.get(theme_name, THEMES["clasico"])
     curses.init_pair(PAIR_MARCO, t["marco"], -1)

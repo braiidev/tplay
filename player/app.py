@@ -811,17 +811,19 @@ class PlayerApp:
                     except curses.error:
                         pass
             if self.update_available and not self.confirm_mode and not self.prompt_mode and not self.show_help:
-                msg = " Nueva actualización disponible "
-                if w > len(msg) + 1:
+                msg = " ⚡ Actualización disponible "
+                if w > len(msg) + 2:
                     try:
-                        self.stdscr.addstr(0, w - len(msg), msg, curses.A_REVERSE)
+                        self.stdscr.addstr(0, w - len(msg) - 1, msg,
+                                           curses.color_pair(1))
                     except curses.error:
                         pass
             if self.show_help:
                 ui.draw_help(self.stdscr, h, w)
 
             if self.meta_edit_editing:
-                cx = 4 + len(self.meta_edit_labels[self.meta_edit_cursor]) + 3 + len(self.meta_edit_buf)
+                cx = (8 + len(self.meta_edit_labels[self.meta_edit_cursor])
+                      + len(self.meta_edit_buf))
                 cy = 4 + self.meta_edit_cursor
                 try:
                     self.stdscr.move(cy, cx)
