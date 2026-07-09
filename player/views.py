@@ -520,21 +520,27 @@ def draw_config(app, h: int, w: int) -> None:
     # --- Tab bar at line 1 ---
     tab_names = [t["name"] for t in app.config_tabs]
     x = 2
-    safe_addstr(app.stdscr, 1, x, "<", nav, h, w)
-    x += 1
+    safe_addstr(app.stdscr, 1, x, "◀ ", nav, h, w)
+    x += 2
     for ti, name in enumerate(tab_names):
         if ti > 0:
             safe_addstr(app.stdscr, 1, x, " │ ", nav, h, w)
             x += 3
-        attr = dest | curses.A_REVERSE if ti == app.config_tab_idx else texto
-        # Truncate name if needed
-        display_name = name
         max_name_w = (w - 6) // max(len(tab_names), 1) - 3
+        display_name = name
         if len(display_name) > max_name_w > 0:
             display_name = display_name[:max_name_w - 1] + "…"
-        safe_addstr(app.stdscr, 1, x, display_name, attr, h, w)
-        x += len(display_name)
-    safe_addstr(app.stdscr, 1, x, ">", nav, h, w)
+        if ti == app.config_tab_idx:
+            safe_addstr(app.stdscr, 1, x, "[", nav, h, w)
+            x += 1
+            safe_addstr(app.stdscr, 1, x, display_name, dest | curses.A_REVERSE, h, w)
+            x += len(display_name)
+            safe_addstr(app.stdscr, 1, x, "]", nav, h, w)
+            x += 1
+        else:
+            safe_addstr(app.stdscr, 1, x, display_name, texto, h, w)
+            x += len(display_name)
+    safe_addstr(app.stdscr, 1, x, " ▶", nav, h, w)
 
     # --- Items with scroll ---
     items = app.config_items

@@ -376,17 +376,17 @@ def draw_help(win, h: int, w: int, scroll: int = 0, tab: int = 0) -> None:
                 win.addstr(y, ox, "│", marco)
                 win.addstr(y, ox + box_w - 1, "│", marco)
 
-            # Content with scroll indicator on last line
+            # Content
             for i, (text, attr) in enumerate(visible):
                 y = 1 + i
                 if attr is not None:
-                    display = text[:max_tw]
-                    if i == list_h - 1 and scroll + list_h < total:
-                        ind = "▼"
-                        if scroll > 0:
-                            ind = "▲▼"
-                        display = display[:max_tw - len(ind)] + ind
-                    win.addstr(y, ox + 2, display, curses.color_pair(attr))
+                    win.addstr(y, ox + 2, text[:max_tw], curses.color_pair(attr))
+
+            # Scroll indicators at right edge
+            if scroll > 0:
+                win.addstr(1, ox + box_w - 2, "▲", nav)
+            if scroll + list_h < total:
+                win.addstr(h - 2, ox + box_w - 2, "▼", nav)
         else:
             # Tab bar at row 1
             tab_names = [t["name"] for t in HELP_TABS]
@@ -420,14 +420,11 @@ def draw_help(win, h: int, w: int, scroll: int = 0, tab: int = 0) -> None:
                     clipped = text[:max_tw] if len(text) <= max_tw else text[:max_tw - 1] + "…"
                     win.addstr(y, ox + 2, clipped, curses.color_pair(attr))
 
-            # Footer (scroll indicators)
-            footer = ""
+            # Scroll indicators at right edge
             if scroll > 0:
-                footer += "▲ "
+                win.addstr(1, ox + box_w - 2, "▲", nav)
             if scroll + list_h < total:
-                footer += "▼"
-            if footer:
-                win.addstr(h - 2, ox + 2, footer, texto)
+                win.addstr(h - 2, ox + box_w - 2, "▼", nav)
 
         # Bottom border
         win.addstr(h - 1, ox, "└" + "─" * (box_w - 2) + "┘", marco)

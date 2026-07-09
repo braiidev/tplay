@@ -387,6 +387,19 @@ class PlayerApp:
             self._handle_dest_key(key)
             return
 
+        # Config tab navigation with h/l (before hjkl aliasing)
+        if self.current_view == self.V_CONFIG and not self.kb_keybinding_view:
+            if key == ord("h"):
+                self.config_tab_idx = (self.config_tab_idx - 1) % max(1, len(self.config_tabs))
+                self.config_cursor = 0
+                self.config_scroll = 0
+                return
+            elif key == ord("l"):
+                self.config_tab_idx = (self.config_tab_idx + 1) % max(1, len(self.config_tabs))
+                self.config_cursor = 0
+                self.config_scroll = 0
+                return
+
         # hjkl navigation aliases for non-Listen views
         if self.current_view != self.V_LISTEN:
             if key == ord("j"):
