@@ -89,6 +89,8 @@ class PlayerApp:
         self.meta_edit_labels = ['Título', 'Artista', 'Álbum', 'Género']
         self.meta_edit_keys = ['title', 'artist', 'album', 'genre']
 
+        self.config_tabs = []
+        self.config_tab_idx = 0
         self.config_cursor = 0
         self.config_scroll = 0
         self.update_available = False
@@ -122,7 +124,7 @@ class PlayerApp:
         self._pending_add_mode: str = "append"
 
         self._setup_keybindings()
-        self._build_config_items()
+        self._build_config_tabs()
         self._build_action_handlers()
 
         self._view_handlers = {
@@ -184,6 +186,12 @@ class PlayerApp:
     @shuffle.setter
     def shuffle(self, val: bool):
         self.stack.shuffle = val
+
+    @property
+    def config_items(self) -> list:
+        if not self.config_tabs:
+            return []
+        return self.config_tabs[self.config_tab_idx]["items"]
 
     @property
     def repeat(self) -> bool:
@@ -320,24 +328,31 @@ class PlayerApp:
                 self.audio.player.set_time(pos)
             self.current_view = self.V_LISTEN
 
-    def _build_config_items(self) -> None:
-        self.config_items = [
-            ("music_dir", "Directorio de música", "path"),
-            ("volume", "Volumen", "int"),
-            ("theme", "Tema", "choice"),
+    def _build_config_tabs(self) -> None:
+        self.config_tabs = [
+            {"name": "General", "items": [
+                ("music_dir", "Directorio de música", "path"),
+                ("volume", "Volumen", "int"),
+                ("sleep_timer_minutes", "Sleep timer (min)", "int"),
+            ]},
+            {"name": "Apariencia", "items": [
+                ("theme", "Tema", "choice"),
+            ]},
+            {"name": "Sistema", "items": [
+                ("keybindings", "Keybindings", "action"),
+                ("update", "Actualizar tplay", "action"),
+            ]},
         ]
         if self.config.get("theme") == "custom":
-            self.config_items += [
+            self.config_tabs[1]["items"] += [
                 ("marco", "Marco", "color"),
                 ("texto", "Texto", "color"),
                 ("destacar", "Destacar", "color"),
                 ("nav", "Nav", "color"),
             ]
-        self.config_items += [
-            ("sleep_timer_minutes", "Sleep timer (min)", "int"),
-            ("keybindings", "Keybindings", "action"),
-            ("update", "Actualizar tplay", "action"),
-        ]
+        self.config_tab_idx = min(self.config_tab_idx, len(self.config_tabs) - 1)
+        self.config_cursor = 0
+        self.config_scroll = 0
 
     def _play_current(self) -> None:
         cur = self.stack.current

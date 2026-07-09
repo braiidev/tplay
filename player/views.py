@@ -274,7 +274,13 @@ def draw_explorer(app, h: int, w: int) -> None:
     indices = app.explorer_filtered if app.explorer_filter_mode else list(range(len(app.entries)))
     total = len(indices)
     pos = f" ({app.cursor + 1}/{total})" if total > 0 else ""
-    draw_box(app.stdscr, h, w, f"Explorador: {app.current_dir}{extra}{pos}")
+    title_p = "Explorador: "
+    title_s = extra + pos
+    max_pw = w - 4 - len(title_p) - len(title_s)
+    pd = app.current_dir
+    if len(pd) > max_pw and max_pw > 4:
+        pd = "…" + pd[-(max_pw - 1):]
+    draw_box(app.stdscr, h, w, f"{title_p}{pd}{title_s}")
 
     if app.explorer_filter_mode and not indices:
         safe_addstr(app.stdscr, 3 + offset, 2, "  Sin resultados", texto, h, w)
@@ -325,8 +331,12 @@ def draw_playlist(app, h: int, w: int) -> None:
         safe_addstr(app.stdscr, 2, 2, f"> {app.playlist_filter}", destacar, h, w)
 
     if not app.playlist:
-        safe_addstr(app.stdscr, h // 2, 2,
-                          "  Sin playlists — presioná [c] para crear una", texto, h, w)
+        if not app.playlist_data:
+            safe_addstr(app.stdscr, h // 2, 2,
+                              "  No hay playlists. [c] crear una.", texto, h, w)
+        else:
+            safe_addstr(app.stdscr, h // 2, 2,
+                              "  Añadí items desde Explorer con a/A.", texto, h, w)
         return
 
     list_h = h - LIST_H - (1 if app.playlist_filter_mode else 0)
@@ -370,22 +380,28 @@ def draw_history(app, h: int, w: int) -> None:
     if not app.history:
         safe_addstr(app.stdscr, h // 2, 2, "  Sin historial", texto, h, w)
         return
-    list_h = h - 5
+    list_h = h - 4
     start = max(0, min(app.history_scroll, len(app.history) - list_h))
     visible = app.history[start:start + list_h]
     for i, entry in enumerate(visible):
-        y = 3 + i
+        y = 2 + i
         idx = start + i
         name = entry.get("name", "?")
         path = entry.get("path", "")
         count = entry.get("count", 0)
         exists = os.path.isfile(path)
+        dur_str = ""
+        if exists:
+            meta = app.meta_cache.get(path)
+            dur = meta.get('length', 0) if meta else 0
+            dur_str = time_str(dur) if dur > 0 else ""
+        dur_w = len(dur_str) + 3 if dur_str else 0
         if exists:
             base = name.rsplit('.', 1)[0] if '.' in name else name
             line = f"  ♪ {base}  ({count}x)"
         else:
             line = f"  ~ Archivo Inexistente  ({count}x)"
-        max_w = w - 4
+        max_w = w - 4 - dur_w
         if len(line) > max_w:
             line = line[:max_w - 1] + "…"
         attr = destacar if idx == app.history_cursor else texto
@@ -393,20 +409,15 @@ def draw_history(app, h: int, w: int) -> None:
             safe_addstr(app.stdscr, y, 2, line, attr | curses.A_REVERSE, h, w)
         else:
             safe_addstr(app.stdscr, y, 2, line, attr, h, w)
-        if exists:
-            meta = app.meta_cache.get(path)
-            dur = meta.get('length', 0) if meta else 0
-            dur_str = time_str(dur) if dur > 0 else ""
-            if dur_str:
-                safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, texto, h, w)
+        if dur_str:
+            safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, texto, h, w)
 
 
 def draw_config(app, h: int, w: int) -> None:
-    total = len(app.config_items)
-    pos = f" ({app.config_cursor + 1}/{total})" if total > 0 else ""
-    draw_box(app.stdscr, h, w, f"Configuración{pos}")
+    draw_box(app.stdscr, h, w, "Configuración")
     texto = curses.color_pair(PAIR_TEXTO)
-    destacar = curses.color_pair(PAIR_DESTACAR)
+    dest = curses.color_pair(PAIR_DESTACAR)
+    nav = curses.color_pair(PAIR_NAV)
 
     labels = {
         "music_dir": f"Directorio música: {app.config.get('music_dir', '~/Music')}",
@@ -416,8 +427,42 @@ def draw_config(app, h: int, w: int) -> None:
     }
     cc = app.config.get("custom_colors", {})
 
-    for i, (key, label, ctype) in enumerate(app.config_items):
-        y = 2 + i
+    # --- Tab bar at line 1 ---
+    tab_names = [t["name"] for t in app.config_tabs]
+    x = 2
+    safe_addstr(app.stdscr, 1, x, "<", nav, h, w)
+    x += 1
+    for ti, name in enumerate(tab_names):
+        if ti > 0:
+            safe_addstr(app.stdscr, 1, x, " │ ", nav, h, w)
+            x += 3
+        attr = dest | curses.A_REVERSE if ti == app.config_tab_idx else texto
+        # Truncate name if needed
+        display_name = name
+        max_name_w = (w - 6) // max(len(tab_names), 1) - 3
+        if len(display_name) > max_name_w > 0:
+            display_name = display_name[:max_name_w - 1] + "…"
+        safe_addstr(app.stdscr, 1, x, display_name, attr, h, w)
+        x += len(display_name)
+    safe_addstr(app.stdscr, 1, x, ">", nav, h, w)
+
+    # --- Items with scroll ---
+    items = app.config_items
+    total = len(items)
+    cur = app.config_cursor
+    list_h = h - 5
+
+    # Clamp scroll
+    if cur < app.config_scroll:
+        app.config_scroll = cur
+    elif cur >= app.config_scroll + list_h:
+        app.config_scroll = cur - list_h + 1
+    app.config_scroll = max(0, app.config_scroll)
+
+    visible = items[app.config_scroll:app.config_scroll + list_h]
+    for i, (key, label, ctype) in enumerate(visible):
+        y = 3 + i
+        idx = app.config_scroll + i
         if ctype == "color":
             line = f"  {label}: {cc.get(key, 'Blanco')}"
         elif key == "keybindings":
@@ -429,16 +474,15 @@ def draw_config(app, h: int, w: int) -> None:
                 line += "  !"
         else:
             line = f"  {labels.get(key, key)}"
-        attr = texto
         if ctype in ("choice", "color", "int"):
             line += "  ← →"
         max_w = w - 4
         if len(line) > max_w:
             line = line[:max_w - 1] + "…"
-        if i == app.config_cursor:
-            safe_addstr(app.stdscr, y, 2, line, destacar | curses.A_REVERSE, h, w)
+        if idx == cur:
+            safe_addstr(app.stdscr, y, 2, line, dest | curses.A_REVERSE, h, w)
         else:
-            safe_addstr(app.stdscr, y, 2, line, attr, h, w)
+            safe_addstr(app.stdscr, y, 2, line, texto, h, w)
 
 
 def draw_keybindings(app, h: int, w: int) -> None:

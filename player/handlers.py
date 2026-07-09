@@ -347,11 +347,25 @@ def handle_history(app, key: int) -> None:
 
 
 def handle_config(app, key: int) -> None:
+    total = len(app.config_items)
+    if key == ord("["):
+        app.config_tab_idx = (app.config_tab_idx - 1) % len(app.config_tabs)
+        app.config_cursor = 0
+        app.config_scroll = 0
+        return
+    elif key == ord("]"):
+        app.config_tab_idx = (app.config_tab_idx + 1) % len(app.config_tabs)
+        app.config_cursor = 0
+        app.config_scroll = 0
+        return
+
     if key == curses.KEY_DOWN:
-        app.config_cursor = min(app.config_cursor + 1, len(app.config_items) - 1)
+        app.config_cursor = min(app.config_cursor + 1, total - 1)
     elif key == curses.KEY_UP:
         app.config_cursor = max(app.config_cursor - 1, 0)
     elif key in (curses.KEY_RIGHT, ord("\n"), 10, 13):
+        if total == 0:
+            return
         key_name, _, ctype = app.config_items[app.config_cursor]
         if ctype == "choice":
             _cycle_theme(app, 1)
@@ -364,6 +378,8 @@ def handle_config(app, key: int) -> None:
         elif ctype == "action" and key_name == "update":
             _handle_update(app)
     elif key == curses.KEY_LEFT:
+        if total == 0:
+            return
         key_name, _, ctype = app.config_items[app.config_cursor]
         if ctype == "choice":
             _cycle_theme(app, -1)
@@ -371,6 +387,13 @@ def handle_config(app, key: int) -> None:
             _cycle_color(app, key_name, -1)
         elif ctype == "int":
             _config_int_dec(app, key_name)
+
+    h, _ = app.stdscr.getmaxyx()
+    list_h = h - 5
+    if app.config_cursor < app.config_scroll:
+        app.config_scroll = app.config_cursor
+    elif app.config_cursor >= app.config_scroll + list_h:
+        app.config_scroll = app.config_cursor - list_h + 1
 
 
 def handle_keybindings(app, key: int) -> None:
@@ -909,7 +932,7 @@ def _cycle_theme(app, direction: int) -> None:
         idx = 0
     new_theme = THEME_NAMES[(idx + direction) % len(THEME_NAMES)]
     app.config["theme"] = new_theme
-    app._build_config_items()
+    app._build_config_tabs()
     app.config_cursor = min(app.config_cursor, len(app.config_items) - 1)
     app._apply_theme()
     from .config import save as save_config
