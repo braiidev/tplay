@@ -1,11 +1,117 @@
 import os
 import curses
 
-from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR
+from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV
 from .file_utils import time_str, ext_label
 from .ui import safe_addstr, draw_box, LIST_H, STATUS_ROW, EXPLORER_MARGIN, PLAYLIST_MARGIN
 from . import keybindings as kb
 from .handlers import _get_current_key
+
+
+def draw_listen(app, h: int, w: int) -> None:
+    texto = curses.color_pair(PAIR_TEXTO)
+    dest = curses.color_pair(PAIR_DESTACAR)
+
+    if app.show_stack_view:
+        draw_box(app.stdscr, h, w, f"Stack ({len(app.stack.items)})")
+        if not app.stack.items:
+            app.stdscr.addstr(h // 2, 2, "  Stack vacío — usá [2] Explorer para añadir", texto)
+        else:
+            list_h = h - 8
+            visible = app.stack.items[app.stack_scroll:app.stack_scroll + list_h]
+            for row, item in enumerate(visible):
+                y = 2 + row
+                idx = app.stack_scroll + row
+                meta = app.meta_cache.get(item.path)
+                display_name = f"{meta.get('artist', '?')} - {meta.get('title', item.name)}" if (meta and meta.get('title')) else item.name
+                is_playing = (app.stack.playhead == idx) and app.audio.playing
+                icon = "►" if is_playing else "♪"
+                mode_tag = ""
+                if item.mode == "repeat_once":
+                    mode_tag = " [1x]"
+                elif item.mode == "repeat_inf":
+                    mode_tag = " [∞]"
+                line = f"  {icon} {display_name}{mode_tag}"
+                max_w = w - 8
+                if len(line) > max_w:
+                    line = line[:max_w - 1] + "…"
+                attr = dest if is_playing else texto
+                if idx == app.stack_cursor:
+                    app.stdscr.addstr(y, 2, line, attr | curses.A_REVERSE)
+                else:
+                    app.stdscr.addstr(y, 2, line, attr)
+                dur = meta.get('length', 0) if meta else 0
+                dur_str = time_str(dur) if dur > 0 else ""
+                if dur_str:
+                    app.stdscr.addstr(y, w - len(dur_str) - 2, dur_str, attr)
+            safe_addstr(app.stdscr, h - 4, 2,
+                        "  [Enter]►  [Tab] Volver  [d]el  [x]clear  [J/K]ordenar  [s]guardar", texto, h, w)
+            safe_addstr(app.stdscr, h - 3, 2,
+                        "  [r/R]modo item  [g]Inicio  [G]Fin", texto, h, w)
+        return
+
+    draw_box(app.stdscr, h, w, "Listen")
+    mid = max(2, (h - 2) // 2)
+
+    if not app.stack.items or not app.audio.playing:
+        safe_addstr(app.stdscr, mid - 1, 2, "  Nada sonando.", dest, h, w)
+        safe_addstr(app.stdscr, mid + 1, 2, "  Abrí [2] Explorer y seleccioná un archivo", texto, h, w)
+        return
+
+    cur_item = app.stack.current
+    if not cur_item:
+        return
+
+    meta = app.meta_cache.get(cur_item.path)
+    estado = "► PLAY" if not app.paused else "⏸ PAUSE"
+    artist = (meta.get('artist') if meta else None) or "Artista desconocido"
+    album = (meta.get('album') if meta else None) or "Álbum desconocido"
+    title = (meta.get('title') if meta else None) or cur_item.name
+
+    safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}", dest, h, w)
+    safe_addstr(app.stdscr, mid - 1, 2, f"  {title}", texto, h, w)
+    safe_addstr(app.stdscr, mid, 2, f"  {artist}  —  {album}", texto, h, w)
+
+    length = app.audio.get_length()
+    pos = app.audio.get_time()
+
+    if length > 0:
+        progress = min(pos / length, 1.0)
+        dur_str = f"{time_str(pos // 1000)} / {time_str(length // 1000)}"
+        bar_w = max(10, w - 12)
+        filled = int(bar_w * progress)
+        bar = "█" * filled + "░" * (bar_w - filled)
+        safe_addstr(app.stdscr, mid + 2, 2, f"  {bar} ", texto, h, w)
+        safe_addstr(app.stdscr, mid + 3, 2, f"  {dur_str}", texto, h, w)
+    else:
+        safe_addstr(app.stdscr, mid + 3, 2, "  Duración: --:--", texto, h, w)
+
+    toggles = ""
+    toggles += " [S]" if app.stack.shuffle else ""
+    toggles += " [R]" if app.stack.repeat else ""
+    toggles += " [MUTE]" if app.audio.muted else ""
+    safe_addstr(app.stdscr, mid + 5, 2, f"  Vol: {app.volume}%{toggles}", texto, h, w)
+
+    timer_str = app.audio.sleep_timer_str()
+    if timer_str:
+        safe_addstr(app.stdscr, mid + 6, 2, f"  {timer_str}", texto, h, w)
+
+    if app.goto_mode:
+        gm = f"{app.goto_mins:02d}"
+        gs = f"{app.goto_secs:02d}"
+        am = texto | curses.A_REVERSE if app.goto_field == 0 else texto
+        as_ = texto | curses.A_REVERSE if app.goto_field == 1 else texto
+        safe_addstr(app.stdscr, mid + 8, 2, "  Ir a: [", texto, h, w)
+        safe_addstr(app.stdscr, mid + 8, 11, gm, am, h, w)
+        safe_addstr(app.stdscr, mid + 8, 13, ":", texto, h, w)
+        safe_addstr(app.stdscr, mid + 8, 14, gs, as_, h, w)
+        safe_addstr(app.stdscr, mid + 8, 16, "]", texto, h, w)
+        safe_addstr(app.stdscr, mid + 9, 2, "  ← → campo  ↑ ↓ valor  Enter saltar", texto, h, w)
+
+    hint = "  [Space] ▶||  [s] ◼  [n] ►►  [b] ◄◄  [h/l] ±5s  [g] Ir a"
+    if app.stack.items:
+        hint += "  [Tab] Stack"
+    safe_addstr(app.stdscr, h - STATUS_ROW, 2, hint, texto, h, w)
 
 
 def draw_explorer(app, h: int, w: int) -> None:
@@ -23,6 +129,10 @@ def draw_explorer(app, h: int, w: int) -> None:
     if app.explorer_filter_mode:
         app.stdscr.addstr(2 + offset, 2, f"> {app.explorer_filter}", destacar)
         offset += 1
+
+    if not app.entries and not app.explorer_filter_mode:
+        app.stdscr.addstr(h // 2, 2, "  Sin archivos multimedia en este directorio", texto)
+        return
 
     list_h = h - LIST_H - offset
     indices = app.explorer_filtered if app.explorer_filter_mode else list(range(len(app.entries)))
@@ -66,7 +176,8 @@ def draw_playlist(app, h: int, w: int) -> None:
         app.stdscr.addstr(2, 2, f"> {app.playlist_filter}", destacar)
 
     if not app.playlist:
-        app.stdscr.addstr(h // 2, 2, "Playlist vacía — agregá canciones desde el Explorador", texto)
+        app.stdscr.addstr(h // 2, 2,
+                          "  Sin playlists — presioná [c] para crear una", texto)
         return
 
     list_h = h - LIST_H - (1 if app.playlist_filter_mode else 0)
@@ -82,13 +193,12 @@ def draw_playlist(app, h: int, w: int) -> None:
         name, path = app.playlist[abs_idx]
         meta = app.meta_cache.get(path)
         display_name = f"{meta.get('artist', '?')} - {meta.get('title', name)}" if (meta and meta.get('title')) else name
-        icon = "►" if abs_idx == app.playlist_idx and app.playing else "♪"
-        tag = " [NEXT]" if any(p == path for p, _ in app.temp_queue) else ""
-        line = f"  {icon} {display_name}{tag}"
+        icon = "►" if abs_idx == 0 and app.audio.playing and app.stack.current and app.stack.current.path == path else "♪"
+        line = f"  {icon} {display_name}"
         max_w = w - PLAYLIST_MARGIN
         if len(line) > max_w:
             line = line[:max_w - 1] + "…"
-        attr = destacar if abs_idx == app.playlist_idx else texto
+        attr = texto
         cur = app.playlist_cursor
         is_cursor = (cur < len(indices) and abs_idx == indices[cur])
         if is_cursor:
@@ -101,102 +211,39 @@ def draw_playlist(app, h: int, w: int) -> None:
             app.stdscr.addstr(y, w - len(dur_str) - 2, dur_str, attr)
 
 
-def draw_now_playing(app, h: int, w: int) -> None:
+def draw_history(app, h: int, w: int) -> None:
+    draw_box(app.stdscr, h, w, "Historial")
     texto = curses.color_pair(PAIR_TEXTO)
-    dest = curses.color_pair(PAIR_DESTACAR)
-
-    if app.show_temp_queue:
-        draw_box(app.stdscr, h, w, f"Lista ({len(app.temp_queue)})")
-        if not app.temp_queue:
-            app.stdscr.addstr(h // 2, 2, "  Lista vacía — usá N/A en Explorador para añadir", texto)
-        else:
-            list_h = h - 8
-            visible = app.temp_queue[app.tq_scroll:app.tq_scroll + list_h]
-            for row, item in enumerate(visible):
-                y = 2 + row
-                path, consumable = item
-                meta = app.meta_cache.get(path)
-                name = os.path.basename(path)
-                display_name = f"{meta.get('artist', '?')} - {meta.get('title', name)}" if (meta and meta.get('title')) else name
-                is_playing = (app.tq_playhead == app.tq_scroll + row) and app.audio.playing
-                icon = "►" if is_playing else "♪"
-                tag = " [N]" if consumable else ""
-                line = f"  {icon} {display_name}{tag}"
-                max_w = w - 8
-                if len(line) > max_w:
-                    line = line[:max_w - 1] + "…"
-                idx = app.tq_scroll + row
-                attr = dest if is_playing else texto
-                if idx == app.tq_cursor:
-                    app.stdscr.addstr(y, 2, line, attr | curses.A_REVERSE)
-                else:
-                    app.stdscr.addstr(y, 2, line, attr)
-                dur = meta.get('length', 0) if meta else 0
-                dur_str = time_str(dur) if dur > 0 else ""
-                if dur_str:
-                    app.stdscr.addstr(y, w - len(dur_str) - 2, dur_str, attr)
-            safe_addstr(app.stdscr, h - 4, 2, "  [Enter]►  [Tab] Volver  [N] Next  [d]el  [x]clear", texto, h, w)
-            safe_addstr(app.stdscr, h - 3, 2, "  [J/K]ordenar  [s]guardar  [g]Inicio  [G]Fin", texto, h, w)
+    destacar = curses.color_pair(PAIR_DESTACAR)
+    if not app.history:
+        app.stdscr.addstr(h // 2, 2, "  Sin historial", texto)
         return
-
-    draw_box(app.stdscr, h, w, "Now Playing")
-
-    mid = max(2, (h - 2) // 2)
-    if app.current_file and app.playing:
-        meta = app.meta_cache.get(app.current_file)
-        name = os.path.basename(app.current_file)
-        estado = "► PLAY" if not app.paused else "⏸ PAUSE"
-        artist = (meta.get('artist') if meta else None) or "Artista desconocido"
-        album = (meta.get('album') if meta else None) or "Álbum desconocido"
-        title = (meta.get('title') if meta else None) or name
-        safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}", dest, h, w)
-        safe_addstr(app.stdscr, mid - 1, 2, f"  {title}", texto, h, w)
-        safe_addstr(app.stdscr, mid, 2, f"  {artist}  —  {album}", texto, h, w)
-
-        length = app.audio.get_length()
-        pos = app.audio.get_time()
-
-        if length > 0:
-            progress = min(pos / length, 1.0)
-            dur_str = f"{time_str(pos // 1000)} / {time_str(length // 1000)}"
-            bar_w = max(10, w - 12)
-            filled = int(bar_w * progress)
-            bar = "█" * filled + "░" * (bar_w - filled)
-            safe_addstr(app.stdscr, mid + 2, 2, f"  {bar} ", texto, h, w)
-            safe_addstr(app.stdscr, mid + 3, 2, f"  {dur_str}", texto, h, w)
+    list_h = h - 5
+    start = max(0, min(app.history_scroll, len(app.history) - list_h))
+    visible = app.history[start:start + list_h]
+    for i, entry in enumerate(visible):
+        y = 3 + i
+        idx = start + i
+        name = entry.get("name", "?")
+        path = entry.get("path", "")
+        count = entry.get("count", 0)
+        exists = os.path.isfile(path)
+        if exists:
+            base = name.rsplit('.', 1)[0] if '.' in name else name
+            line = f"  ♪ {base}  ({count}x)"
         else:
-            safe_addstr(app.stdscr, mid + 3, 2, "  Duración: --:--", texto, h, w)
-
-        toggles = ""
-        toggles += " [S]" if app.shuffle else ""
-        toggles += " [R]" if app.repeat else ""
-        toggles += " [MUTE]" if app.audio.muted else ""
-        info = f"  Vol: {app.volume}%{toggles}"
-        safe_addstr(app.stdscr, mid + 5, 2, info, texto, h, w)
-
-        timer_str = app.audio.sleep_timer_str()
-        if timer_str:
-            safe_addstr(app.stdscr, mid + 6, 2, f"  {timer_str}", texto, h, w)
-
-        if app.goto_mode:
-            gm = f"{app.goto_mins:02d}"
-            gs = f"{app.goto_secs:02d}"
-            am = texto | curses.A_REVERSE if app.goto_field == 0 else texto
-            as_ = texto | curses.A_REVERSE if app.goto_field == 1 else texto
-            safe_addstr(app.stdscr, mid + 8, 2, "  Ir a: [", texto, h, w)
-            safe_addstr(app.stdscr, mid + 8, 11, gm, am, h, w)
-            safe_addstr(app.stdscr, mid + 8, 13, ":", texto, h, w)
-            safe_addstr(app.stdscr, mid + 8, 14, gs, as_, h, w)
-            safe_addstr(app.stdscr, mid + 8, 16, "]", texto, h, w)
-            safe_addstr(app.stdscr, mid + 9, 2, "  \u2190\u2192 campo  \u2191\u2193 valor  Enter saltar", texto, h, w)
-    else:
-        safe_addstr(app.stdscr, mid - 1, 2, "  Nada en reproducción", texto, h, w)
-        safe_addstr(app.stdscr, mid + 1, 2, "  Explorá música en [1] y presioná Enter", texto, h, w)
-
-    hint = "  [Space] ▶||  [s] ◼  [n] ►►  [p] ◄◄  [h/l] ±5s  [g] Ir a"
-    if app.temp_queue:
-        hint += "  [Tab] Lista"
-    safe_addstr(app.stdscr, h - STATUS_ROW, 2, hint, texto, h, w)
+            line = f"  ~ Archivo Inexistente  ({count}x)"
+        attr = destacar if idx == app.history_cursor else texto
+        if idx == app.history_cursor:
+            app.stdscr.addstr(y, 2, line, attr | curses.A_REVERSE)
+        else:
+            app.stdscr.addstr(y, 2, line, attr)
+        if exists:
+            meta = app.meta_cache.get(path)
+            dur = meta.get('length', 0) if meta else 0
+            dur_str = time_str(dur) if dur > 0 else ""
+            if dur_str:
+                app.stdscr.addstr(y, w - len(dur_str) - 2, dur_str, texto)
 
 
 def draw_config(app, h: int, w: int) -> None:
@@ -232,33 +279,6 @@ def draw_config(app, h: int, w: int) -> None:
             app.stdscr.addstr(y, 2, line, destacar | curses.A_REVERSE)
         else:
             app.stdscr.addstr(y, 2, line, attr)
-
-
-def draw_history(app, h: int, w: int) -> None:
-    draw_box(app.stdscr, h, w, "Historial")
-    texto = curses.color_pair(PAIR_TEXTO)
-    destacar = curses.color_pair(PAIR_DESTACAR)
-    if not app.history:
-        app.stdscr.addstr(3, 2, "  Sin historial", texto)
-        return
-    list_h = h - 5
-    start = max(0, min(app.history_scroll, len(app.history) - list_h))
-    visible = app.history[start:start + list_h]
-    for i, (name, path) in enumerate(visible):
-        y = 3 + i
-        idx = start + i
-        base = name.rsplit('.', 1)[0] if '.' in name else name
-        line = f"  {base}"
-        attr = destacar if idx == app.history_cursor else texto
-        if idx == app.history_cursor:
-            app.stdscr.addstr(y, 2, line, attr | curses.A_REVERSE)
-        else:
-            app.stdscr.addstr(y, 2, line, attr)
-        meta = app.meta_cache.get(path)
-        dur = meta.get('length', 0) if meta else 0
-        dur_str = time_str(dur) if dur > 0 else ""
-        if dur_str:
-            app.stdscr.addstr(y, w - len(dur_str) - 2, dur_str, texto)
 
 
 def draw_keybindings(app, h: int, w: int) -> None:

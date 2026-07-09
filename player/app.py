@@ -6,20 +6,18 @@ import copy
 
 from .audio import AudioEngine
 from .config import load as load_config, save as save_config, apply_theme
-from .playlist import load_all as load_all_playlists
+from .playlist import load_all as load_all_playlists, save_all as save_playlists
 from .metadata import MetadataCache
 from .file_utils import list_dir as _list_dir
+from .stack import Stack, StackItem
 from . import views
 from . import ui
 from . import handlers
 from . import keybindings as kb
-from .state import load_state, save_state
+from .state import load_state, save_state, load_history, save_history
 
 
 class PlayerApp:
-    HJKL = {ord("h"): curses.KEY_LEFT, ord("j"): curses.KEY_DOWN,
-            ord("k"): curses.KEY_UP, ord("l"): curses.KEY_RIGHT}
-
     LIST_H = 5
     FILTER_LIST_H = 6
     STATUS_ROW = 3
@@ -27,12 +25,19 @@ class PlayerApp:
     EXPLORER_MARGIN = 8
     PLAYLIST_MARGIN = 6
 
+    # view IDs
+    V_CONFIG = 0
+    V_LISTEN = 1
+    V_EXPLORER = 2
+    V_PLAYLIST = 3
+    V_HISTORY = 4
+
     def __init__(self, stdscr) -> None:
         self.stdscr = stdscr
         self.running = True
 
         self.config = load_config()
-        self.current_view = 1
+        self.current_view = self.V_LISTEN
         self.current_dir = self.config.get("music_dir", os.path.expanduser("~/Music"))
         self.cursor = 0
         self.scroll = 0
@@ -44,7 +49,6 @@ class PlayerApp:
         all_pl, active_name = load_all_playlists()
         self.playlist_data = all_pl
         self.active_name = active_name
-        self.playlist_idx = 0 if self.playlist else -1
         self.playlist_cursor = 0
         self.playlist_scroll = 0
 
@@ -54,7 +58,10 @@ class PlayerApp:
         self.prompt_callback = None
 
         self.meta_cache = MetadataCache()
-        self.temp_queue: list[tuple[str, bool]] = []
+        self.stack = Stack()
+        self.show_stack_view = False
+        self.stack_cursor = 0
+        self.stack_scroll = 0
 
         self.playlist_filter = ""
         self.playlist_filtered = []
@@ -71,18 +78,13 @@ class PlayerApp:
         self.goto_mins = 0
         self.goto_secs = 0
 
-        self.show_temp_queue = False
-        self.tq_cursor = 0
-        self.tq_scroll = 0
-        self.tq_playhead = -1
-
         self.config_cursor = 0
         self.config_scroll = 0
         self.update_available = False
         self.update_check_done = False
         self.update_behind = 0
 
-        self.history = []
+        self.history: list[dict] = load_history()
         self.history_cursor = 0
         self.history_scroll = 0
         self._history_last = None
@@ -98,25 +100,25 @@ class PlayerApp:
         self.file_op_mode = None
         self.file_op_source = None
 
+        self.kb_keybinding_view = False
+
         self._setup_keybindings()
         self._build_config_items()
         self._build_action_handlers()
 
         self._view_handlers = {
-            1: handlers.handle_explorer,
-            2: handlers.handle_playlist,
-            3: handlers.handle_now_playing,
-            0: handlers.handle_config,
-            5: handlers.handle_keybindings,
-            6: handlers.handle_history,
+            self.V_LISTEN: handlers.handle_listen,
+            self.V_EXPLORER: handlers.handle_explorer,
+            self.V_PLAYLIST: handlers.handle_playlist,
+            self.V_HISTORY: handlers.handle_history,
+            self.V_CONFIG: handlers.handle_config,
         }
         self._view_drawers = {
-            1: views.draw_explorer,
-            2: views.draw_playlist,
-            3: views.draw_now_playing,
-            0: views.draw_config,
-            5: views.draw_keybindings,
-            6: views.draw_history,
+            self.V_LISTEN: views.draw_listen,
+            self.V_EXPLORER: views.draw_explorer,
+            self.V_PLAYLIST: views.draw_playlist,
+            self.V_HISTORY: views.draw_history,
+            self.V_CONFIG: views.draw_config,
         }
 
         curses.curs_set(0)
@@ -127,37 +129,6 @@ class PlayerApp:
         self._apply_theme()
         self._check_updates()
         self._resume_session()
-
-    def _setup_keybindings(self) -> None:
-        self.keybinding_mode = self.config.get("keybinding_mode", "default")
-        raw = self.config.get("keybindings", {})
-        if self.keybinding_mode == "custom" and raw:
-            cleaned = kb.resolve_conflicts(raw)
-            self.key_lookup = kb.build_lookup(cleaned)
-        else:
-            self.key_lookup = {}
-        self.kb_cursor = 0
-        self.kb_capturing = False
-        self.kb_capturing_action = None
-        self.kb_conflict_msg = ""
-        self.kb_conflict_other = ""
-
-    def _build_action_handlers(self) -> None:
-        self._action_handlers = {
-            "play_pause": lambda: (self.audio.toggle_play_pause(), None),
-            "stop": lambda: (self.audio.stop(), None),
-            "next": lambda: (self.audio.next(self.playlist), None),
-            "prev": lambda: (self.audio.prev(self.playlist), None),
-            "volume_up": lambda: (self.audio.set_volume(self.audio.volume + 5), None),
-            "volume_down": lambda: (self.audio.set_volume(self.audio.volume - 5), None),
-            "shuffle": lambda: (setattr(self.audio, 'shuffle', not self.audio.shuffle), None),
-            "repeat": lambda: (setattr(self.audio, 'repeat', not self.audio.repeat), None),
-            "help": lambda: (setattr(self, 'show_help', not self.show_help), None),
-            "play_next": lambda: (self._queue_next(), None),
-            "queue_add": lambda: (self._queue_add(), None),
-            "sleep_timer": lambda: (self._toggle_sleep_timer(), None),
-            "mute": lambda: (self.audio.toggle_mute(), None),
-        }
 
     @property
     def playlist(self) -> list:
@@ -189,19 +160,19 @@ class PlayerApp:
 
     @property
     def shuffle(self) -> bool:
-        return self.audio.shuffle
+        return self.stack.shuffle
 
     @shuffle.setter
     def shuffle(self, val: bool):
-        self.audio.shuffle = val
+        self.stack.shuffle = val
 
     @property
     def repeat(self) -> bool:
-        return self.audio.repeat
+        return self.stack.repeat
 
     @repeat.setter
     def repeat(self, val: bool):
-        self.audio.repeat = val
+        self.stack.repeat = val
 
     @property
     def sleep_timer_start(self) -> float:
@@ -263,7 +234,7 @@ class PlayerApp:
             self.update_available = False
         self.update_check_done = True
 
-    def _apply_updates(self) -> None:
+    def _apply_updates(self) -> tuple[bool, str]:
         repo = self._repo_dir
         try:
             result = subprocess.run(["git", "pull"], cwd=repo,
@@ -275,14 +246,46 @@ class PlayerApp:
         except Exception as e:
             return False, str(e)
 
+    def _setup_keybindings(self) -> None:
+        self.keybinding_mode = self.config.get("keybinding_mode", "default")
+        raw = self.config.get("keybindings", {})
+        if self.keybinding_mode == "custom" and raw:
+            cleaned = kb.resolve_conflicts(raw)
+            self.key_lookup = kb.build_lookup(cleaned)
+        else:
+            self.key_lookup = {}
+        self.kb_cursor = 0
+        self.kb_capturing = False
+        self.kb_capturing_action = None
+        self.kb_conflict_msg = ""
+        self.kb_conflict_other = ""
+
+    def _build_action_handlers(self) -> None:
+        self._action_handlers = {
+            "play_pause": lambda: (self.audio.toggle_play_pause(), None),
+            "stop": lambda: (self.audio.stop(), None),
+            "next": lambda: (self._play_next(), None),
+            "prev": lambda: (self._play_prev(), None),
+            "volume_up": lambda: (self.audio.set_volume(self.audio.volume + 5), None),
+            "volume_down": lambda: (self.audio.set_volume(self.audio.volume - 5), None),
+            "shuffle": lambda: (setattr(self.stack, 'shuffle', not self.stack.shuffle), None),
+            "repeat": lambda: (setattr(self.stack, 'repeat', not self.stack.repeat), None),
+            "help": lambda: (setattr(self, 'show_help', not self.show_help), None),
+            "play_next": lambda: (self._stack_add_from_cursor(prepend=True), None),
+            "queue_add": lambda: (self._stack_add_from_cursor(prepend=False), None),
+            "sleep_timer": lambda: (self._toggle_sleep_timer(), None),
+            "mute": lambda: (self.audio.toggle_mute(), None),
+        }
+
     def _resume_session(self) -> None:
         st = load_state()
         if st.get("playing") and st.get("file") and os.path.isfile(st["file"]):
+            self.stack.items = [StackItem(path=st["file"], name=os.path.basename(st["file"]))]
             self.audio.play_file(st["file"])
             pos = st.get("position", 0)
             if pos > 0:
                 self.audio.player.set_time(pos)
-            self.current_view = 3
+            self.current_view = self.V_LISTEN
 
     def _build_config_items(self) -> None:
         self.config_items = [
@@ -303,53 +306,73 @@ class PlayerApp:
             ("update", "Actualizar tplay", "action"),
         ]
 
-    def _auto_next_temp(self) -> bool:
-        """Returns True if handled from temp_queue, False to fall through to playlist."""
-        if not self.temp_queue:
-            return False
-        # If the item that just finished was consumable (N), remove it
-        if 0 <= self.tq_playhead < len(self.temp_queue):
-            if self.temp_queue[self.tq_playhead][1]:
-                self.temp_queue.pop(self.tq_playhead)
-                if self.tq_playhead >= len(self.temp_queue):
-                    self.tq_playhead = len(self.temp_queue) - 1
-        # Consume any N items at the front (inserted during playback)
-        if self.temp_queue and self.temp_queue[0][1]:
-            path, _ = self.temp_queue.pop(0)
-            self.audio.play_file(path)
-            self.tq_playhead = -1
-            return True
-        # Advance playhead to next permanent item
-        nxt = (self.tq_playhead + 1) if self.tq_playhead >= 0 else 0
-        if nxt < len(self.temp_queue):
-            self.tq_playhead = nxt
-            self.audio.play_file(self.temp_queue[nxt][0])
-            return True
-        # End of temp_queue
-        self.tq_playhead = -1
-        return False
-
-    def _auto_prev_temp(self) -> None:
-        if not self.temp_queue:
+    def _stack_add_from_cursor(self, prepend: bool = False) -> None:
+        path = None
+        if self.current_view == self.V_EXPLORER and self.entries:
+            _, is_dir, full = self.entries[self.cursor]
+            if not is_dir:
+                path = full
+        elif self.current_view == self.V_PLAYLIST and self.playlist:
+            path = self.playlist[self.playlist_cursor][1]
+        elif self.current_view == self.V_HISTORY and self.history:
+            path = self.history[self.history_cursor]["path"]
+        if not path or not os.path.isfile(path):
             return
-        if self.tq_playhead > 0:
-            self.tq_playhead -= 1
-            self.audio.play_file(self.temp_queue[self.tq_playhead][0])
-        elif self.tq_playhead == 0 and self.audio.repeat:
-            self.tq_playhead = len(self.temp_queue) - 1
-            self.audio.play_file(self.temp_queue[self.tq_playhead][0])
+        item = StackItem(path=path, name=os.path.basename(path))
+        if prepend:
+            self.stack.prepend(item)
+        else:
+            self.stack.append(item)
+        if self.stack.playhead == 0 and not self.audio.playing:
+            self._play_current()
+
+    def _play_current(self) -> None:
+        cur = self.stack.current
+        if cur:
+            self.audio.play_file(cur.path)
+            self.current_view = self.V_LISTEN
+
+    def _play_next(self) -> None:
+        if self.stack.is_empty:
+            return
+        nxt = self.stack.next_playhead()
+        if nxt < 0:
+            self.audio.stop()
+            self.stack.clear()
+            return
+        self.stack.playhead = nxt
+        self._play_current()
+
+    def _play_prev(self) -> None:
+        if self.stack.is_empty:
+            return
+        prev = self.stack.prev_playhead()
+        if prev < 0:
+            return
+        self.stack.playhead = prev
+        self._play_current()
 
     def _check_playback_end(self) -> None:
         if not self.audio.is_ended():
             return
-        if self._auto_next_temp():
+        if self.stack.is_empty:
             return
-        self.audio.auto_next(self.playlist)
+        cur = self.stack.current
+        if cur is None:
+            self._play_next()
+            return
+        if cur.mode == "repeat_inf":
+            self.audio.play_file(cur.path)
+            return
+        if cur.mode == "repeat_once":
+            cur.mode = "normal"
+            self.audio.play_file(cur.path)
+            return
+        self._play_next()
 
     def _add_history(self, path: str) -> None:
-        name = os.path.basename(path)
-        self.history = [(n, p) for n, p in self.history if p != path]
-        self.history.insert(0, (name, path))
+        self.history = [h for h in self.history if h.get("path") != path]
+        self.history.insert(0, {"name": os.path.basename(path), "path": path, "count": 1})
         if len(self.history) > 100:
             self.history.pop()
 
@@ -377,10 +400,9 @@ class PlayerApp:
             return
         if self._handle_key_mode_specific(key):
             return
-        key = self.HJKL.get(key, key)
         if self._handle_key_view_switch(key):
             return
-        if self.current_view == 5:
+        if self.current_view == self.V_CONFIG and self.kb_keybinding_view:
             handlers.handle_keybindings(self, key)
             return
         if self._handle_key_global(key):
@@ -401,41 +423,37 @@ class PlayerApp:
         return False
 
     def _handle_key_mode_specific(self, key: int) -> bool:
-        if self.current_view == 3 and self.show_temp_queue:
-            handlers.handle_temp_queue(self, key)
+        if self.current_view == self.V_LISTEN and self.show_stack_view:
+            handlers.handle_stack_view(self, key)
             return True
-        if self.current_view == 3 and self.goto_mode:
+        if self.current_view == self.V_LISTEN and self.goto_mode:
             handlers.handle_goto(self, key)
             return True
-        if self.current_view == 1 and self.explorer_filter_mode:
+        if self.current_view == self.V_EXPLORER and self.explorer_filter_mode:
             handlers.handle_explorer(self, key)
             return True
-        if self.current_view == 2 and self.playlist_filter_mode:
+        if self.current_view == self.V_PLAYLIST and self.playlist_filter_mode:
             handlers.handle_playlist(self, key)
             return True
         if key == ord("/"):
-            if self.current_view == 1:
+            if self.current_view == self.V_EXPLORER:
                 handlers.handle_explorer(self, key)
                 return True
-            if self.current_view == 2:
+            if self.current_view == self.V_PLAYLIST:
                 handlers.handle_playlist(self, key)
                 return True
         return False
 
     def _handle_key_view_switch(self, key: int) -> bool:
-        if ord("0") <= key <= ord("3"):
+        if ord("0") <= key <= ord("4"):
             self.current_view = key - ord("0")
             self.cursor = 0
             self.scroll = 0
-            curses.flushinp()
-            return True
-        if key == ord("H"):
-            if self.current_view == 6:
-                self.current_view = 3
-            else:
-                self.current_view = 6
-                self.history_cursor = 0
-                self.history_scroll = 0
+            self.show_stack_view = False
+            self.goto_mode = False
+            self.explorer_filter_mode = False
+            self.playlist_filter_mode = False
+            self.kb_keybinding_view = False
             curses.flushinp()
             return True
         return False
@@ -458,11 +476,11 @@ class PlayerApp:
             curses.flushinp()
             return True
         if key == ord("n"):
-            self.audio.next(self.playlist)
+            self._play_next()
             curses.flushinp()
             return True
-        if key == ord("p"):
-            self.audio.prev(self.playlist)
+        if key == ord("b"):
+            self._play_prev()
             curses.flushinp()
             return True
         if key == ord("+"):
@@ -473,20 +491,12 @@ class PlayerApp:
             self.audio.set_volume(self.audio.volume - 5)
             curses.flushinp()
             return True
-        if key == ord("N"):
-            self._queue_next()
-            curses.flushinp()
-            return True
-        if key == ord("A"):
-            self._queue_add()
-            curses.flushinp()
-            return True
         if key == ord("r"):
-            self.audio.shuffle = not self.audio.shuffle
+            self.stack.shuffle = not self.stack.shuffle
             curses.flushinp()
             return True
         if key == ord("R"):
-            self.audio.repeat = not self.audio.repeat
+            self.stack.repeat = not self.stack.repeat
             curses.flushinp()
             return True
         if key == ord("m"):
@@ -503,62 +513,67 @@ class PlayerApp:
             return True
         if key == ord("q"):
             save_state(False)
+            save_history(self.history)
             self.config["volume"] = self.audio.volume
             save_config(self.config)
-            handlers._save_playlist(self)
+            self._save_all_playlists()
             self.audio.player.stop()
             self.running = False
             return True
         if key == 27:
+            self.show_stack_view = False
+            self.goto_mode = False
+            self.kb_keybinding_view = False
             curses.flushinp()
             return True
         return False
 
-    def _queue_next(self) -> None:
-        was_empty = not self.temp_queue
-        if self.current_view == 1 and self.entries:
-            _, is_dir, full = self.entries[self.cursor]
-            if not is_dir:
-                self.temp_queue.insert(0, (full, True))
-                if self.tq_playhead >= 0:
-                    self.tq_playhead += 1
-        elif self.current_view == 2 and self.playlist:
-            path = self.playlist[self.playlist_cursor][1]
-            self.temp_queue.insert(0, (path, True))
-            if self.tq_playhead >= 0:
-                self.tq_playhead += 1
-        if was_empty and self.temp_queue and not self.audio.playing:
-            self.tq_playhead = 0
-            self.audio.play_file(self.temp_queue[0][0])
-            self.current_view = 3
+    def _save_all_playlists(self) -> None:
+        save_playlists(self.playlist_data, self.active_name)
 
-    def _queue_add(self) -> None:
-        was_empty = not self.temp_queue
-        if self.current_view == 1 and self.entries:
-            _, is_dir, full = self.entries[self.cursor]
-            if not is_dir:
-                self.temp_queue.append((full, False))
-        elif self.current_view == 2 and self.playlist:
-            path = self.playlist[self.playlist_cursor][1]
-            self.temp_queue.append((path, False))
-        if was_empty and self.temp_queue and not self.audio.playing:
-            self.tq_playhead = 0
-            self.audio.play_file(self.temp_queue[0][0])
-            self.current_view = 3
+    def _toggle_sleep_timer(self) -> None:
+        if self.audio.sleep_timer_active:
+            self.audio.sleep_timer_active = False
+            self.audio.sleep_timer_expired = False
+        else:
+            minutes = self.config.get("sleep_timer_minutes", 30)
+            self.audio.set_sleep_timer(minutes)
+
+    def _setup_sleep_timer(self, buf: str) -> None:
+        try:
+            mins = max(1, int(buf.strip()))
+        except ValueError:
+            mins = 30
+        self.config["sleep_timer_minutes"] = mins
+        save_config(self.config)
+        self.audio.set_sleep_timer(mins)
+
+    def _clear_stack(self) -> None:
+        self.audio.stop()
+        self.stack.clear()
 
     # ── Undo / Redo ──
 
-    def _playlist_snapshot(self) -> dict:
+    def _snapshot_state(self) -> dict:
         return {
-            "data": copy.deepcopy(self.playlist_data),
-            "active": self.active_name,
-            "idx": self.playlist_idx,
-            "tq": list(self.temp_queue),
-            "tq_head": self.tq_playhead,
+            "playlist_data": copy.deepcopy(self.playlist_data),
+            "active_name": self.active_name,
+            "stack_items": copy.deepcopy(self.stack.items),
+            "stack_playhead": self.stack.playhead,
+            "stack_shuffle": self.stack.shuffle,
+            "stack_repeat": self.stack.repeat,
         }
 
+    def _restore_snapshot(self, snap: dict) -> None:
+        self.playlist_data = snap["playlist_data"]
+        self.active_name = snap["active_name"]
+        self.stack.load_items(snap["stack_items"])
+        self.stack.playhead = snap["stack_playhead"]
+        self.stack.shuffle = snap["stack_shuffle"]
+        self.stack.repeat = snap["stack_repeat"]
+
     def _push_snapshot(self) -> None:
-        self.undo_stack.append(self._playlist_snapshot())
+        self.undo_stack.append(self._snapshot_state())
         if len(self.undo_stack) > 50:
             self.undo_stack.pop(0)
         self.redo_stack.clear()
@@ -566,25 +581,15 @@ class PlayerApp:
     def _undo(self) -> None:
         if not self.undo_stack:
             return
-        self.redo_stack.append(self._playlist_snapshot())
-        snap = self.undo_stack.pop()
-        self.playlist_data = snap["data"]
-        self.active_name = snap["active"]
-        self.playlist_idx = snap["idx"]
-        self.temp_queue = snap["tq"]
-        self.tq_playhead = snap["tq_head"]
+        self.redo_stack.append(self._snapshot_state())
+        self._restore_snapshot(self.undo_stack.pop())
         self.playlist_cursor = max(0, min(self.playlist_cursor, len(self.playlist) - 1))
 
     def _redo(self) -> None:
         if not self.redo_stack:
             return
-        self.undo_stack.append(self._playlist_snapshot())
-        snap = self.redo_stack.pop()
-        self.playlist_data = snap["data"]
-        self.active_name = snap["active"]
-        self.playlist_idx = snap["idx"]
-        self.temp_queue = snap["tq"]
-        self.tq_playhead = snap["tq_head"]
+        self.undo_stack.append(self._snapshot_state())
+        self._restore_snapshot(self.redo_stack.pop())
         self.playlist_cursor = max(0, min(self.playlist_cursor, len(self.playlist) - 1))
 
     # ── Prompt ──
@@ -622,25 +627,8 @@ class PlayerApp:
         curses.flushinp()
         if is_info:
             return
-        if cb and chr(key).lower() in ("s", "y"):
+        if cb and (chr(key).lower() == "s" or key in (ord("\n"), 10, 13)):
             cb()
-
-    def _toggle_sleep_timer(self) -> None:
-        if self.audio.sleep_timer_active:
-            self.audio.sleep_timer_active = False
-            self.audio.sleep_timer_expired = False
-        else:
-            minutes = self.config.get("sleep_timer_minutes", 30)
-            self.audio.set_sleep_timer(minutes)
-
-    def _setup_sleep_timer(self, buf: str) -> None:
-        try:
-            mins = max(1, int(buf.strip()))
-        except ValueError:
-            mins = 30
-        self.config["sleep_timer_minutes"] = mins
-        save_config(self.config)
-        self.audio.set_sleep_timer(mins)
 
     # ── Drawing ──
 
@@ -654,8 +642,8 @@ class PlayerApp:
                 self.stdscr.refresh()
                 return
 
-            needs_cursor = ((self.current_view == 1 and self.explorer_filter_mode)
-                            or (self.current_view == 2 and self.playlist_filter_mode)
+            needs_cursor = ((self.current_view == self.V_EXPLORER and self.explorer_filter_mode)
+                            or (self.current_view == self.V_PLAYLIST and self.playlist_filter_mode)
                             or self.prompt_mode)
             if needs_cursor:
                 curses.curs_set(1)
@@ -666,7 +654,7 @@ class PlayerApp:
 
             self._draw_status(h, w)
             if self.confirm_mode:
-                buf = "  s/N  " if not self.confirm_is_info else "  OK  "
+                buf = "  s/Enter  " if not self.confirm_is_info else "  OK  "
                 ui.draw_prompt(self.stdscr, h, w, self.confirm_label, buf)
             elif self.prompt_mode:
                 ui.draw_prompt(self.stdscr, h, w, self.prompt_label, self.prompt_buf)
@@ -682,11 +670,11 @@ class PlayerApp:
             if self.show_help:
                 ui.draw_help(self.stdscr, h, w)
 
-            if self.current_view == 1 and self.explorer_filter_mode:
+            if self.current_view == self.V_EXPLORER and self.explorer_filter_mode:
                 y = 3 if self.file_op_mode else 2
                 self.stdscr.move(y, 4 + len(self.explorer_filter))
                 curses.curs_set(1)
-            elif self.current_view == 2 and self.playlist_filter_mode:
+            elif self.current_view == self.V_PLAYLIST and self.playlist_filter_mode:
                 self.stdscr.move(2, 4 + len(self.playlist_filter))
                 curses.curs_set(1)
 
@@ -697,9 +685,6 @@ class PlayerApp:
     def _draw_status(self, h: int, w: int) -> None:
         ui.draw_status(self.stdscr, h, w, self.audio, self.audio.playing,
                        self.audio.current_file, self.audio.volume,
-                       self.audio.shuffle, self.audio.repeat,
+                       self.stack.shuffle, self.stack.repeat,
                        self.active_name, self.current_view,
-                       self.temp_queue)
-
-
-
+                       self.stack)

@@ -44,7 +44,7 @@ def draw_box(win, h: int, w: int, title: str) -> None:
 
 def draw_nav(win, h: int, w: int) -> None:
     nav = curses.color_pair(PAIR_NAV)
-    tabs = " 0:Config │ 1:Expl │ 2:Playlist │ 3:Listen │ H:Hist │ q:Salir "
+    tabs = " 0:Config │ 1:Listen │ 2:Expl │ 3:Playlist │ 4:Hist │ q:Salir "
     win.move(h - NAV_ROW, 0)
     win.clrtoeol()
     win.addstr(h - NAV_ROW, max(0, (w - len(tabs)) // 2), tabs, nav)
@@ -52,8 +52,8 @@ def draw_nav(win, h: int, w: int) -> None:
 
 def draw_status(win, h: int, w: int, audio, playing: bool, current_file, volume: int,
                 shuffle: bool, repeat: bool, active_name: str, current_view: int,
-                temp_queue: list = None) -> None:
-    if current_view in (3, 5, 6):
+                stack=None) -> None:
+    if current_view in (1, 5, 6):
         return
     status = curses.color_pair(PAIR_DESTACAR)
     if playing:
@@ -70,10 +70,6 @@ def draw_status(win, h: int, w: int, audio, playing: bool, current_file, volume:
             txt += " [R]"
         if audio.muted:
             txt += " [MUTE]"
-        if temp_queue:
-            n = sum(1 for _, c in temp_queue if c)
-            if n:
-                txt += f" [▶NEXT×{n}]"
         timer_str = audio.sleep_timer_str()
         if timer_str:
             txt += f" {timer_str}"
@@ -115,46 +111,52 @@ def draw_help(win, h: int, w: int) -> None:
         ("    < > / h l    Retroceder / Avanzar", texto),
         ("    Enter        Reproducir / entrar carpeta", texto),
         ("    ~            Ir al home", texto),
+        ("    g / G        Ir al inicio / fin del listado", texto),
         ("", None),
-        ("  Reproduccion", nav),
+        ("  Reproduccion (Listen)", nav),
         ("    Space        ▶ / ⏸", texto),
         ("    s            ◼ Stop", texto),
-        ("    n / p        ►► / ◄◄", texto),
+        ("    n / b        ►► / ◄◄", texto),
+        ("    + / k        Subir volumen", texto),
+        ("    - / j        Bajar volumen", texto),
         ("    h / l        Seek -5s / +5s", texto),
-        ("    + / -        Subir / Bajar volumen", texto),
         ("    m            Mute", texto),
-        ("    r / R        Shuffle / Repeat", texto),
-        ("    g            Ir a tiempo (en Now Playing)", texto),
+        ("    r / R        Shuffle / Repeat global", texto),
+        ("    g            Ir a tiempo (en Listen)", texto),
         ("    t / T        Sleep timer: toggle / configurar", texto),
+        ("    Tab          Ver Stack", texto),
         ("", None),
-        ("  Archivos (Explorador)", nav),
-        ("    C            Copiar archivo", texto),
-        ("    V            Mover archivo", texto),
-        ("    E            Renombrar archivo", texto),
-        ("    I            Editar tags (title/artist/album)", texto),
+        ("  Vista Stack (Tab en Listen)", nav),
+        ("    Enter        Mover playhead al item", texto),
+        ("    d / x        Eliminar item / Limpiar todo", texto),
+        ("    J / K        Reordenar", texto),
+        ("    s            Guardar como playlist", texto),
+        ("    r / R        Modo item: normal / 1x / ∞", texto),
+        ("", None),
+        ("  Archivos (Explorer)", nav),
+        ("    a / A        Añadir a destino (final / inicio)", texto),
+        ("    C / V        Copiar / Mover", texto),
+        ("    E            Renombrar", texto),
+        ("    I            Editar tags ID3", texto),
+        ("    d            Eliminar (con confirmación)", texto),
+        ("    M            Crear directorio", texto),
+        ("    R            Refrescar vista", texto),
         ("", None),
         ("  Playlist", nav),
-        ("    a            Anadir a playlist", texto),
-        ("    d            Quitar de playlist", texto),
+        ("    c / D        Crear / Eliminar playlist", texto),
+        ("    e            Renombrar playlist", texto),
+        ("    d            Quitar item", texto),
         ("    x            Limpiar playlist", texto),
-        ("    J / K        Reordenar (mover abajo/arriba)", texto),
-        ("    C            Crear nueva playlist", texto),
-        ("    E            Renombrar playlist", texto),
-        ("    D            Eliminar playlist", texto),
+        ("    J / K        Reordenar items", texto),
         ("    [ / ]        Playlist anterior / siguiente", texto),
+        ("    s            Guardar playlist", texto),
         ("", None),
         ("  Vistas", nav),
-        ("    0-3          Cambiar vista", texto),
-        ("    H            Historial", texto),
+        ("    0-4          Cambiar vista", texto),
         ("    ? / F1       Abrir esta ayuda", texto),
-        ("    /            Filtrar lista actual (Expl/Playlist)", texto),
-        ("  Cola Temporal", nav),
-        ("    Tab          Ver/ocultar cola (en Now Playing)", texto),
-        ("    d / x        Quitar / Limpiar cola", texto),
-        ("    J / K        Reordenar cola", texto),
-        ("    s            Guardar cola como playlist", texto),
-        ("    Esc          Cerrar ayuda", texto),
-        ("    q            Salir", texto),
+        ("    /            Filtrar lista actual", texto),
+        ("    q            Salir (guarda todo)", texto),
+        ("    Esc          Cancelar / cerrar", texto),
         ("", None),
     ]
     inner_w = 35
