@@ -5,7 +5,9 @@ import vlc
 
 class AudioEngine:
     def __init__(self):
-        self.instance = vlc.Instance("--no-video", "--quiet")
+        self.instance = vlc.Instance("--no-video", "--quiet",
+                                      "--msg-level=mpg123=0",
+                                      "--no-stderr")
         self.player = self.instance.media_player_new()
         self.playing = False
         self.paused = False
