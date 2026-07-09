@@ -329,7 +329,9 @@ def draw_listen_compact(app, h: int, w: int) -> None:
             app.stdscr.addstr(oy + 1, cx + 2, gm, am)
             app.stdscr.addstr(oy + 1, cx + 4, ":", texto)
             app.stdscr.addstr(oy + 1, cx + 5, gs, as_)
-            app.stdscr.addstr(oy + 2, ox + 2, "← → ↑ ↓ Enter", texto)
+            app.stdscr.addstr(oy + 2, ox + 2, "← → ↑ ↓", texto)
+            ex = ox + (bw - len("Enter")) // 2
+            app.stdscr.addstr(oy + 3, ex, "Enter", dest)
         except curses.error:
             pass
 
