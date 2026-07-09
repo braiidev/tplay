@@ -183,6 +183,11 @@ def handle_explorer(app, key: int) -> None:
         app.entries = _list_dir(app.current_dir)
         app.cursor = 0
         app.scroll = 0
+    elif key == ord("u"):
+        if not app._undo_file_op() and app.undo_stack:
+            app._undo()
+    elif key == ord("U"):
+        app._redo()
 
     h, _ = app.stdscr.getmaxyx()
     list_h = h - app.LIST_H
@@ -789,16 +794,31 @@ def _do_file_op(app, dest_dir: str) -> None:
     app.file_op_source = None
     if not src or not mode or not os.path.isdir(dest_dir):
         return
+    dest = os.path.join(dest_dir, os.path.basename(src))
+    label = "Copiar" if mode == "copy" else "Mover"
     try:
-        dest = os.path.join(dest_dir, os.path.basename(src))
         app._push_snapshot()
         if mode == "copy":
             shutil.copy2(src, dest)
         elif mode == "move":
             shutil.move(src, dest)
+        app._file_undo = {"type": mode, "src": src, "dest": dest}
         app.entries = _list_dir(app.current_dir)
     except Exception as e:
         _confirm(app, f"Error: {e}", None)
+        return
+    _confirm(app, f"{label}: {os.path.basename(src)} listo", None)
+
+
+def _confirm_file_op(app, dest_dir: str) -> None:
+    src = app.file_op_source
+    mode = app.file_op_mode
+    if not src or not os.path.isdir(dest_dir):
+        return
+    label = "Copiar" if mode == "copy" else "Mover"
+    name = os.path.basename(src)
+    dest_name = os.path.basename(dest_dir)
+    _confirm(app, f"¿{label} '{name}' a '{dest_name}'?", lambda: _do_file_op(app, dest_dir))
 
 
 def _handle_file_op_picker(app, key: int) -> None:
@@ -820,6 +840,13 @@ def _handle_file_op_picker(app, key: int) -> None:
         app.cursor = 0
     elif key == ord("G"):
         app.cursor = len(app.entries) - 1
+    elif key in (ord("\n"), 10, 13, ord("C"), ord("V")):
+        if app.entries:
+            _, is_dir, full = app.entries[app.cursor]
+            if is_dir:
+                _confirm_file_op(app, full)
+            else:
+                _confirm_file_op(app, app.current_dir)
     elif key in (curses.KEY_RIGHT, ord("l")):
         if app.entries:
             _, is_dir, full = app.entries[app.cursor]
@@ -828,11 +855,6 @@ def _handle_file_op_picker(app, key: int) -> None:
                 app.entries = _list_dir(full)
                 app.cursor = 0
                 app.scroll = 0
-    elif key in (ord("\n"), 10, 13):
-        if app.entries:
-            _, is_dir, full = app.entries[app.cursor]
-            if is_dir:
-                _do_file_op(app, full)
     elif key in (curses.KEY_LEFT, 127, curses.KEY_BACKSPACE):
         parent = os.path.dirname(app.current_dir)
         if parent and parent != app.current_dir:
@@ -845,6 +867,12 @@ def _handle_file_op_picker(app, key: int) -> None:
         app.entries = _list_dir(app.current_dir)
         app.cursor = 0
         app.scroll = 0
+    elif key in (ord("u"), ord("U")):
+        if key == ord("u"):
+            app._undo_file_op()
+        else:
+            app._redo()
+        return
 
     h, _ = app.stdscr.getmaxyx()
     list_h = h - app.LIST_H

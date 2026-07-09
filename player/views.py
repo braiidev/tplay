@@ -122,8 +122,9 @@ def draw_explorer(app, h: int, w: int) -> None:
 
     offset = 0
     if app.file_op_mode:
-        mode_label = "Copiar a" if app.file_op_mode == "copy" else "Mover a"
-        app.stdscr.addstr(2, 2, f"  {mode_label}: Enter confirma  Esc cancela", destacar)
+        mode_label = "Copiar" if app.file_op_mode == "copy" else "Mover"
+        src_name = os.path.basename(app.file_op_source) if app.file_op_source else ""
+        app.stdscr.addstr(2, 2, f"  {mode_label}: {src_name}  Enter/C/V=pegar bajo directorio  Esc=cancelar  u=deshacer", destacar)
         offset = 1
 
     if app.explorer_filter_mode:

@@ -1,5 +1,6 @@
 import curses
 import os
+import shutil
 import subprocess
 import time
 import copy
@@ -99,6 +100,7 @@ class PlayerApp:
 
         self.file_op_mode = None
         self.file_op_source = None
+        self._file_undo = None
 
         self.kb_keybinding_view = False
 
@@ -624,6 +626,22 @@ class PlayerApp:
         self.undo_stack.append(self._snapshot_state())
         self._restore_snapshot(self.redo_stack.pop())
         self.playlist_cursor = max(0, min(self.playlist_cursor, len(self.playlist) - 1))
+
+    def _undo_file_op(self) -> bool:
+        if not self._file_undo:
+            return False
+        info = self._file_undo
+        self._file_undo = None
+        try:
+            if info["type"] == "move":
+                shutil.move(info["dest"], info["src"])
+            elif info["type"] == "copy":
+                if os.path.isfile(info["dest"]):
+                    os.remove(info["dest"])
+            self.entries = _list_dir(self.current_dir)
+        except Exception:
+            pass
+        return True
 
     # ── Prompt ──
 
