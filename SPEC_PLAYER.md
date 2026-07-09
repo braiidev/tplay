@@ -1,4 +1,7 @@
-# SPEC_PLAYER.md — Reproductor multimedia TUI (v3.0)
+# SPEC_PLAYER.md — Reproductor multimedia TUI (OBSOLETO)
+
+> **⚠️ Este documento está obsoleto.** La fuente de verdad es `COMPACT_SPEC.md`.
+> Se mantiene solo como referencia histórica. No refleja el estado actual del código.
 
 ## Visión general
 
