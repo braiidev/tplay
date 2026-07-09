@@ -117,8 +117,8 @@ def draw_dialog(win, h: int, w: int, title: str, text: str,
     oy = max(1, (h - DH) // 2)
 
     if compact:
-        box_w = w - 2
-        ox = 1
+        box_w = w - 4
+        ox = 2
         tl, bl, vb = "┌┐", "└┘", "│"
     else:
         box_w = min(60, w - 10)
@@ -129,8 +129,8 @@ def draw_dialog(win, h: int, w: int, title: str, text: str,
 
     try:
         # Row 0: top border + title
-        top = vb + "─" * ih if compact else "═" * ih
-        win.addstr(oy, ox, tl[0] + top + tl[1], dest)
+        hz = "─" if compact else "═"
+        win.addstr(oy, ox, tl[0] + hz * ih + tl[1], dest)
         ttl = f" {title} "
         if len(ttl) > ih:
             ttl = ttl[:ih - 1] + "…"
@@ -177,8 +177,7 @@ def draw_dialog(win, h: int, w: int, title: str, text: str,
 
         # Row 4: bottom border
         oy += 1
-        bot = vb + "─" * ih if compact else "═" * ih
-        win.addstr(oy, ox, bl[0] + bot + bl[1], dest)
+        win.addstr(oy, ox, bl[0] + hz * ih + bl[1], dest)
 
     except curses.error:
         pass
