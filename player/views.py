@@ -332,3 +332,37 @@ def draw_keybindings(app, h: int, w: int) -> None:
     if app.kb_conflict_msg:
         app.stdscr.addstr(h - 3, 2, f"  {app.kb_conflict_msg}", texto)
     app.stdscr.addstr(h - 4, 2, "  [Esc] Volver", texto)
+
+
+def draw_meta_editor(app, win, h: int, w: int) -> None:
+    texto = curses.color_pair(PAIR_TEXTO)
+    destacar = curses.color_pair(PAIR_DESTACAR)
+
+    pad_x = 4
+    row = 2
+    draw_box(win, h, w, "Editar metadata")
+    safe_addstr(win, row, pad_x,
+                "↑/↓: navegar  Enter: editar  [s] guardar  [q] cancelar",
+                texto, h, w)
+    row += 2
+
+    for i, (label, key, orig) in enumerate(app.meta_edit_fields):
+        current = app.meta_edit_changed.get(key, orig)
+        val = current if current else "(vacío)"
+        marker = " *" if key in app.meta_edit_changed else "  "
+        line = f"  {label}: {val}{marker}"
+        attr = destacar if i == app.meta_edit_cursor else texto
+        if i == app.meta_edit_cursor and not app.meta_edit_editing:
+            safe_addstr(win, row, pad_x, line, attr | curses.A_REVERSE, h, w)
+        else:
+            safe_addstr(win, row, pad_x, line, attr, h, w)
+        if i == app.meta_edit_cursor and app.meta_edit_editing:
+            buf = app.meta_edit_buf
+            cx = pad_x + len(f"  {label}: ")
+            display = buf if buf else ""
+            safe_addstr(win, row, cx, display, attr | curses.A_REVERSE, h, w)
+        row += 1
+
+    row += 1
+    if not app.meta_edit_changed:
+        safe_addstr(win, row, pad_x, "  Sin cambios", texto, h, w)

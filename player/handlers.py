@@ -598,43 +598,18 @@ def _start_tag_edit(app) -> None:
     if is_dir or not _is_media_file(full):
         return
 
-    import mutagen
-
     meta = app.meta_cache.get(full)
-    tags = {
-        'title': (meta and meta.get('title')) or '',
-        'artist': (meta and meta.get('artist')) or '',
-        'album': (meta and meta.get('album')) or '',
-        'genre': (meta and meta.get('genre')) or '',
-    }
-    fields = ['title', 'artist', 'album', 'genre']
-    labels = ['Título', 'Artista', 'Álbum', 'Género']
-    pending = {}
-
-    def _save_all():
-        try:
-            audio = mutagen.File(full, easy=True)
-            if audio is not None:
-                for f, v in pending.items():
-                    audio[f] = v
-                audio.save()
-        except Exception:
-            pass
-        app.meta_cache.clear()
-
-    def _make_cb(idx):
-        def _cb(app, buf):
-            if buf != tags[fields[idx]]:
-                pending[fields[idx]] = buf
-            nxt = idx + 1
-            if nxt < len(fields):
-                _prompt(app, f"{labels[nxt]} [{tags[fields[nxt]]}]",
-                        _make_cb(nxt), tags[fields[nxt]])
-            else:
-                _save_all()
-        return _cb
-
-    _prompt(app, f"Título [{tags['title']}]", _make_cb(0), tags['title'])
+    app.meta_edit_file = full
+    app.meta_edit_fields = [
+        ('Título', 'title', (meta and meta.get('title')) or ''),
+        ('Artista', 'artist', (meta and meta.get('artist')) or ''),
+        ('Álbum', 'album', (meta and meta.get('album')) or ''),
+        ('Género', 'genre', (meta and meta.get('genre')) or ''),
+    ]
+    app.meta_edit_changed = {}
+    app.meta_edit_cursor = 0
+    app.meta_edit_editing = False
+    app.meta_edit_mode = True
 
 
 def _do_playlist_remove(app, idx: int) -> None:

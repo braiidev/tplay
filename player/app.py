@@ -79,6 +79,16 @@ class PlayerApp:
         self.goto_mins = 0
         self.goto_secs = 0
 
+        self.meta_edit_mode = False
+        self.meta_edit_file = ""
+        self.meta_edit_fields = []
+        self.meta_edit_changed = {}
+        self.meta_edit_cursor = 0
+        self.meta_edit_editing = False
+        self.meta_edit_buf = ""
+        self.meta_edit_labels = ['Título', 'Artista', 'Álbum', 'Género']
+        self.meta_edit_keys = ['title', 'artist', 'album', 'genre']
+
         self.config_cursor = 0
         self.config_scroll = 0
         self.update_available = False
@@ -382,6 +392,8 @@ class PlayerApp:
                     self._handle_confirm(key)
                 elif self.prompt_mode:
                     self._handle_prompt(key)
+                elif self.meta_edit_mode:
+                    self._handle_meta_edit(key)
                 else:
                     self._handle_key(key)
             self._draw()
@@ -691,6 +703,58 @@ class PlayerApp:
         if cb and (chr(key).lower() == "s" or key in (ord("\n"), 10, 13)):
             cb()
 
+    # ── Meta Editor ──
+
+    def _handle_meta_edit(self, key: int) -> None:
+        if self.meta_edit_editing:
+            if key == 27:
+                self.meta_edit_editing = False
+                curses.curs_set(0)
+            elif key in (10, 13):
+                new_val = self.meta_edit_buf.strip()
+                fname = self.meta_edit_keys[self.meta_edit_cursor]
+                orig = self.meta_edit_fields[self.meta_edit_cursor][2]
+                if new_val != orig:
+                    self.meta_edit_changed[fname] = new_val
+                elif fname in self.meta_edit_changed:
+                    del self.meta_edit_changed[fname]
+                self.meta_edit_editing = False
+                curses.curs_set(0)
+            elif key in (127, curses.KEY_BACKSPACE):
+                self.meta_edit_buf = self.meta_edit_buf[:-1]
+            elif 32 <= key <= 126 and len(self.meta_edit_buf) < 60:
+                self.meta_edit_buf += chr(key)
+            return
+        if key in (ord("q"), 27):
+            self.meta_edit_mode = False
+            self.meta_edit_changed = {}
+        elif key == ord("s"):
+            self._save_meta_edits()
+            self.meta_edit_mode = False
+        elif key in (ord("j"), curses.KEY_DOWN):
+            self.meta_edit_cursor = min(self.meta_edit_cursor + 1,
+                                        len(self.meta_edit_fields) - 1)
+        elif key in (ord("k"), curses.KEY_UP):
+            self.meta_edit_cursor = max(self.meta_edit_cursor - 1, 0)
+        elif key in (10, 13, curses.KEY_ENTER):
+            self.meta_edit_editing = True
+            fname = self.meta_edit_keys[self.meta_edit_cursor]
+            self.meta_edit_buf = (self.meta_edit_changed.get(fname)
+                                  or self.meta_edit_fields[self.meta_edit_cursor][2])
+            curses.curs_set(1)
+
+    def _save_meta_edits(self) -> None:
+        import mutagen
+        try:
+            audio = mutagen.File(self.meta_edit_file, easy=True)
+            if audio is not None:
+                for f, v in self.meta_edit_changed.items():
+                    audio[f] = v
+                audio.save()
+            self.meta_cache.clear()
+        except Exception:
+            pass
+
     # ── Drawing ──
 
     def _draw(self) -> None:
@@ -705,13 +769,17 @@ class PlayerApp:
 
             needs_cursor = ((self.current_view == self.V_EXPLORER and self.explorer_filter_mode)
                             or (self.current_view == self.V_PLAYLIST and self.playlist_filter_mode)
-                            or self.prompt_mode)
+                            or self.prompt_mode
+                            or self.meta_edit_editing)
             if needs_cursor:
                 curses.curs_set(1)
 
-            drawer = self._view_drawers.get(self.current_view)
-            if drawer:
-                drawer(self, h, w)
+            if self.meta_edit_mode:
+                views.draw_meta_editor(self, self.stdscr, h, w)
+            else:
+                drawer = self._view_drawers.get(self.current_view)
+                if drawer:
+                    drawer(self, h, w)
 
             self._draw_status(h, w)
             if self.confirm_mode:
@@ -719,7 +787,7 @@ class PlayerApp:
                 ui.draw_prompt(self.stdscr, h, w, self.confirm_label, buf)
             elif self.prompt_mode:
                 ui.draw_prompt(self.stdscr, h, w, self.prompt_label, self.prompt_buf)
-            else:
+            elif not self.meta_edit_mode:
                 ui.draw_nav(self.stdscr, h, w)
             if self.awaiting_dest:
                 msg = " ¿Destino?  s:stack  |  p:playlist  |  Esc:cancelar "
@@ -738,7 +806,15 @@ class PlayerApp:
             if self.show_help:
                 ui.draw_help(self.stdscr, h, w)
 
-            if self.current_view == self.V_EXPLORER and self.explorer_filter_mode:
+            if self.meta_edit_editing:
+                cx = 4 + len(self.meta_edit_labels[self.meta_edit_cursor]) + 3 + len(self.meta_edit_buf)
+                cy = 4 + self.meta_edit_cursor
+                try:
+                    self.stdscr.move(cy, cx)
+                except curses.error:
+                    pass
+                curses.curs_set(1)
+            elif self.current_view == self.V_EXPLORER and self.explorer_filter_mode:
                 y = 3 if self.file_op_mode else 2
                 self.stdscr.move(y, 4 + len(self.explorer_filter))
                 curses.curs_set(1)
