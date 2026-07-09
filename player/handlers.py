@@ -16,10 +16,10 @@ def handle_listen(app, key: int) -> None:
         app.stack_scroll = 0
         curses.flushinp()
         return
-    if key == curses.KEY_LEFT:
+    if key in (curses.KEY_LEFT, ord("h")):
         cur = app.audio.get_time()
         app.audio.player.set_time(max(0, cur - SEEK_STEP))
-    elif key == curses.KEY_RIGHT:
+    elif key in (curses.KEY_RIGHT, ord("l")):
         cur = app.audio.get_time()
         dur = app.audio.get_length()
         app.audio.player.set_time(min(dur, cur + SEEK_STEP))
@@ -152,9 +152,9 @@ def handle_explorer(app, key: int) -> None:
             else:
                 _play_file_direct(app, full)
     elif key == ord("a"):
-        _add_from_explorer(app, prepend=False)
+        _add_from_explorer(app, insert_mode="append")
     elif key == ord("A"):
-        _add_from_explorer(app, prepend=True)
+        _add_from_explorer(app, insert_mode="after_current")
     elif key == ord("C"):
         _start_file_op(app, "copy")
     elif key == ord("V"):
@@ -255,13 +255,13 @@ def handle_playlist(app, key: int) -> None:
             pl[i], pl[i + 1] = pl[i + 1], pl[i]
             app.playlist_cursor += 1
             _save_playlist(app)
-    elif key == ord("["):
+    elif key in (curses.KEY_LEFT, ord("[")):
         names = list(app.playlist_data.keys())
         if len(names) > 1:
             app._push_snapshot()
             idx = names.index(app.active_name)
             _switch_playlist(app, names[(idx - 1) % len(names)])
-    elif key == ord("]"):
+    elif key in (curses.KEY_RIGHT, ord("]")):
         names = list(app.playlist_data.keys())
         if len(names) > 1:
             app._push_snapshot()
@@ -298,10 +298,10 @@ def handle_history(app, key: int) -> None:
         _confirm(app, "¿Limpiar todo el historial?", lambda: _do_history_clear(app))
         return
     if key == ord("a"):
-        _add_from_history(app, prepend=False)
+        _add_from_history(app, insert_mode="append")
         return
     if key == ord("A"):
-        _add_from_history(app, prepend=True)
+        _add_from_history(app, insert_mode="after_current")
         return
     if key == curses.KEY_DOWN:
         app.history_cursor = min(app.history_cursor + 1, len(app.history) - 1)
@@ -436,7 +436,7 @@ def _play_playlist_enter(app) -> None:
     app.current_view = app.V_LISTEN
 
 
-def _add_from_explorer(app, prepend: bool = False) -> None:
+def _add_from_explorer(app, insert_mode: str = "append") -> None:
     if not app.entries:
         return
     _, is_dir, full = app.entries[app.cursor]
@@ -446,35 +446,20 @@ def _add_from_explorer(app, prepend: bool = False) -> None:
         len(songs) > 0 for songs in app.playlist_data.values()
     )
     if has_playlists:
-        _prompt(app, "¿Destino? [s]tack / [p]laylist", lambda a, b: _do_add_dest(app, b, full, prepend), "")
+        app.awaiting_dest = True
+        app._pending_add_path = full
+        app._pending_add_mode = insert_mode
     else:
         item = StackItem(path=full, name=os.path.basename(full))
-        if prepend:
-            app.stack.prepend(item)
+        if insert_mode == "after_current":
+            app.stack.insert_after_current(item)
         else:
             app.stack.append(item)
         if app.stack.playhead == 0 and not app.audio.playing:
             app._play_current()
 
 
-def _do_add_dest(app, buf: str, path: str, prepend: bool) -> None:
-    item = StackItem(path=path, name=os.path.basename(path))
-    if buf and buf.lower() in ("s", "stack"):
-        if prepend:
-            app.stack.prepend(item)
-        else:
-            app.stack.append(item)
-        if app.stack.playhead == 0 and not app.audio.playing:
-            app._play_current()
-    elif buf and buf.lower() in ("p", "playlist"):
-        app._push_snapshot()
-        name = os.path.basename(path)
-        app.playlist.append((name, path))
-        _save_playlist(app)
-        _confirm(app, f"Añadido a '{app.active_name}'", None)
-
-
-def _add_from_history(app, prepend: bool = False) -> None:
+def _add_from_history(app, insert_mode: str = "append") -> None:
     if not app.history:
         return
     entry = app.history[app.history_cursor]
@@ -482,8 +467,8 @@ def _add_from_history(app, prepend: bool = False) -> None:
     if not os.path.isfile(path):
         return
     item = StackItem(path=path, name=os.path.basename(path))
-    if prepend:
-        app.stack.prepend(item)
+    if insert_mode == "after_current":
+        app.stack.insert_after_current(item)
     else:
         app.stack.append(item)
     if app.stack.playhead == 0 and not app.audio.playing:
@@ -551,10 +536,13 @@ def _start_rename(app) -> None:
     if not app.entries:
         return
     name, _, full = app.entries[app.cursor]
+    _, ext = os.path.splitext(name)
 
     def _cb(app, buf):
         if not buf or buf == name:
             return
+        if not os.path.splitext(buf)[1]:
+            buf += ext
         new_path = os.path.join(os.path.dirname(full), buf)
         try:
             app._push_snapshot()

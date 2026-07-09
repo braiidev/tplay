@@ -9,3 +9,5 @@ dist/
 node_modules/
 .DS_Store
 *.stale
+*SPEC*
+SCENES*

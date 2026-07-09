@@ -102,6 +102,10 @@ class PlayerApp:
 
         self.kb_keybinding_view = False
 
+        self.awaiting_dest = False
+        self._pending_add_path = ""
+        self._pending_add_mode: str = "append"
+
         self._setup_keybindings()
         self._build_config_items()
         self._build_action_handlers()
@@ -271,8 +275,6 @@ class PlayerApp:
             "shuffle": lambda: (setattr(self.stack, 'shuffle', not self.stack.shuffle), None),
             "repeat": lambda: (setattr(self.stack, 'repeat', not self.stack.repeat), None),
             "help": lambda: (setattr(self, 'show_help', not self.show_help), None),
-            "play_next": lambda: (self._stack_add_from_cursor(prepend=True), None),
-            "queue_add": lambda: (self._stack_add_from_cursor(prepend=False), None),
             "sleep_timer": lambda: (self._toggle_sleep_timer(), None),
             "mute": lambda: (self.audio.toggle_mute(), None),
         }
@@ -305,26 +307,6 @@ class PlayerApp:
             ("keybindings", "Keybindings", "action"),
             ("update", "Actualizar tplay", "action"),
         ]
-
-    def _stack_add_from_cursor(self, prepend: bool = False) -> None:
-        path = None
-        if self.current_view == self.V_EXPLORER and self.entries:
-            _, is_dir, full = self.entries[self.cursor]
-            if not is_dir:
-                path = full
-        elif self.current_view == self.V_PLAYLIST and self.playlist:
-            path = self.playlist[self.playlist_cursor][1]
-        elif self.current_view == self.V_HISTORY and self.history:
-            path = self.history[self.history_cursor]["path"]
-        if not path or not os.path.isfile(path):
-            return
-        item = StackItem(path=path, name=os.path.basename(path))
-        if prepend:
-            self.stack.prepend(item)
-        else:
-            self.stack.append(item)
-        if self.stack.playhead == 0 and not self.audio.playing:
-            self._play_current()
 
     def _play_current(self) -> None:
         cur = self.stack.current
@@ -405,11 +387,61 @@ class PlayerApp:
         if self.current_view == self.V_CONFIG and self.kb_keybinding_view:
             handlers.handle_keybindings(self, key)
             return
+
+        if self.awaiting_dest:
+            self._handle_dest_key(key)
+            return
+
+        # hjkl navigation aliases for non-Listen views
+        if self.current_view != self.V_LISTEN:
+            if key == ord("j"):
+                key = curses.KEY_DOWN
+            elif key == ord("k"):
+                key = curses.KEY_UP
+            elif key == ord("h"):
+                key = curses.KEY_LEFT
+            elif key == ord("l"):
+                key = curses.KEY_RIGHT
+
         if self._handle_key_global(key):
             return
         handler = self._view_handlers.get(self.current_view)
         if handler:
             handler(self, key)
+
+    def _handle_dest_key(self, key: int) -> None:
+        if key in (27,):
+            self.awaiting_dest = False
+            self._pending_add_path = ""
+            curses.flushinp()
+            return
+        if key == ord("s"):
+            item = StackItem(path=self._pending_add_path,
+                             name=os.path.basename(self._pending_add_path))
+            if self._pending_add_mode == "append":
+                self.stack.append(item)
+            elif self._pending_add_mode == "after_current":
+                self.stack.insert_after_current(item)
+            if self.stack.playhead == 0 and not self.audio.playing:
+                self._play_current()
+        elif key == ord("p"):
+            name = os.path.basename(self._pending_add_path)
+            self._push_snapshot()
+            if self._pending_add_mode == "after_current":
+                pos = self.playlist_cursor + 1 if self.playlist else 0
+                self.playlist.insert(pos, (name, self._pending_add_path))
+            else:
+                self.playlist.append((name, self._pending_add_path))
+            handlers._save_playlist(self)
+            handlers._confirm(self, f"Añadido a '{self.active_name}'", None)
+        else:
+            self.awaiting_dest = False
+            self._pending_add_path = ""
+            curses.flushinp()
+            return
+        self.awaiting_dest = False
+        self._pending_add_path = ""
+        curses.flushinp()
 
     def _handle_key_help(self, key: int) -> bool:
         if key in (ord("?"), curses.KEY_F1, getattr(curses, "KEY_HELP", -1)):
@@ -471,10 +503,11 @@ class PlayerApp:
             self.audio.toggle_play_pause()
             curses.flushinp()
             return True
-        if key == ord("s"):
-            self.audio.stop()
-            curses.flushinp()
-            return True
+        if key in (ord("s"), ord("S")):
+            if self.current_view != self.V_PLAYLIST and not self.show_stack_view:
+                self.audio.stop()
+                curses.flushinp()
+                return True
         if key == ord("n"):
             self._play_next()
             curses.flushinp()
@@ -483,11 +516,11 @@ class PlayerApp:
             self._play_prev()
             curses.flushinp()
             return True
-        if key == ord("+"):
+        if key in (ord("+"), ord("k")):
             self.audio.set_volume(self.audio.volume + 5)
             curses.flushinp()
             return True
-        if key == ord("-"):
+        if key in (ord("-"), ord("j")):
             self.audio.set_volume(self.audio.volume - 5)
             curses.flushinp()
             return True
@@ -660,6 +693,13 @@ class PlayerApp:
                 ui.draw_prompt(self.stdscr, h, w, self.prompt_label, self.prompt_buf)
             else:
                 ui.draw_nav(self.stdscr, h, w)
+            if self.awaiting_dest:
+                msg = " ¿Destino?  s:stack  |  p:playlist  |  Esc:cancelar "
+                if w > len(msg) + 1:
+                    try:
+                        self.stdscr.addstr(h - 2, (w - len(msg)) // 2, msg, curses.A_REVERSE)
+                    except curses.error:
+                        pass
             if self.update_available and not self.confirm_mode and not self.prompt_mode and not self.show_help:
                 msg = " Nueva actualización disponible "
                 if w > len(msg) + 1:
