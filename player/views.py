@@ -380,11 +380,11 @@ def draw_history(app, h: int, w: int) -> None:
     if not app.history:
         safe_addstr(app.stdscr, h // 2, 2, "  Sin historial", texto, h, w)
         return
-    list_h = h - 4
+    list_h = h - 5
     start = max(0, min(app.history_scroll, len(app.history) - list_h))
     visible = app.history[start:start + list_h]
     for i, entry in enumerate(visible):
-        y = 2 + i
+        y = 3 + i
         idx = start + i
         name = entry.get("name", "?")
         path = entry.get("path", "")
