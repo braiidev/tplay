@@ -243,11 +243,19 @@ class PlayerApp:
     def _apply_updates(self) -> tuple[bool, str]:
         repo = self._repo_dir
         try:
-            result = subprocess.run(["git", "pull"], cwd=repo,
+            subprocess.run(["git", "fetch", "origin"], cwd=repo,
+                           capture_output=True, timeout=10)
+            result = subprocess.run(["git", "pull", "--ff-only"], cwd=repo,
                                     capture_output=True, text=True, timeout=30)
             if result.returncode == 0:
                 self.update_available = False
                 return True, "Actualizado correctamente"
+            result2 = subprocess.run(
+                ["git", "reset", "--hard", "origin/main"],
+                cwd=repo, capture_output=True, text=True, timeout=10)
+            if result2.returncode == 0:
+                self.update_available = False
+                return True, "Actualizado correctamente (historial corregido)"
             return False, result.stderr.strip() or "Error al actualizar"
         except Exception as e:
             return False, str(e)

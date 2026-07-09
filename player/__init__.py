@@ -23,9 +23,15 @@ def _cli_update() -> bool:
             print("✓ tplay ya está actualizado")
             return True
         print(f"  ↳ {behind} commits detrás, actualizando...")
-        pull = subprocess.run(["git", "pull"], cwd=repo, capture_output=True, text=True, timeout=30)
+        pull = subprocess.run(["git", "pull", "--ff-only"], cwd=repo,
+                              capture_output=True, text=True, timeout=30)
         if pull.returncode == 0:
             print("✓ tplay actualizado correctamente")
+            return True
+        reset = subprocess.run(["git", "reset", "--hard", "origin/main"],
+                                cwd=repo, capture_output=True, text=True, timeout=10)
+        if reset.returncode == 0:
+            print("✓ tplay actualizado correctamente (historial corregido)")
             return True
         print(f"Error: {pull.stderr.strip()}", file=sys.stderr)
         return False
