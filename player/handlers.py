@@ -510,7 +510,7 @@ def _save_stack_as_playlist_cb(app, name: str) -> None:
     if name and name not in app.playlist_data:
         app.playlist_data[name] = [(item.name, item.path) for item in app.stack.items]
         _save_playlist(app)
-        _confirm(app, f"Playlist '{name}' creada desde Stack", None)
+        _toast(app, f"Playlist '{name}' creada desde Stack")
 
 
 def _start_delete(app) -> None:
@@ -520,10 +520,10 @@ def _start_delete(app) -> None:
     if is_dir:
         try:
             if os.listdir(full):
-                _confirm(app, f"'{name}': directorio no vacío", None)
+                _toast(app, f"'{name}': directorio no vacío")
                 return
         except PermissionError:
-            _confirm(app, f"'{name}': sin permisos", None)
+            _toast(app, f"'{name}': sin permisos")
             return
     _confirm(app, f"¿Eliminar '{name}'?", lambda: _do_delete(app, full))
 
@@ -539,7 +539,7 @@ def _do_delete(app, path: str) -> None:
         app.cursor = 0
         app.scroll = 0
     except Exception as e:
-        _confirm(app, f"Error al eliminar: {e}", None)
+        _toast(app, f"Error al eliminar: {e}")
 
 
 def _start_mkdir(app) -> None:
@@ -554,7 +554,7 @@ def _do_mkdir(app, buf: str) -> None:
         os.makedirs(path, exist_ok=True)
         app.entries = _list_dir(app.current_dir)
     except Exception as e:
-        _confirm(app, f"Error al crear directorio: {e}", None)
+        _toast(app, f"Error al crear directorio: {e}")
 
 
 def _play_folder(app) -> None:
@@ -588,7 +588,7 @@ def _start_rename(app) -> None:
             os.rename(full, new_path)
             app.entries = _list_dir(app.current_dir)
         except Exception as e:
-            _confirm(app, f"Error al renombrar: {e}", None)
+            _toast(app, f"Error al renombrar: {e}")
 
     _prompt(app, "Renombrar a", _cb, name)
 
@@ -815,9 +815,9 @@ def _do_file_op(app, dest_dir: str) -> None:
         app._file_undo = {"type": mode, "src": src, "dest": dest}
         app.entries = _list_dir(app.current_dir)
     except Exception as e:
-        _confirm(app, f"Error: {e}", None)
+        _toast(app, f"Error: {e}")
         return
-    _confirm(app, f"{label}: {os.path.basename(src)} listo", None)
+    _toast(app, f"{label}: {os.path.basename(src)} listo")
 
 
 def _confirm_file_op(app, dest_dir: str) -> None:
@@ -1020,6 +1020,10 @@ def _prompt(app, label: str, callback, initial: str = "") -> None:
     curses.flushinp()
 
 
+def _toast(app, msg: str) -> None:
+    app.toast(msg)
+
+
 def _confirm(app, label: str, callback) -> None:
     app.confirm_mode = True
     app.confirm_label = label
@@ -1037,7 +1041,7 @@ def _handle_update(app) -> None:
         s = "s" if n != 1 else ""
         _confirm(app, f"Actualización disp. ({n} commit{s}) ¿Descargar?", lambda: _do_update(app))
     else:
-        _confirm(app, "Sin actualizaciones disponibles", None)
+        _toast(app, "Sin actualizaciones disponibles")
 
 
 def _do_update(app) -> None:
@@ -1046,7 +1050,7 @@ def _do_update(app) -> None:
         app.update_available = False
         _restart_app(app)
     else:
-        _confirm(app, msg, None)
+        _toast(app, msg)
 
 
 def _restart_app(app) -> None:
@@ -1063,4 +1067,4 @@ def _restart_app(app) -> None:
         app_path = os.path.join(repo, "app.py")
         os.execv(sys.executable, [sys.executable, app_path])
     except Exception:
-        _confirm(app, "Error al reiniciar, reiniciá manualmente", None)
+        _toast(app, "Error al reiniciar, reiniciá manualmente")

@@ -114,6 +114,9 @@ class PlayerApp:
 
         self.kb_keybinding_view = False
 
+        self.toast_msg = ""
+        self.toast_ticks = 0
+
         self.awaiting_dest = False
         self._pending_add_path = ""
         self._pending_add_mode: str = "append"
@@ -455,7 +458,7 @@ class PlayerApp:
             else:
                 self.playlist.append((name, self._pending_add_path))
             handlers._save_playlist(self)
-            handlers._confirm(self, f"Añadido a '{self.active_name}'", None)
+            self.toast(f"Añadido a '{self.active_name}'")
         else:
             self.awaiting_dest = False
             self._pending_add_path = ""
@@ -468,11 +471,28 @@ class PlayerApp:
     def _handle_key_help(self, key: int) -> bool:
         if key in (ord("?"), curses.KEY_F1, getattr(curses, "KEY_HELP", -1)):
             self.show_help = not self.show_help
+            self.help_scroll = 0
             curses.flushinp()
             return True
         if self.show_help:
             if key in (27, ord("?"), ord("q"), curses.KEY_F1):
                 self.show_help = False
+                self.help_scroll = 0
+            elif key in (curses.KEY_DOWN, ord("j")):
+                self.help_scroll = min(self.help_scroll + 1, len(ui.HELP_LINES) - 1)
+            elif key in (curses.KEY_UP, ord("k")):
+                self.help_scroll = max(self.help_scroll - 1, 0)
+            elif key in (curses.KEY_NPAGE, ord("l"), curses.KEY_RIGHT):
+                ph, _ = self.stdscr.getmaxyx()
+                list_h = max(1, ph - 7)
+                self.help_scroll = min(self.help_scroll + list_h, len(ui.HELP_LINES) - 1)
+            elif key in (curses.KEY_PPAGE, ord("h"), curses.KEY_LEFT):
+                ph, _ = self.stdscr.getmaxyx()
+                list_h = max(1, ph - 7)
+                self.help_scroll = max(self.help_scroll - list_h, 0)
+            else:
+                self.show_help = False
+                self.help_scroll = 0
             return True
         return False
 
@@ -678,6 +698,12 @@ class PlayerApp:
             pass
         return True
 
+    # ── Toast ──
+
+    def toast(self, msg: str, duration: int = 60) -> None:
+        self.toast_msg = msg
+        self.toast_ticks = duration
+
     # ── Prompt ──
 
     def _handle_prompt(self, key: int) -> None:
@@ -803,6 +829,12 @@ class PlayerApp:
                 ui.draw_prompt(self.stdscr, h, w, self.prompt_label, self.prompt_buf)
             elif not self.meta_edit_mode:
                 ui.draw_nav(self.stdscr, h, w)
+            if self.toast_ticks > 0:
+                try:
+                    self.stdscr.addstr(h - 2, 2, self.toast_msg, curses.color_pair(2))
+                except curses.error:
+                    pass
+                self.toast_ticks -= 1
             if self.awaiting_dest:
                 msg = " ¿Destino?  s:stack  |  p:playlist  |  Esc:cancelar "
                 if w > len(msg) + 1:
@@ -819,7 +851,7 @@ class PlayerApp:
                     except curses.error:
                         pass
             if self.show_help:
-                ui.draw_help(self.stdscr, h, w)
+                ui.draw_help(self.stdscr, h, w, self.help_scroll)
 
             if self.meta_edit_editing:
                 cx = (8 + len(self.meta_edit_labels[self.meta_edit_cursor])

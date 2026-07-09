@@ -13,7 +13,9 @@ def draw_listen(app, h: int, w: int) -> None:
     dest = curses.color_pair(PAIR_DESTACAR)
 
     if app.show_stack_view:
-        draw_box(app.stdscr, h, w, f"Stack ({len(app.stack.items)})")
+        total = len(app.stack.items)
+        pos = f" ({app.stack_cursor + 1}/{total})" if total > 0 else ""
+        draw_box(app.stdscr, h, w, f"Stack{pos} ({total})")
         if not app.stack.items:
             safe_addstr(app.stdscr, h // 2, 2, "  Stack vacío — usá [2] Explorer para añadir", texto, h, w)
         else:
@@ -82,8 +84,12 @@ def draw_listen(app, h: int, w: int) -> None:
         album = (meta.get('album') if meta else None) or "Álbum desconocido"
         title = (meta.get('title') if meta else None) or cur_item.name
         safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}", dest, h, w)
-        safe_addstr(app.stdscr, mid - 1, 2, f"  {title}", texto, h, w)
-        safe_addstr(app.stdscr, mid, 2, f"  {artist}  —  {album}", texto, h, w)
+        tw = w - 4
+        title_s = title[:tw - 1] + "…" if len(title) > tw else title
+        safe_addstr(app.stdscr, mid - 1, 2, f"  {title_s}", texto, h, w)
+        artist_album = f"{artist}  —  {album}"
+        aa_s = artist_album[:tw - 1] + "…" if len(artist_album) > tw else artist_album
+        safe_addstr(app.stdscr, mid, 2, f"  {aa_s}", texto, h, w)
 
     length = app.audio.get_length()
     pos = app.audio.get_time()
@@ -121,15 +127,16 @@ def draw_listen(app, h: int, w: int) -> None:
         safe_addstr(app.stdscr, mid + 8, 16, "]", texto, h, w)
         safe_addstr(app.stdscr, mid + 9, 2, "  ← → campo  ↑ ↓ valor  Enter saltar", texto, h, w)
 
-    hint = "  [Space] ▶||  [s] ◼  [n] ►►  [b] ◄◄  [h/l] ±5s  [g] Ir a  [o] URL"
+    safe_addstr(app.stdscr, h - STATUS_ROW, 2,
+                "  [Space] ▶||  [s] ◼  [n] ►►  [b] ◄◄  [h/l] ±5s", texto, h, w)
+    line2 = "  [g] Ir a  [o] URL"
     if app.stack.items:
-        hint += "  [Tab] Stack"
-    safe_addstr(app.stdscr, h - STATUS_ROW, 2, hint, texto, h, w)
+        line2 += "  [Tab] Stack"
+    safe_addstr(app.stdscr, h - STATUS_ROW + 1, 2, line2, texto, h, w)
 
 
 def draw_explorer(app, h: int, w: int) -> None:
     extra = " [Filtro]" if app.explorer_filter_mode else ""
-    draw_box(app.stdscr, h, w, f"Explorador: {app.current_dir}{extra}")
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
 
@@ -146,6 +153,9 @@ def draw_explorer(app, h: int, w: int) -> None:
 
     list_h = h - LIST_H - offset
     indices = app.explorer_filtered if app.explorer_filter_mode else list(range(len(app.entries)))
+    total = len(indices)
+    pos = f" ({app.cursor + 1}/{total})" if total > 0 else ""
+    draw_box(app.stdscr, h, w, f"Explorador: {app.current_dir}{extra}{pos}")
 
     if app.explorer_filter_mode and not indices:
         safe_addstr(app.stdscr, 3 + offset, 2, "  Sin resultados", texto, h, w)
@@ -186,7 +196,9 @@ def draw_explorer(app, h: int, w: int) -> None:
 
 def draw_playlist(app, h: int, w: int) -> None:
     extra = " [Filtro]" if app.playlist_filter_mode else ""
-    draw_box(app.stdscr, h, w, f"Playlist [{app.active_name}] ({len(app.playlist)}){extra}")
+    total_items = len(app.playlist)
+    pos = f" ({app.playlist_cursor + 1}/{total_items})" if total_items > 0 else ""
+    draw_box(app.stdscr, h, w, f"Playlist [{app.active_name}]{pos} ({total_items}){extra}")
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
 
@@ -231,7 +243,9 @@ def draw_playlist(app, h: int, w: int) -> None:
 
 
 def draw_history(app, h: int, w: int) -> None:
-    draw_box(app.stdscr, h, w, "Historial")
+    total = len(app.history)
+    pos = f" ({app.history_cursor + 1}/{total})" if total > 0 else ""
+    draw_box(app.stdscr, h, w, f"Historial{pos}")
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
     if not app.history:
@@ -252,6 +266,9 @@ def draw_history(app, h: int, w: int) -> None:
             line = f"  ♪ {base}  ({count}x)"
         else:
             line = f"  ~ Archivo Inexistente  ({count}x)"
+        max_w = w - 4
+        if len(line) > max_w:
+            line = line[:max_w - 1] + "…"
         attr = destacar if idx == app.history_cursor else texto
         if idx == app.history_cursor:
             safe_addstr(app.stdscr, y, 2, line, attr | curses.A_REVERSE, h, w)
@@ -266,7 +283,9 @@ def draw_history(app, h: int, w: int) -> None:
 
 
 def draw_config(app, h: int, w: int) -> None:
-    draw_box(app.stdscr, h, w, "Configuración")
+    total = len(app.config_items)
+    pos = f" ({app.config_cursor + 1}/{total})" if total > 0 else ""
+    draw_box(app.stdscr, h, w, f"Configuración{pos}")
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
 
@@ -294,6 +313,9 @@ def draw_config(app, h: int, w: int) -> None:
         attr = texto
         if ctype in ("choice", "color", "int"):
             line += "  ← →"
+        max_w = w - 4
+        if len(line) > max_w:
+            line = line[:max_w - 1] + "…"
         if i == app.config_cursor:
             safe_addstr(app.stdscr, y, 2, line, destacar | curses.A_REVERSE, h, w)
         else:

@@ -63,7 +63,9 @@ def draw_status(win, h: int, w: int, audio, playing: bool, current_file, volume:
         dur = audio.get_length()
         cur_s = f"{cur // 60000:02d}:{(cur // 1000) % 60:02d}" if cur >= 0 else "--:--"
         dur_s = f"{dur // 60000:02d}:{(dur // 1000) % 60:02d}" if dur > 0 else "--:--"
-        txt = f" {estado} {name[:w//3]}  [{cur_s}-{dur_s}] [Vol: {volume}%]"
+        max_name = max(5, w // 3)
+        name_s = (name[:max_name - 1] + "…") if len(name) > max_name else name
+        txt = f" {estado} {name_s}  [{cur_s}-{dur_s}] [Vol: {volume}%]"
         if shuffle:
             txt += " [S]"
         if repeat:
@@ -87,96 +89,134 @@ def draw_prompt(win, h: int, w: int, label: str, buf: str) -> None:
     ox = max(2, (w - tw) // 2)
     oy = max(1, h // 2 - 1)
     try:
-        win.addstr(oy, ox, "╭" + "─" * (tw - 2) + "╮", dest)
-        win.addstr(oy + 1, ox, "│" + " " * (tw - 2) + "│", dest)
+        win.addstr(oy, ox, "╔" + "═" * (tw - 2) + "╗", dest)
+        win.addstr(oy + 1, ox, "║" + " " * (tw - 2) + "║", dest)
         win.addstr(oy + 1, ox + 2, prompt[:tw - 4], texto)
-        win.addstr(oy + 2, ox, "╰" + "─" * (tw - 2) + "╯", dest)
+        win.addstr(oy + 2, ox, "╚" + "═" * (tw - 2) + "╝", dest)
         cx = ox + 2 + len(f" {label}: ") + len(buf)
         win.move(oy + 1, min(cx, w - 2))
     except curses.error:
         pass
 
 
-def draw_help(win, h: int, w: int) -> None:
+HELP_LINES = [
+    ("", None),
+    ("  A Y U D A   D E   T E C L A S", 3),
+    ("", None),
+    ("  Navegacion", 4),
+    ("    ^ v / j k    Desplazarse", 2),
+    ("    < > / h l    Retroceder / Avanzar", 2),
+    ("    Enter        Reproducir / entrar carpeta", 2),
+    ("    ~            Ir al home", 2),
+    ("    g / G        Ir al inicio / fin del listado", 2),
+    ("", None),
+    ("  Reproduccion (Listen)", 4),
+    ("    Space        ▶ / ⏸", 2),
+    ("    s            ◼ Stop", 2),
+    ("    n / b        ►► / ◄◄", 2),
+    ("    + / k        Subir volumen", 2),
+    ("    - / j        Bajar volumen", 2),
+    ("    h / l        Seek -5s / +5s", 2),
+    ("    m            Mute", 2),
+    ("    r / R        Shuffle / Repeat global", 2),
+    ("    g            Ir a tiempo", 2),
+    ("    t / T        Sleep timer: toggle / configurar", 2),
+    ("    Tab          Ver Stack", 2),
+    ("", None),
+    ("  Ir a tiempo (Goto)", 4),
+    ("    ^ v / j k    Ajustar valor", 2),
+    ("    < > / h l    Cambiar campo (min / seg)", 2),
+    ("    Enter        Saltar", 2),
+    ("    Esc          Cancelar", 2),
+    ("", None),
+    ("  Vista Stack (Tab en Listen)", 4),
+    ("    Enter        Mover playhead al item", 2),
+    ("    d / x        Eliminar item / Limpiar todo", 2),
+    ("    J / K        Reordenar", 2),
+    ("    s            Guardar como playlist", 2),
+    ("    r / R        Modo item: normal / 1x / ∞", 2),
+    ("", None),
+    ("  Historial (vista 4)", 4),
+    ("    Enter        Reproducir archivo", 2),
+    ("    d            Eliminar entrada", 2),
+    ("    x            Limpiar historial", 2),
+    ("    a / A        Añadir a Stack (final / tras actual)", 2),
+    ("", None),
+    ("  Archivos (Explorer)", 4),
+    ("    a / A        Añadir a Stack (final / tras actual)", 2),
+    ("    Enter        Entrar directorio / Reproducir", 2),
+    ("    C / V        Copiar / Mover", 2),
+    ("    E            Renombrar", 2),
+    ("    I            Editar tags ID3", 2),
+    ("    d            Eliminar (con confirmación)", 2),
+    ("    M            Crear directorio", 2),
+    ("    u            Undo file op", 2),
+    ("    R            Refrescar vista", 2),
+    ("", None),
+    ("  File ops (Copiar/Mover)", 4),
+    ("    Enter / C/V  Pegar en directorio", 2),
+    ("    u            Undo última operación", 2),
+    ("    Esc          Cancelar", 2),
+    ("", None),
+    ("  Editor de metadata", 4),
+    ("    ^ v / j k    Navegar campos", 2),
+    ("    Enter        Editar campo", 2),
+    ("    s            Guardar cambios", 2),
+    ("    q / Esc      Cancelar", 2),
+    ("", None),
+    ("  Playlist", 4),
+    ("    c / D        Crear / Eliminar playlist", 2),
+    ("    e            Renombrar playlist", 2),
+    ("    d            Quitar item", 2),
+    ("    x            Limpiar playlist", 2),
+    ("    J / K        Reordenar items", 2),
+    ("    [ / ]        Playlist anterior / siguiente", 2),
+    ("    s            Guardar playlist", 2),
+    ("", None),
+    ("  Configuración", 4),
+    ("    < > / h l    Cambiar valor", 2),
+    ("", None),
+    ("  Vistas", 4),
+    ("    0-4          Cambiar vista", 2),
+    ("    ? / F1       Abrir esta ayuda", 2),
+    ("    /            Filtrar lista actual", 2),
+    ("    q            Salir (guarda todo)", 2),
+    ("    Esc          Cancelar / cerrar", 2),
+    ("", None),
+    ("  Navegacion en ayuda", 4),
+    ("    j / k / ▼ / ▲  Desplazar línea", 2),
+    ("    h / l / ◄ / ►  Página arriba / abajo", 2),
+    ("    cualquier otra  Cerrar ayuda", 2),
+    ("", None),
+]
+
+
+def draw_help(win, h: int, w: int, scroll: int = 0) -> None:
     marco = curses.color_pair(PAIR_MARCO)
     texto = curses.color_pair(PAIR_TEXTO)
-    nav = curses.color_pair(PAIR_NAV)
     dest = curses.color_pair(PAIR_DESTACAR)
-    lines = [
-        ("", None),
-        ("  A Y U D A   D E   T E C L A S", dest),
-        ("", None),
-        ("  Navegacion", nav),
-        ("    ^ v / j k    Desplazarse", texto),
-        ("    < > / h l    Retroceder / Avanzar", texto),
-        ("    Enter        Reproducir / entrar carpeta", texto),
-        ("    ~            Ir al home", texto),
-        ("    g / G        Ir al inicio / fin del listado", texto),
-        ("", None),
-        ("  Reproduccion (Listen)", nav),
-        ("    Space        ▶ / ⏸", texto),
-        ("    s            ◼ Stop", texto),
-        ("    n / b        ►► / ◄◄", texto),
-        ("    + / k        Subir volumen", texto),
-        ("    - / j        Bajar volumen", texto),
-        ("    h / l        Seek -5s / +5s", texto),
-        ("    m            Mute", texto),
-        ("    r / R        Shuffle / Repeat global", texto),
-        ("    g            Ir a tiempo (en Listen)", texto),
-        ("    t / T        Sleep timer: toggle / configurar", texto),
-        ("    Tab          Ver Stack", texto),
-        ("", None),
-        ("  Vista Stack (Tab en Listen)", nav),
-        ("    Enter        Mover playhead al item", texto),
-        ("    d / x        Eliminar item / Limpiar todo", texto),
-        ("    J / K        Reordenar", texto),
-        ("    s            Guardar como playlist", texto),
-        ("    r / R        Modo item: normal / 1x / ∞", texto),
-        ("", None),
-        ("  Archivos (Explorer)", nav),
-        ("    a / A        Añadir a destino (final / inicio)", texto),
-        ("    C / V        Copiar / Mover", texto),
-        ("    E            Renombrar", texto),
-        ("    I            Editar tags ID3", texto),
-        ("    d            Eliminar (con confirmación)", texto),
-        ("    M            Crear directorio", texto),
-        ("    R            Refrescar vista", texto),
-        ("", None),
-        ("  Playlist", nav),
-        ("    c / D        Crear / Eliminar playlist", texto),
-        ("    e            Renombrar playlist", texto),
-        ("    d            Quitar item", texto),
-        ("    x            Limpiar playlist", texto),
-        ("    J / K        Reordenar items", texto),
-        ("    [ / ]        Playlist anterior / siguiente", texto),
-        ("    s            Guardar playlist", texto),
-        ("", None),
-        ("  Vistas", nav),
-        ("    0-4          Cambiar vista", texto),
-        ("    ? / F1       Abrir esta ayuda", texto),
-        ("    /            Filtrar lista actual", texto),
-        ("    q            Salir (guarda todo)", texto),
-        ("    Esc          Cancelar / cerrar", texto),
-        ("", None),
-    ]
-    inner_w = 35
-    inner_h = len(lines)
+    inner_w = 37
     box_w = min(inner_w + 2, w - 2)
-    box_h = min(inner_h + 2, h - 2)
+    list_h = max(1, h - 7)
+    total = len(HELP_LINES)
+    scroll = max(0, min(scroll, total - list_h))
+    visible = HELP_LINES[scroll:scroll + list_h]
     ox = max(0, (w - box_w) // 2)
-    oy = max(0, (h - box_h) // 2)
+    oy = max(0, (h - list_h - 4) // 2)
     try:
-        win.addstr(oy, ox, "\u250c" + "\u2500" * (box_w - 2) + "\u2510", marco)
-        for y in range(1, box_h - 1):
-            clear = "\u2502" + " " * (box_w - 2) + "\u2502"
-            win.addstr(oy + y, ox, clear, marco)
-        win.addstr(oy + box_h - 1, ox, "\u2514" + "\u2500" * (box_w - 2) + "\u2518", marco)
-        for i, (text, attr) in enumerate(lines):
-            if i >= box_h - 2:
-                break
+        win.addstr(oy, ox, "╔" + "═" * (box_w - 2) + "╗", marco)
+        for y in range(1, list_h + 1):
+            win.addstr(oy + y, ox, "║" + " " * (box_w - 2) + "║", marco)
+        win.addstr(oy + list_h + 1, ox, "╚" + "═" * (box_w - 2) + "╝", marco)
+        for i, (text, attr) in enumerate(visible):
             y = oy + 1 + i
-            win.addstr(y, ox + 2, " " * (box_w - 4), texto)
             if attr is not None:
-                win.addstr(y, ox + 2, text[:box_w - 4], attr)
+                win.addstr(y, ox + 2, text[:box_w - 4], curses.color_pair(attr))
+        footer = ""
+        if scroll > 0:
+            footer += "  ▲"
+        if scroll + list_h < total:
+            footer += "  ▼"
+        win.addstr(oy + list_h + 2, ox + 2, footer, texto)
     except curses.error:
         pass
