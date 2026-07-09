@@ -38,23 +38,6 @@ RESERVED_KEYS = {
 # Printable keys (32-126) are handled by input modes
 
 
-def validate(bindings: dict) -> list[str]:
-    errors = []
-    key_to_actions = {}
-    for action, keycode in bindings.items():
-        if action not in BINDABLE_ACTIONS:
-            errors.append(f"Acción desconocida: {action}")
-            continue
-        if keycode in RESERVED_KEYS:
-            errors.append(f"Tecla {keycode} reservada para {action}, se usará default")
-            continue
-        if keycode in key_to_actions:
-            other = key_to_actions[keycode]
-            errors.append(f"Colisión: {action} y {other} usan tecla {keycode}")
-        key_to_actions[keycode] = action
-    return errors
-
-
 def resolve_conflicts(bindings: dict) -> dict:
     result = {}
     seen_keys = set()

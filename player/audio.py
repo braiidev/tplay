@@ -1,6 +1,5 @@
 import os
 import time
-import random
 import vlc
 
 
@@ -17,9 +16,6 @@ class AudioEngine:
         self.paused = False
         self.current_file = None
         self.volume = 50
-        self.shuffle = False
-        self.repeat = False
-        self.playlist_idx = -1
         self.sleep_timer_start = 0.0
         self.sleep_timer_duration = 0
         self.sleep_timer_active = False
@@ -75,57 +71,9 @@ class AudioEngine:
         self.current_file = path
         self.sleep_timer_expired = False
 
-    def play_playlist_idx(self, idx: int, playlist: list) -> None:
-        if idx < 0 or idx >= len(playlist):
-            return
-        self.playlist_idx = idx
-        self.play_file(playlist[idx][1])
-
-    def next(self, playlist: list) -> None:
-        if not playlist:
-            return
-        if self.shuffle:
-            nxt = random.randrange(len(playlist))
-        else:
-            nxt = self.playlist_idx + 1
-            if nxt >= len(playlist):
-                if self.repeat:
-                    nxt = 0
-                else:
-                    return
-        self.play_playlist_idx(nxt, playlist)
-
-    def prev(self, playlist: list) -> None:
-        if not playlist:
-            return
-        prev = self.playlist_idx - 1
-        if prev < 0:
-            if self.repeat:
-                prev = len(playlist) - 1
-            else:
-                return
-        self.play_playlist_idx(prev, playlist)
-
     def is_ended(self) -> bool:
         return (self.playing and not self.paused
                 and self.player.get_state() == vlc.State.Ended)
-
-    def auto_next(self, playlist: list) -> None:
-        if not playlist or self.playlist_idx < 0:
-            self.playing = False
-            self.current_file = None
-            return
-        if self.shuffle:
-            nxt = random.randrange(len(playlist))
-        else:
-            nxt = self.playlist_idx + 1
-            if nxt >= len(playlist):
-                if not self.repeat:
-                    self.playing = False
-                    self.current_file = None
-                    return
-                nxt = 0
-        self.play_playlist_idx(nxt, playlist)
 
     def check_sleep_timer(self) -> None:
         if self.sleep_timer_active:

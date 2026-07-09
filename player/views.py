@@ -3,7 +3,7 @@ import curses
 
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV
 from .file_utils import time_str, ext_label, is_url as _is_url
-from .ui import safe_addstr, draw_box, LIST_H, STATUS_ROW, EXPLORER_MARGIN, PLAYLIST_MARGIN
+from .ui import safe_addstr, draw_box, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN
 from . import keybindings as kb
 from .handlers import _get_current_key
 
@@ -289,6 +289,10 @@ def draw_listen_compact(app, h: int, w: int) -> None:
         states += " R"
     if app.audio.muted:
         states += " M"
+    if app.audio.sleep_timer_active:
+        states += " ◴"
+    elif app.audio.sleep_timer_expired:
+        states += " ◴FIN"
     full = controls + vol_str + states
     if len(full) <= max_w:
         display = full
@@ -299,6 +303,35 @@ def draw_listen_compact(app, h: int, w: int) -> None:
         else:
             display = controls[:max_w]
     safe_addstr(app.stdscr, h - 2, 2, display, dest, h, w)
+
+    # ── Goto overlay for compact ──
+    if app.goto_mode:
+        goto_h = 5
+        oy = max(0, (h - goto_h) // 2)
+        bw = min(22, w - 4)
+        ox = (w - bw) // 2
+        try:
+            app.stdscr.addstr(oy, ox, "┌" + "─" * (bw - 2) + "┐", marco)
+            title = " Ir a "
+            tx = 2 + (bw - 2 - len(title)) // 2
+            app.stdscr.addstr(oy, ox + tx, title, dest)
+            for yy in range(1, goto_h - 1):
+                app.stdscr.addstr(oy + yy, ox, "│", marco)
+                app.stdscr.addstr(oy + yy, ox + bw - 1, "│", marco)
+                app.stdscr.addstr(oy + yy, ox + 1, " " * (bw - 2), texto)
+            app.stdscr.addstr(oy + goto_h - 1, ox, "└" + "─" * (bw - 2) + "┘", marco)
+            cx = ox + (bw - 6) // 2
+            gm = f"{app.goto_mins:02d}"
+            gs = f"{app.goto_secs:02d}"
+            am = texto | curses.A_REVERSE if app.goto_field == 0 else texto
+            as_ = texto | curses.A_REVERSE if app.goto_field == 1 else texto
+            app.stdscr.addstr(oy + 1, cx, "  ", texto)
+            app.stdscr.addstr(oy + 1, cx + 2, gm, am)
+            app.stdscr.addstr(oy + 1, cx + 4, ":", texto)
+            app.stdscr.addstr(oy + 1, cx + 5, gs, as_)
+            app.stdscr.addstr(oy + 2, ox + 2, "← → ↑ ↓ Enter", texto)
+        except curses.error:
+            pass
 
 
 def draw_explorer(app, h: int, w: int) -> None:

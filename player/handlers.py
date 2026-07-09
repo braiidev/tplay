@@ -29,9 +29,6 @@ def handle_listen(app, key: int) -> None:
         dur = app.audio.get_length()
         app.audio.player.set_time(min(dur, cur + SEEK_STEP))
     elif key == ord("g"):
-        h, w = app.stdscr.getmaxyx()
-        if h < 16 or w < 61:
-            return
         if app.audio.get_length() > 0:
             cur_s = app.audio.get_time() // 1000
             app.goto_mins = cur_s // 60

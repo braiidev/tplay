@@ -21,10 +21,6 @@ from .state import load_state, save_state, load_history, save_history
 class PlayerApp:
     LIST_H = 4
     FILTER_LIST_H = 5
-    STATUS_ROW = 3
-    NAV_ROW = 1
-    EXPLORER_MARGIN = 8
-    PLAYLIST_MARGIN = 6
 
     # view IDs
     V_CONFIG = 0
@@ -159,10 +155,6 @@ class PlayerApp:
         return self.playlist_data.get(self.active_name, [])
 
     @property
-    def playing(self) -> bool:
-        return self.audio.is_playing
-
-    @property
     def paused(self) -> bool:
         return self.audio.paused
 
@@ -183,58 +175,10 @@ class PlayerApp:
         self.audio.volume = val
 
     @property
-    def shuffle(self) -> bool:
-        return self.stack.shuffle
-
-    @shuffle.setter
-    def shuffle(self, val: bool):
-        self.stack.shuffle = val
-
-    @property
     def config_items(self) -> list:
         if not self.config_tabs:
             return []
         return self.config_tabs[self.config_tab_idx]["items"]
-
-    @property
-    def repeat(self) -> bool:
-        return self.stack.repeat
-
-    @repeat.setter
-    def repeat(self, val: bool):
-        self.stack.repeat = val
-
-    @property
-    def sleep_timer_start(self) -> float:
-        return self.audio.sleep_timer_start
-
-    @sleep_timer_start.setter
-    def sleep_timer_start(self, val: float):
-        self.audio.sleep_timer_start = val
-
-    @property
-    def sleep_timer_duration(self) -> int:
-        return self.audio.sleep_timer_duration
-
-    @sleep_timer_duration.setter
-    def sleep_timer_duration(self, val: int):
-        self.audio.sleep_timer_duration = val
-
-    @property
-    def sleep_timer_active(self) -> bool:
-        return self.audio.sleep_timer_active
-
-    @sleep_timer_active.setter
-    def sleep_timer_active(self, val: bool):
-        self.audio.sleep_timer_active = val
-
-    @property
-    def sleep_timer_expired(self) -> bool:
-        return self.audio.sleep_timer_expired
-
-    @sleep_timer_expired.setter
-    def sleep_timer_expired(self, val: bool):
-        self.audio.sleep_timer_expired = val
 
     def _apply_theme(self) -> None:
         apply_theme(self.config)
@@ -541,9 +485,6 @@ class PlayerApp:
             handlers.handle_stack_view(self, key)
             return True
         if self.current_view == self.V_LISTEN and self.goto_mode:
-            if _compact:
-                self.goto_mode = False
-                return True
             handlers.handle_goto(self, key)
             return True
         if self.current_view == self.V_EXPLORER and self.explorer_filter_mode:

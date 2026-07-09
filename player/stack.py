@@ -51,14 +51,6 @@ class Stack:
         if was_empty:
             self.playhead = 0
 
-    def prepend(self, item: StackItem) -> None:
-        was_empty = not self._items
-        self._items.insert(0, item)
-        if self.playhead >= 0:
-            self.playhead += 1
-        if was_empty:
-            self.playhead = 0
-
     def insert_after_current(self, item: StackItem) -> None:
         pos = self.playhead + 1 if self.playhead >= 0 else len(self._items)
         self._items.insert(pos, item)
@@ -125,13 +117,3 @@ class Stack:
             item.mode = "repeat_inf"
         else:
             item.mode = "normal"
-
-    def repeat_count_for(self, index: int) -> int:
-        if index < 0 or index >= len(self._items):
-            return 1
-        item = self._items[index]
-        if item.mode == "repeat_once":
-            return 2
-        if item.mode == "repeat_inf":
-            return -1
-        return 1
