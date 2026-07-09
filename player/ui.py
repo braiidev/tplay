@@ -85,13 +85,16 @@ def draw_prompt(win, h: int, w: int, label: str, buf: str) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     dest = curses.color_pair(PAIR_DESTACAR)
     prompt = f" {label}: {buf} "
+    max_pw = max(10, w - 8)
+    if len(prompt) > max_pw:
+        prompt = prompt[:max_pw - 1] + "…"
     tw = len(prompt) + 4
     ox = max(2, (w - tw) // 2)
     oy = max(1, h // 2 - 1)
     try:
         win.addstr(oy, ox, "╔" + "═" * (tw - 2) + "╗", dest)
         win.addstr(oy + 1, ox, "║" + " " * (tw - 2) + "║", dest)
-        win.addstr(oy + 1, ox + 2, prompt[:tw - 4], texto)
+        win.addstr(oy + 1, ox + 2, prompt, texto)
         win.addstr(oy + 2, ox, "╚" + "═" * (tw - 2) + "╝", dest)
         cx = ox + 2 + len(f" {label}: ") + len(buf)
         win.move(oy + 1, min(cx, w - 2))
