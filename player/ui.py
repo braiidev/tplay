@@ -26,7 +26,7 @@ def safe_addstr(win, y: int, x: int, text: str, attr=None, h: int = 0, w: int = 
 def draw_box(win, h: int, w: int, title: str) -> None:
     marco = curses.color_pair(PAIR_MARCO)
     top = min(w - 2, 2)
-    bot = max(0, h - 2)
+    bot = max(0, h - 1) if h < 16 else max(0, h - 2)
     try:
         win.addstr(0, 0, "┌" + "─" * max(0, w - 2) + "┐", marco)
         if title:
