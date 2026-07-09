@@ -313,24 +313,25 @@ def draw_listen_compact(app, h: int, w: int) -> None:
         try:
             app.stdscr.addstr(oy, ox, "┌" + "─" * (bw - 2) + "┐", marco)
             title = " Ir a "
-            tx = 2 + (bw - 2 - len(title)) // 2
-            app.stdscr.addstr(oy, ox + tx, title, dest)
+            tx = ox + 1 + (bw - 2 - len(title)) // 2
+            app.stdscr.addstr(oy, tx, title, dest)
             for yy in range(1, goto_h - 1):
                 app.stdscr.addstr(oy + yy, ox, "│", marco)
                 app.stdscr.addstr(oy + yy, ox + bw - 1, "│", marco)
                 app.stdscr.addstr(oy + yy, ox + 1, " " * (bw - 2), texto)
             app.stdscr.addstr(oy + goto_h - 1, ox, "└" + "─" * (bw - 2) + "┘", marco)
-            cx = ox + (bw - 6) // 2
             gm = f"{app.goto_mins:02d}"
             gs = f"{app.goto_secs:02d}"
             am = texto | curses.A_REVERSE if app.goto_field == 0 else texto
             as_ = texto | curses.A_REVERSE if app.goto_field == 1 else texto
-            app.stdscr.addstr(oy + 1, cx, "  ", texto)
-            app.stdscr.addstr(oy + 1, cx + 2, gm, am)
-            app.stdscr.addstr(oy + 1, cx + 4, ":", texto)
-            app.stdscr.addstr(oy + 1, cx + 5, gs, as_)
-            app.stdscr.addstr(oy + 2, ox + 2, "← → ↑ ↓", texto)
-            ex = ox + (bw - len("Enter")) // 2
+            tmp = f"{gm}:{gs}"
+            tx2 = ox + 1 + (bw - 2 - len(tmp)) // 2
+            app.stdscr.addstr(oy + 1, tx2, gm, am)
+            app.stdscr.addstr(oy + 1, tx2 + 2, ":", texto)
+            app.stdscr.addstr(oy + 1, tx2 + 3, gs, as_)
+            ax = ox + 1 + (bw - 2 - 7) // 2
+            app.stdscr.addstr(oy + 2, ax, "← → ↑ ↓", texto)
+            ex = ox + 1 + (bw - 2 - 5) // 2
             app.stdscr.addstr(oy + 3, ex, "Enter", dest)
         except curses.error:
             pass
