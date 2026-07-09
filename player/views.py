@@ -11,6 +11,7 @@ from .handlers import _get_current_key
 def draw_listen(app, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     dest = curses.color_pair(PAIR_DESTACAR)
+    nav = curses.color_pair(PAIR_NAV)
 
     if app.show_stack_view:
         total = len(app.stack.items)
@@ -59,8 +60,9 @@ def draw_listen(app, h: int, w: int) -> None:
                         "  [r/R]modo item  [g]Inicio  [G]Fin  [o]URL", texto, h, w)
         return
 
-    draw_box(app.stdscr, h, w, "Listen")
-    mid = max(2, (h - 2) // 2)
+    draw_box(app.stdscr, h - 2, w, "Listen")
+    bh = h - 2
+    mid = max(3, (bh - 2) // 2)
 
     if not app.stack.items or not app.audio.playing:
         safe_addstr(app.stdscr, mid - 1, 2, "  Nada sonando.", dest, h, w)
@@ -84,55 +86,56 @@ def draw_listen(app, h: int, w: int) -> None:
         album = (meta.get('album') if meta else None) or "Álbum desconocido"
         title = (meta.get('title') if meta else None) or cur_item.name
         safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}", dest, h, w)
-        tw = w - 4
+        tw = w - 6
         title_s = title[:tw - 1] + "…" if len(title) > tw else title
-        safe_addstr(app.stdscr, mid - 1, 2, f"  {title_s}", texto, h, w)
+        safe_addstr(app.stdscr, mid - 1, 2, f"    {title_s}", texto, h, w)
         artist_album = f"{artist}  —  {album}"
         aa_s = artist_album[:tw - 1] + "…" if len(artist_album) > tw else artist_album
-        safe_addstr(app.stdscr, mid, 2, f"  {aa_s}", texto, h, w)
+        safe_addstr(app.stdscr, mid, 2, f"    {aa_s}", texto, h, w)
 
     length = app.audio.get_length()
     pos = app.audio.get_time()
 
     if length > 0:
         progress = min(pos / length, 1.0)
-        dur_str = f"{time_str(pos // 1000)} / {time_str(length // 1000)}"
-        bar_w = max(10, w - 12)
+        cur_s = time_str(pos // 1000)
+        dur_s = time_str(length // 1000)
+        bar_w = max(8, w - 18)
         filled = int(bar_w * progress)
         bar = "█" * filled + "░" * (bar_w - filled)
-        safe_addstr(app.stdscr, mid + 2, 2, f"  {bar} ", texto, h, w)
-        safe_addstr(app.stdscr, mid + 3, 2, f"  {dur_str}", texto, h, w)
+        safe_addstr(app.stdscr, mid + 2, 2, f"  {cur_s} {bar} {dur_s}", texto, h, w)
     else:
-        safe_addstr(app.stdscr, mid + 3, 2, "  Duración: --:--", texto, h, w)
+        safe_addstr(app.stdscr, mid + 2, 2, "  --:--", texto, h, w)
 
     toggles = ""
     toggles += " [S]" if app.stack.shuffle else ""
     toggles += " [R]" if app.stack.repeat else ""
     toggles += " [MUTE]" if app.audio.muted else ""
-    safe_addstr(app.stdscr, mid + 5, 2, f"  Vol: {app.volume}%{toggles}", texto, h, w)
+    safe_addstr(app.stdscr, mid + 4, 2,
+                f"  ◄◤  ▶||  ◥►  ◼   Vol: {app.volume}%{toggles}", texto, h, w)
 
     timer_str = app.audio.sleep_timer_str()
     if timer_str:
-        safe_addstr(app.stdscr, mid + 6, 2, f"  {timer_str}", texto, h, w)
+        safe_addstr(app.stdscr, mid + 5, 2, f"  {timer_str}", texto, h, w)
 
     if app.goto_mode:
         gm = f"{app.goto_mins:02d}"
         gs = f"{app.goto_secs:02d}"
         am = texto | curses.A_REVERSE if app.goto_field == 0 else texto
         as_ = texto | curses.A_REVERSE if app.goto_field == 1 else texto
-        safe_addstr(app.stdscr, mid + 8, 2, "  Ir a: [", texto, h, w)
-        safe_addstr(app.stdscr, mid + 8, 11, gm, am, h, w)
-        safe_addstr(app.stdscr, mid + 8, 13, ":", texto, h, w)
-        safe_addstr(app.stdscr, mid + 8, 14, gs, as_, h, w)
-        safe_addstr(app.stdscr, mid + 8, 16, "]", texto, h, w)
-        safe_addstr(app.stdscr, mid + 9, 2, "  ← → campo  ↑ ↓ valor  Enter saltar", texto, h, w)
+        safe_addstr(app.stdscr, mid + 7, 2, "  Ir a: [", texto, h, w)
+        safe_addstr(app.stdscr, mid + 7, 11, gm, am, h, w)
+        safe_addstr(app.stdscr, mid + 7, 13, ":", texto, h, w)
+        safe_addstr(app.stdscr, mid + 7, 14, gs, as_, h, w)
+        safe_addstr(app.stdscr, mid + 7, 16, "]", texto, h, w)
+        safe_addstr(app.stdscr, mid + 8, 2, "  ← → campo  ↑ ↓ valor  Enter saltar", texto, h, w)
 
-    safe_addstr(app.stdscr, h - STATUS_ROW, 2,
-                "  [Space] ▶||  [s] ◼  [n] ►►  [b] ◄◄  [h/l] ±5s", texto, h, w)
-    line2 = "  [g] Ir a  [o] URL"
+    safe_addstr(app.stdscr, bh - 2, 2,
+                "  ◄◤ [b]  ▶|| [Space]  ◥► [n]  ◼ [s]  +/- Vol", texto, h, w)
+    line2 = "  [g] Goto  [o] URL"
     if app.stack.items:
         line2 += "  [Tab] Stack"
-    safe_addstr(app.stdscr, h - STATUS_ROW + 1, 2, line2, texto, h, w)
+    safe_addstr(app.stdscr, bh - 1, 2, f"  {line2}  [t/T] Sleep  [r/R] Shf/Rpt", texto, h, w)
 
 
 def draw_explorer(app, h: int, w: int) -> None:
