@@ -322,10 +322,17 @@ def draw_explorer(app, h: int, w: int) -> None:
 def draw_playlist(app, h: int, w: int) -> None:
     extra = " [Filtro]" if app.playlist_filter_mode else ""
     total_items = len(app.playlist)
-    pos = f" ({app.playlist_cursor + 1}/{total_items})" if total_items > 0 else ""
-    draw_box(app.stdscr, h, w, f"Playlist [{app.active_name}]{pos} ({total_items}){extra}")
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
+
+    list_h = h - LIST_H - (1 if app.playlist_filter_mode else 0)
+    if total_items > list_h and total_items > 0:
+        pos = f" ({app.playlist_cursor + 1}/{total_items})"
+    elif total_items > 0:
+        pos = f" ({total_items})"
+    else:
+        pos = ""
+    draw_box(app.stdscr, h, w, f"Playlist [{app.active_name}]{pos}{extra}")
 
     if app.playlist_filter_mode:
         safe_addstr(app.stdscr, 2, 2, f"> {app.playlist_filter}", destacar, h, w)
@@ -339,7 +346,6 @@ def draw_playlist(app, h: int, w: int) -> None:
                               "  Añadí items desde Explorer con a/A.", texto, h, w)
         return
 
-    list_h = h - LIST_H - (1 if app.playlist_filter_mode else 0)
     indices = app.playlist_filtered if app.playlist_filter_mode else list(range(len(app.playlist)))
     visible = indices[app.playlist_scroll:app.playlist_scroll + list_h]
 
@@ -380,11 +386,11 @@ def draw_history(app, h: int, w: int) -> None:
     if not app.history:
         safe_addstr(app.stdscr, h // 2, 2, "  Sin historial", texto, h, w)
         return
-    list_h = h - 5
+    list_h = h - LIST_H
     start = max(0, min(app.history_scroll, len(app.history) - list_h))
     visible = app.history[start:start + list_h]
     for i, entry in enumerate(visible):
-        y = 3 + i
+        y = 2 + i
         idx = start + i
         name = entry.get("name", "?")
         path = entry.get("path", "")

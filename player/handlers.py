@@ -339,7 +339,7 @@ def handle_history(app, key: int) -> None:
     elif key == curses.KEY_UP:
         app.history_cursor = max(app.history_cursor - 1, 0)
     h, _ = app.stdscr.getmaxyx()
-    list_h = h - 5
+    list_h = h - app.LIST_H
     if app.history_cursor < app.history_scroll:
         app.history_scroll = app.history_cursor
     elif app.history_cursor >= app.history_scroll + list_h:

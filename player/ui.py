@@ -3,8 +3,8 @@ import curses
 
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV
 
-LIST_H = 5
-FILTER_LIST_H = 6
+LIST_H = 4
+FILTER_LIST_H = 5
 STATUS_ROW = 3
 NAV_ROW = 1
 EXPLORER_MARGIN = 8
@@ -32,7 +32,12 @@ def draw_box(win, h: int, w: int, title: str) -> None:
         if title:
             title_str = f" {title} "
             tx = max(2, (w - len(title_str)) // 2)
-            win.addstr(0, tx, title_str[:max(0, w - tx - 1)], marco)
+            max_tw = max(0, w - tx - 1)
+            if len(title_str) > max_tw and max_tw >= 2:
+                title_str = title_str[:max_tw - 1] + "…"
+            elif len(title_str) > max_tw:
+                title_str = title_str[:max_tw]
+            win.addstr(0, tx, title_str, marco)
         for y in range(1, min(bot, h - 1)):
             win.addstr(y, 0, "│", marco)
             win.addstr(y, max(0, w - 1), "│", marco)

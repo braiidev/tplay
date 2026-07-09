@@ -19,8 +19,8 @@ from .state import load_state, save_state, load_history, save_history
 
 
 class PlayerApp:
-    LIST_H = 5
-    FILTER_LIST_H = 6
+    LIST_H = 4
+    FILTER_LIST_H = 5
     STATUS_ROW = 3
     NAV_ROW = 1
     EXPLORER_MARGIN = 8
