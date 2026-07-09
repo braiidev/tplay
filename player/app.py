@@ -937,7 +937,7 @@ class PlayerApp:
                 ui.draw_nav(self.stdscr, h, w)
             if self.toast_ticks > 0:
                 try:
-                    self.stdscr.addstr(h - 2, 2, self.toast_msg, curses.color_pair(2))
+                    self.stdscr.addstr(h - 3, 2, self.toast_msg, curses.color_pair(2))
                 except curses.error:
                     pass
                 self.toast_ticks -= 1
@@ -947,7 +947,8 @@ class PlayerApp:
                     msg = " s:stack  p:playlist  Esc:cancelar "
                 if len(msg) < w:
                     try:
-                        self.stdscr.addstr(h - 2, (w - len(msg)) // 2, msg, curses.A_REVERSE)
+                        dy = h - 2 if h < 16 else h - 3
+                        self.stdscr.addstr(dy, (w - len(msg)) // 2, msg, curses.A_REVERSE)
                     except curses.error:
                         pass
             if self.update_available and not self.confirm_mode and not self.prompt_mode and not self.show_help:

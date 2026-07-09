@@ -25,7 +25,6 @@ def safe_addstr(win, y: int, x: int, text: str, attr=None, h: int = 0, w: int = 
 
 def draw_box(win, h: int, w: int, title: str) -> None:
     marco = curses.color_pair(PAIR_MARCO)
-    top = min(w - 2, 2)
     bot = max(0, h - 1) if h < 16 else max(0, h - 2)
     try:
         win.addstr(0, 0, "┌" + "─" * max(0, w - 2) + "┐", marco)
@@ -380,6 +379,10 @@ def draw_help(win, h: int, w: int, scroll: int = 0, tab: int = 0) -> None:
         # Top border
         win.addstr(0, ox, "┌" + "─" * (box_w - 2) + "┐", marco)
         max_tw = box_w - 4
+
+        # Fill interior to hide underlying content
+        for y in range(1, h - 1):
+            win.addstr(y, ox + 1, " " * (box_w - 2), texto)
 
         if compact:
             # Tab name as title in top border

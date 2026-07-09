@@ -119,16 +119,17 @@ def draw_listen(app, h: int, w: int) -> None:
         safe_addstr(app.stdscr, mid + 4, 2, f"  {timer_str}", texto, h, w)
 
     if app.goto_mode:
+        goto_y = min(mid + 6, h - 7)
         gm = f"{app.goto_mins:02d}"
         gs = f"{app.goto_secs:02d}"
         am = texto | curses.A_REVERSE if app.goto_field == 0 else texto
         as_ = texto | curses.A_REVERSE if app.goto_field == 1 else texto
-        safe_addstr(app.stdscr, mid + 6, 2, "  Ir a: [", texto, h, w)
-        safe_addstr(app.stdscr, mid + 6, 11, gm, am, h, w)
-        safe_addstr(app.stdscr, mid + 6, 13, ":", texto, h, w)
-        safe_addstr(app.stdscr, mid + 6, 14, gs, as_, h, w)
-        safe_addstr(app.stdscr, mid + 6, 16, "]", texto, h, w)
-        safe_addstr(app.stdscr, mid + 7, 2, "  ← → campo  ↑ ↓ valor  Enter saltar", texto, h, w)
+        safe_addstr(app.stdscr, goto_y, 2, "  Ir a: [", texto, h, w)
+        safe_addstr(app.stdscr, goto_y, 11, gm, am, h, w)
+        safe_addstr(app.stdscr, goto_y, 13, ":", texto, h, w)
+        safe_addstr(app.stdscr, goto_y, 14, gs, as_, h, w)
+        safe_addstr(app.stdscr, goto_y, 16, "]", texto, h, w)
+        safe_addstr(app.stdscr, goto_y + 1, 2, "  ← → campo  ↑ ↓ valor  Enter saltar", texto, h, w)
 
     # ── Bottom grid: controls ──
     cw = [5, 7, 5, 4, 9, 11]
@@ -316,7 +317,7 @@ def draw_explorer(app, h: int, w: int) -> None:
         safe_addstr(app.stdscr, 2 + offset, 2, f"> {app.explorer_filter}", destacar, h, w)
         offset += 1
 
-    list_h = h - LIST_H - offset
+    list_h = h - LIST_H - offset - (0 if h < 16 else 1)
     indices = app.explorer_filtered if app.explorer_filter_mode else list(range(len(app.entries)))
     total = len(indices)
     pos = f" ({app.cursor + 1}/{total})" if total > 0 else ""
@@ -371,7 +372,7 @@ def draw_playlist(app, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
 
-    list_h = h - LIST_H - (1 if app.playlist_filter_mode else 0)
+    list_h = h - LIST_H - (1 if app.playlist_filter_mode else 0) - (0 if h < 16 else 1)
     if total_items > list_h and total_items > 0:
         pos = f" ({app.playlist_cursor + 1}/{total_items})"
     elif total_items > 0:
@@ -432,7 +433,8 @@ def draw_history(app, h: int, w: int) -> None:
     if not app.history:
         safe_addstr(app.stdscr, h // 2, 2, "  Sin historial", texto, h, w)
         return
-    list_h = h - LIST_H
+    _compact_history = h < 16
+    list_h = h - LIST_H - (0 if _compact_history else 1)
     start = max(0, min(app.history_scroll, len(app.history) - list_h))
     visible = app.history[start:start + list_h]
     for i, entry in enumerate(visible):
@@ -502,7 +504,7 @@ def draw_config(app, h: int, w: int) -> None:
     items = app.config_items
     total = len(items)
     cur = app.config_cursor
-    list_h = h - 5
+    list_h = h - 5 if h < 16 else h - 6
 
     # Clamp scroll
     if cur < app.config_scroll:
@@ -561,7 +563,7 @@ def draw_keybindings(app, h: int, w: int) -> None:
             safe_addstr(app.stdscr, h - 3, 2, "  [Esc] Volver", texto, h, w)
             return
         safe_addstr(app.stdscr, 3, 2, "  Enter para cambiar una tecla, Esc para volver", texto, h, w)
-        list_h = h - 7
+        list_h = h - 8
         y0 = 5
 
     actions = kb.BINDABLE_ACTIONS
@@ -583,9 +585,10 @@ def draw_keybindings(app, h: int, w: int) -> None:
             safe_addstr(app.stdscr, y, 2, line, attr, h, w)
 
     if not compact:
+        footer = "  [Esc] Volver"
         if app.kb_conflict_msg:
-            safe_addstr(app.stdscr, h - 3, 2, f"  {app.kb_conflict_msg}", texto, h, w)
-        safe_addstr(app.stdscr, h - 4, 2, "  [Esc] Volver", texto, h, w)
+            footer = f"  {app.kb_conflict_msg}  |  [Esc] Volver"
+        safe_addstr(app.stdscr, h - 3, 2, footer, texto, h, w)
 
 
 def draw_meta_editor(app, win, h: int, w: int) -> None:
