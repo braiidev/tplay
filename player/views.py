@@ -24,9 +24,9 @@ def draw_listen(app, h: int, w: int) -> None:
     if app.show_stack_view:
         total = len(app.stack.items)
         pos = f" ({app.stack_cursor + 1}/{total})" if total > 0 else ""
-        draw_box(app.stdscr, h, w, f"Stack{pos} ({total})")
+        draw_box(app.stdscr, h, w, f"Pila{pos} ({total})")
         if not app.stack.items:
-            safe_addstr(app.stdscr, h // 2, 2, "  Stack vacío — usá [2] Explorer para añadir", texto, h, w)
+            safe_addstr(app.stdscr, h // 2, 2, "  Pila vacía — usá [2] Explorador para añadir", texto, h, w)
         else:
             list_h = h - 8
             visible = app.stack.items[app.stack_scroll:app.stack_scroll + list_h]
@@ -73,7 +73,7 @@ def draw_listen(app, h: int, w: int) -> None:
 
     if not app.stack.items or not app.audio.playing:
         safe_addstr(app.stdscr, mid - 1, 2, "  Nada sonando.", dest, h, w)
-        safe_addstr(app.stdscr, mid + 1, 2, "  Abrí [2] Explorer y seleccioná un archivo", texto, h, w)
+        safe_addstr(app.stdscr, mid + 1, 2, "  Abrí [2] Explorador y seleccioná un archivo", texto, h, w)
         return
 
     cur_item = app.stack.current
@@ -160,7 +160,7 @@ def draw_listen(app, h: int, w: int) -> None:
     line1 = " " + "   ".join(icons)
     line2 = " " + "   ".join(keys)
 
-    extra = "  [Tab] Stack │ [o] URL │ [g] Goto │ [t/T] Tmr │ [h/l] Seek │ [r]Sfl [R]Rpt [m]Mute"
+    extra = "  [Tab] Pila │ [o] URL │ [g] Ir a │ [t/T] Tmp │ [h/l] Buscar │ [r]Azar [R]Rep [m]Sil"
 
     safe_addstr(app.stdscr, h - 5, 2, line1[:w - 4], dest, h, w)
     safe_addstr(app.stdscr, h - 4, 2, line2[:w - 4], texto, h, w)
@@ -387,10 +387,10 @@ def draw_playlist(app, h: int, w: int) -> None:
     if not app.playlist:
         if not app.playlist_data:
             safe_addstr(app.stdscr, h // 2, 2,
-                              "  No hay playlists. [c] crear una.", texto, h, w)
+                              "  No hay listas. [c] crear una.", texto, h, w)
         else:
             safe_addstr(app.stdscr, h // 2, 2,
-                              "  Añadí items desde Explorer con a/A.", texto, h, w)
+                              "  Añadí elementos desde Explorador con a/A.", texto, h, w)
         return
 
     indices = app.playlist_filtered if app.playlist_filter_mode else list(range(len(app.playlist)))
@@ -546,12 +546,12 @@ def draw_keybindings(app, h: int, w: int) -> None:
 
     compact = h < 16
     is_custom = app.keybinding_mode == "custom"
-    mode = "CUSTOM" if is_custom else "DEFAULT"
+    mode = "PERSONALIZADO" if is_custom else "POR DEFECTO"
 
     if compact:
         safe_addstr(app.stdscr, 2, 2, f"Modo:{mode}  ←→cambiar  Esc:volver", destacar, h, w)
         if not is_custom:
-            safe_addstr(app.stdscr, 3, 2, "Pasá a Custom para editar", texto, h, w)
+            safe_addstr(app.stdscr, 3, 2, "Pasá a Personalizado para editar", texto, h, w)
             return
         safe_addstr(app.stdscr, 3, 2, "Enter:asignar tecla", texto, h, w)
         list_h = max(1, h - 5)
@@ -559,7 +559,7 @@ def draw_keybindings(app, h: int, w: int) -> None:
     else:
         safe_addstr(app.stdscr, 2, 2, f"  Modo: {mode}  ← → cambiar", destacar, h, w)
         if not is_custom:
-            safe_addstr(app.stdscr, 4, 2, "  Cambiá a modo Custom para personalizar las teclas", texto, h, w)
+            safe_addstr(app.stdscr, 4, 2, "  Cambiá a modo Personalizado para editar las teclas", texto, h, w)
             safe_addstr(app.stdscr, h - 3, 2, "  [Esc] Volver", texto, h, w)
             return
         safe_addstr(app.stdscr, 3, 2, "  Enter para cambiar una tecla, Esc para volver", texto, h, w)

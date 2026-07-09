@@ -97,10 +97,10 @@ def handle_stack_view(app, key: int) -> None:
         if app.stack_cursor >= len(app.stack.items) and app.stack_cursor > 0:
             app.stack_cursor -= 1
     elif key in (ord("x"),):
-        _confirm(app, "¿Limpiar todo el Stack?", lambda: _do_clear_stack(app))
+        _confirm(app, "¿Limpiar toda la pila?", lambda: _do_clear_stack(app))
     elif key in (ord("s"),):
         if app.stack.items:
-            _prompt(app, "Guardar Stack como playlist", _save_stack_as_playlist_cb)
+            _prompt(app, "Guardar pila como lista", _save_stack_as_playlist_cb)
     elif key == ord("K"):
         if app.stack_cursor > 0:
             app._push_snapshot()
@@ -260,11 +260,11 @@ def handle_playlist(app, key: int) -> None:
         if not app.playlist:
             return
         name = app.playlist[app.playlist_cursor][0]
-        _confirm(app, f"¿Eliminar '{name}' de la playlist?", lambda: _do_playlist_remove(app, app.playlist_cursor))
+        _confirm(app, f"¿Eliminar '{name}' de la lista?", lambda: _do_playlist_remove(app, app.playlist_cursor))
     elif key == ord("x"):
-        _confirm(app, "¿Limpiar toda la playlist?", lambda: _do_playlist_clear(app))
+        _confirm(app, "¿Limpiar toda la lista?", lambda: _do_playlist_clear(app))
     elif key == ord("c"):
-        _prompt(app, "Nombre de la nueva playlist", _create_playlist_cb)
+        _prompt(app, "Nombre de la nueva lista", _create_playlist_cb)
     elif key == ord("e"):
         if app.active_name == "default":
             return
@@ -541,7 +541,7 @@ def _save_stack_as_playlist_cb(app, name: str) -> None:
     if name and name not in app.playlist_data:
         app.playlist_data[name] = [(item.name, item.path) for item in app.stack.items]
         _save_playlist(app)
-        _toast(app, f"Playlist '{name}' creada desde Stack")
+        _toast(app, f"Lista '{name}' creada desde pila")
 
 
 def _start_delete(app) -> None:

@@ -663,7 +663,7 @@ class PlayerApp:
             self._toggle_sleep_timer()
             return True
         if key == ord("T"):
-            handlers._prompt(self, "Minutos sleep timer",
+            handlers._prompt(self, "Minutos temporizador",
                              lambda a, b: self._setup_sleep_timer(b),
                              str(self.config.get("sleep_timer_minutes", 30)))
             return True
@@ -897,9 +897,8 @@ class PlayerApp:
             compact = h < 16 or (self.current_view == self.V_LISTEN and w < 61)
 
             if h < 8 or w < 40:
-                err = f"Terminal muy pequeña ({h}x{w}) — mínimo 40x8"
-                if w >= len(err):
-                    self.stdscr.addstr(0, 0, err)
+                err = f"MIN 40x8, NOW({h}x{w})"
+                self.stdscr.addstr(0, 0, err[:w])
                 self.stdscr.refresh()
                 return
 
@@ -942,7 +941,7 @@ class PlayerApp:
                     pass
                 self.toast_ticks -= 1
             if self.awaiting_dest:
-                msg = " ¿Destino?  s:stack  |  p:playlist  |  Esc:cancelar "
+                msg = " ¿Destino?  s:pila  |  p:lista  |  Esc:cancelar "
                 if len(msg) >= w:
                     msg = " s:stack  p:playlist  Esc:cancelar "
                 if len(msg) < w:
