@@ -525,7 +525,7 @@ class PlayerApp:
         _compact = h < 16 or w < 61
         if self.current_view == self.V_LISTEN and self.show_stack_view:
             if _compact:
-                self.show_stack_view = False
+                self._handle_compact_stack(key)
                 return True
             handlers.handle_stack_view(self, key)
             return True
@@ -549,6 +549,30 @@ class PlayerApp:
                 handlers.handle_playlist(self, key)
                 return True
         return False
+
+    def _handle_compact_stack(self, key: int) -> None:
+        if key in (ord("\t"), 27):
+            self.show_stack_view = False
+            curses.flushinp()
+            return
+        if not self.stack.items:
+            return
+        if key in (ord("\n"), ord("\r"), curses.KEY_ENTER):
+            self.stack.playhead = self.stack_cursor
+            self._play_current()
+            self.show_stack_view = False
+            return
+        if key in (curses.KEY_DOWN, ord("j")):
+            self.stack_cursor = min(self.stack_cursor + 1, len(self.stack.items) - 1)
+        elif key in (curses.KEY_UP, ord("k")):
+            self.stack_cursor = max(self.stack_cursor - 1, 0)
+
+        h, _ = self.stdscr.getmaxyx()
+        list_h = h - 2
+        if self.stack_cursor < self.stack_scroll:
+            self.stack_scroll = self.stack_cursor
+        elif self.stack_cursor >= self.stack_scroll + list_h:
+            self.stack_scroll = self.stack_cursor - list_h + 1
 
     def _handle_key_view_switch(self, key: int) -> bool:
         if ord("0") <= key <= ord("4"):
@@ -925,9 +949,14 @@ class PlayerApp:
                 ui.draw_help(self.stdscr, h, w, self.help_scroll)
 
             if self.meta_edit_editing:
-                cx = (8 + len(self.meta_edit_labels[self.meta_edit_cursor])
-                      + len(self.meta_edit_buf))
-                cy = 4 + self.meta_edit_cursor
+                cur = self.meta_edit_cursor
+                compact = h < 16
+                y0 = 3 if compact else 4
+                total = len(self.meta_edit_fields)
+                list_h = total if not compact else max(2, h - y0 - 1)
+                scroll = max(0, min(cur, total - list_h)) if total > list_h else 0
+                cy = y0 + (cur - scroll)
+                cx = 6 + len(self.meta_edit_labels[cur]) + len(self.meta_edit_buf)
                 try:
                     self.stdscr.move(cy, cx)
                 except curses.error:

@@ -166,7 +166,53 @@ def draw_listen(app, h: int, w: int) -> None:
     safe_addstr(app.stdscr, h - 3, 2, extra[:w - 4], nav, h, w)
 
 
+def draw_mini_stack(app, win, h: int, w: int) -> None:
+    texto = curses.color_pair(PAIR_TEXTO)
+    dest = curses.color_pair(PAIR_DESTACAR)
+
+    try:
+        app.stdscr.addstr(0, 0, "┌" + "─" * max(0, w - 2) + "┐", dest)
+    except curses.error:
+        pass
+    try:
+        app.stdscr.addstr(h - 1, 0, "└" + "─" * max(0, w - 2) + "┘", dest)
+    except curses.error:
+        pass
+    for y in range(1, h - 1):
+        try:
+            app.stdscr.addstr(y, 0, "│", dest)
+            app.stdscr.addstr(y, max(0, w - 1), "│", dest)
+        except curses.error:
+            pass
+
+    items = app.stack.items
+    total = len(items)
+    if total == 0:
+        safe_addstr(win, h // 2, 2, "  (vacío)", texto, h, w)
+        return
+
+    list_h = h - 2
+    visible = items[app.stack_scroll:app.stack_scroll + list_h]
+    for i, item in enumerate(visible):
+        y = 1 + i
+        idx = app.stack_scroll + i
+        is_playing = (app.stack.playhead == idx) and app.audio.playing
+        icon = "►" if is_playing else "♪"
+        line = f" {icon} {item.name}"
+        max_w = w - 3
+        if len(line) > max_w:
+            line = line[:max_w - 1] + "…"
+        attr = dest if is_playing else texto
+        if idx == app.stack_cursor:
+            safe_addstr(win, y, 1, line, attr | curses.A_REVERSE, h, w)
+        else:
+            safe_addstr(win, y, 1, line, attr, h, w)
+
+
 def draw_listen_compact(app, h: int, w: int) -> None:
+    if app.show_stack_view:
+        draw_mini_stack(app, app.stdscr, h, w)
+        return
     marco = curses.color_pair(PAIR_MARCO)
     texto = curses.color_pair(PAIR_TEXTO)
     dest = curses.color_pair(PAIR_DESTACAR)
@@ -545,32 +591,50 @@ def draw_keybindings(app, h: int, w: int) -> None:
 def draw_meta_editor(app, win, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
+    compact = h < 16
 
     pad_x = 2
-    row = 2
     draw_box(win, h, w, "Editar metadata")
-    safe_addstr(win, row, pad_x,
-                "↑/↓: navegar  Enter: editar  [s] guardar  [q] cancelar",
-                texto, h, w)
-    row += 2
 
-    for i, (label, key, orig) in enumerate(app.meta_edit_fields):
+    if compact:
+        safe_addstr(win, 2, pad_x, "↑↓ Naveg  Enter Ed  s:Guardar  q:Salir", texto, h, w)
+        y0 = 3
+    else:
+        safe_addstr(win, 2, pad_x,
+                    "↑/↓: navegar  Enter: editar  [s] guardar  [q] cancelar",
+                    texto, h, w)
+        y0 = 4
+
+    fields = app.meta_edit_fields
+    total = len(fields)
+    cur = app.meta_edit_cursor
+    list_h = total if not compact else max(2, h - y0 - 1)
+
+    # Auto-scroll so cursor is always visible
+    scroll = max(0, min(cur, total - list_h)) if total > list_h else 0
+    visible = fields[scroll:scroll + list_h]
+
+    for i, (label, key, orig) in enumerate(visible):
+        actual_idx = scroll + i
+        row = y0 + i
         current = app.meta_edit_changed.get(key, orig)
         val = current if current else "(vacío)"
         marker = " *" if key in app.meta_edit_changed else "  "
         line = f"  {label}: {val}{marker}"
-        attr = destacar if i == app.meta_edit_cursor else texto
-        if i == app.meta_edit_cursor and not app.meta_edit_editing:
+        attr = destacar if actual_idx == cur else texto
+        if actual_idx == cur and not app.meta_edit_editing:
             safe_addstr(win, row, pad_x, line, attr | curses.A_REVERSE, h, w)
         else:
             safe_addstr(win, row, pad_x, line, attr, h, w)
-        if i == app.meta_edit_cursor and app.meta_edit_editing:
+        if actual_idx == cur and app.meta_edit_editing:
             buf = app.meta_edit_buf
             cx = pad_x + len(f"  {label}: ")
             display = buf if buf else ""
             safe_addstr(win, row, cx, display, attr | curses.A_REVERSE, h, w)
-        row += 1
 
-    row += 1
-    if not app.meta_edit_changed:
-        safe_addstr(win, row, pad_x, "  Sin cambios", texto, h, w)
+    # Status line only if room
+    status_row = y0 + len(visible)
+    if not compact and status_row < h - 1:
+        row = status_row + 1
+        if not app.meta_edit_changed:
+            safe_addstr(win, row, pad_x, "  Sin cambios", texto, h, w)

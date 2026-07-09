@@ -12,11 +12,13 @@ def handle_listen(app, key: int) -> None:
     SEEK_STEP = 5000
     if key in (ord("\t"),):
         h, w = app.stdscr.getmaxyx()
-        if h < 16 or w < 61:
-            return
-        app.show_stack_view = True
-        app.stack_cursor = max(0, min(app.stack_cursor, len(app.stack.items) - 1)) if app.stack.items else 0
-        app.stack_scroll = 0
+        if h >= 16 and w >= 61:
+            app.show_stack_view = True
+            app.stack_cursor = max(0, min(app.stack_cursor, len(app.stack.items) - 1)) if app.stack.items else 0
+            app.stack_scroll = 0
+        else:
+            app.show_stack_view = len(app.stack.items) > 0
+            app.stack_scroll = 0
         curses.flushinp()
         return
     if key in (curses.KEY_LEFT, ord("h")):
