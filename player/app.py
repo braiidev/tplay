@@ -668,9 +668,10 @@ class PlayerApp:
             self.prompt_label = ""
             self.prompt_buf = ""
             curses.curs_set(0)
-            if buf and self.prompt_callback:
-                self.prompt_callback(self, buf)
+            cb = self.prompt_callback
             self.prompt_callback = None
+            if cb:
+                cb(self, buf)
         elif key in (127, curses.KEY_BACKSPACE):
             self.prompt_buf = self.prompt_buf[:-1]
         elif 32 <= key <= 126 and len(self.prompt_buf) < 60:

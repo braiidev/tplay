@@ -20,6 +20,7 @@ class MetadataCache:
                     'title': audio.get('title', [None])[0],
                     'artist': audio.get('artist', [None])[0],
                     'album': audio.get('album', [None])[0],
+                    'genre': audio.get('genre', [None])[0],
                     'length': int(audio.info.length) if audio.info else 0,
                 }
             self._cache[path] = tags

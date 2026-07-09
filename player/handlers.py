@@ -605,9 +605,10 @@ def _start_tag_edit(app) -> None:
         'title': (meta and meta.get('title')) or '',
         'artist': (meta and meta.get('artist')) or '',
         'album': (meta and meta.get('album')) or '',
+        'genre': (meta and meta.get('genre')) or '',
     }
-    fields = ['title', 'artist', 'album']
-    labels = ['Título', 'Artista', 'Álbum']
+    fields = ['title', 'artist', 'album', 'genre']
+    labels = ['Título', 'Artista', 'Álbum', 'Género']
     pending = {}
 
     def _save_all():
