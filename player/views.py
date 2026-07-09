@@ -27,7 +27,7 @@ def draw_listen(app, h: int, w: int) -> None:
                 meta = app.meta_cache.get(item.path) if not _is_url(item.path) else None
                 is_stream = _is_url(item.path)
                 if is_stream:
-                    display_name = f"📻 {item.name}"
+                    display_name = f"[R] {item.name}"
                 elif meta and meta.get('title'):
                     display_name = f"{meta.get('artist', '?')} - {meta.get('title', item.name)}"
                 else:
@@ -73,10 +73,10 @@ def draw_listen(app, h: int, w: int) -> None:
 
     is_stream = _is_url(cur_item.path)
     meta = app.meta_cache.get(cur_item.path) if not is_stream else None
-    estado = "► PLAY" if not app.paused else "⏸ PAUSE"
+    estado = "► PLAY" if not app.paused else "|| PAUSE"
 
     if is_stream:
-        safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}  📻 STREAM", dest, h, w)
+        safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}  [STREAM]", dest, h, w)
         safe_addstr(app.stdscr, mid - 1, 2, f"  {cur_item.name}", texto, h, w)
         safe_addstr(app.stdscr, mid, 2, f"  {cur_item.path}", texto, h, w)
     else:
@@ -307,7 +307,7 @@ def draw_config(app, h: int, w: int) -> None:
         elif key == "update":
             line = f"  {label}  [Comprobar]"
             if app.update_available:
-                line += "  ⚡"
+                line += "  !"
         else:
             line = f"  {labels.get(key, key)}"
         attr = texto
@@ -366,7 +366,7 @@ def draw_meta_editor(app, win, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
 
-    pad_x = 4
+    pad_x = 2
     row = 2
     draw_box(win, h, w, "Editar metadata")
     safe_addstr(win, row, pad_x,

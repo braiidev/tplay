@@ -239,6 +239,14 @@ class PlayerApp:
             self.update_check_done = True
             return
         try:
+            try:
+                h, w = self.stdscr.getmaxyx()
+                self.stdscr.erase()
+                self.stdscr.addstr(h // 2, max(0, (w - 24) // 2),
+                                   " Buscando actualizaciones... ")
+                self.stdscr.refresh()
+            except curses.error:
+                pass
             subprocess.run(["git", "fetch", "origin"], cwd=repo,
                            capture_output=True, timeout=10)
             result = subprocess.run(
@@ -843,7 +851,7 @@ class PlayerApp:
                     except curses.error:
                         pass
             if self.update_available and not self.confirm_mode and not self.prompt_mode and not self.show_help:
-                msg = " ⚡ Actualización disponible "
+                msg = " ! Actualización disponible "
                 if w > len(msg) + 2:
                     try:
                         self.stdscr.addstr(0, w - len(msg) - 1, msg,

@@ -58,7 +58,7 @@ def draw_status(win, h: int, w: int, audio, playing: bool, current_file, volume:
     status = curses.color_pair(PAIR_DESTACAR)
     if playing:
         name = os.path.basename(current_file) if current_file else ""
-        estado = "►" if not audio.paused else "⏸"
+        estado = "►" if not audio.paused else "||"
         cur = audio.get_time()
         dur = audio.get_length()
         cur_s = f"{cur // 60000:02d}:{(cur // 1000) % 60:02d}" if cur >= 0 else "--:--"
@@ -111,7 +111,7 @@ HELP_LINES = [
     ("    g / G        Ir al inicio / fin del listado", 2),
     ("", None),
     ("  Reproduccion (Listen)", 4),
-    ("    Space        ▶ / ⏸", 2),
+    ("    Space        ▶ / ||", 2),
     ("    s            ◼ Stop", 2),
     ("    n / b        ►► / ◄◄", 2),
     ("    + / k        Subir volumen", 2),
