@@ -889,10 +889,11 @@ def _create_playlist_cb(app: PlayerApp, name: str) -> None:
 
 def _do_delete_playlist(app: PlayerApp) -> None:
     if len(app.playlist_data) > 1:
-        del app.playlist_data[app.active_name]
-        new_name = next(n for n in app.playlist_data if n != app.active_name)
-        _switch_playlist(app, new_name)
-        _save_playlist(app)
+        app.playlist_data.pop(app.active_name, None)
+        names = list(app.playlist_data.keys())
+        if names:
+            _switch_playlist(app, names[0])
+            _save_playlist(app)
 
 
 def _rename_playlist_cb(app: PlayerApp, new_name: str) -> None:
