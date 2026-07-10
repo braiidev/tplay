@@ -14,8 +14,8 @@
 | --- | ----------- | ------- | ------ |
 | B1  | Copiar/mover archivos sobreescribe sin confirmar (renombrar sí pregunta) | handlers.py:929 | ✅ |
 | B2  | Dos sistemas de undo desconectados: file_op_undo vs snapshot_redo | app.py:709-737 | ✅ |
-| B3  | Al salir/entrar se pierde el [Stack] de reproducción (E6) | app.py | [ ] |
-| B4  | El [Stack] debería persistir entre sesiones o no (E7) | — | [ ] |
+| B3  | Al salir/entrar se pierde el [Stack] de reproducción (E6) | app.py | ✅ |
+| B4  | El [Stack] debería persistir entre sesiones o no (E7) | — | ✅ |
 
 ## 🟡 ARCH (arquitectura / mantenibilidad)
 
@@ -70,3 +70,4 @@
 - **M1** — draw_item_row() unificada
 - **M2** — 9 vars de diálogo unificadas en self.dialog dict
 - **M3** — mypy strict, 0 errores en 13 archivos
+- **B3/B4** — stack persistente entre sesiones (state.json + stack_items, shuffle, repeat, playhead, volumen)

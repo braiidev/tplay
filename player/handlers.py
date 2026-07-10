@@ -1174,11 +1174,7 @@ def _do_update(app: PlayerApp) -> None:
 def _restart_app(app: PlayerApp) -> None:
     import os, sys
     try:
-        from .state import save_state
-        if app.current_file:
-            save_state(True, app.current_file, max(0, app.audio.get_time()))
-        else:
-            save_state(False)
+        app._save_session()
         app.audio.player.stop()
         curses.endwin()
         repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

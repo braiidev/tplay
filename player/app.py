@@ -195,6 +195,26 @@ class PlayerApp:
     def _repo_dir(self) -> str:
         return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+    def _save_session(self) -> None:
+        pos = 0
+        if self.audio.playing and self.audio.player:
+            try:
+                pos = max(0, self.audio.get_time())
+            except Exception:
+                pos = 0
+        stack_items = [{"path": item.path, "name": item.name, "mode": item.mode}
+                       for item in self.stack.items]
+        save_state(
+            playing=self.audio.playing,
+            file=os.path.abspath(self.current_file) if self.current_file else "",
+            position=pos,
+            stack_items=stack_items,
+            playhead=self.stack.playhead,
+            shuffle=self.stack.shuffle,
+            repeat=self.stack.repeat,
+            volume=self.audio.volume,
+        )
+
     def _check_updates(self) -> None:
         repo = self._repo_dir
         git_dir = os.path.join(repo, ".git")
@@ -276,9 +296,21 @@ class PlayerApp:
 
     def _resume_session(self) -> None:
         st: dict[str, Any] = load_state()
-        if st.get("playing") and st.get("file") and os.path.isfile(st["file"]):
-            self.stack.items = [StackItem(path=st["file"], name=os.path.basename(st["file"]))]
-            self.audio.play_file(st["file"])
+        items = st.get("stack_items", [])
+        if items:
+            self.stack.items = [StackItem(path=i["path"], name=i.get("name", os.path.basename(i["path"])),
+                                          mode=i.get("mode", "normal"))
+                                for i in items if isinstance(i, dict) and os.path.isfile(i.get("path", ""))]
+            ph = st.get("playhead", -1)
+            if 0 <= ph < len(self.stack.items):
+                self.stack.playhead = ph
+            self.stack.shuffle = bool(st.get("shuffle", False))
+            self.stack.repeat = bool(st.get("repeat", False))
+        vol = st.get("volume", 75)
+        if 0 <= vol <= 100:
+            self.audio.set_volume(vol)
+        if st.get("playing") and self.stack.current and os.path.isfile(self.stack.current.path):
+            self.audio.play_file(self.stack.current.path)
             pos = st.get("position", 0)
             if pos > 0:
                 self.audio.player.set_time(pos)
@@ -633,7 +665,7 @@ class PlayerApp:
                              str(self.config.get("sleep_timer_minutes", 30)))
             return True
         if key == ord("q"):
-            save_state(False)
+            self._save_session()
             save_history(self.history)
             self.config["volume"] = self.audio.volume
             save_config(self.config)
