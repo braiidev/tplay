@@ -25,24 +25,21 @@ def safe_addstr(win, y: int, x: int, text: str, attr=None, h: int = 0, w: int = 
 def draw_box(win, h: int, w: int, title: str) -> None:
     marco = curses.color_pair(PAIR_MARCO)
     bot = max(0, h - 1) if h < 16 else max(0, h - 2)
-    try:
-        win.addstr(0, 0, "┌" + "─" * max(0, w - 2) + "┐", marco)
-        if title:
-            title_str = f" {title} "
-            tx = max(2, (w - len(title_str)) // 2)
-            max_tw = max(0, w - tx - 1)
-            if len(title_str) > max_tw and max_tw >= 2:
-                title_str = title_str[:max_tw - 1] + "…"
-            elif len(title_str) > max_tw:
-                title_str = title_str[:max_tw]
-            win.addstr(0, tx, title_str, marco)
-        for y in range(1, min(bot, h - 1)):
-            win.addstr(y, 0, "│", marco)
-            win.addstr(y, max(0, w - 1), "│", marco)
-        if h > 1:
-            win.addstr(bot, 0, "└" + "─" * max(0, w - 2) + "┘", marco)
-    except curses.error:
-        pass
+    safe_addstr(win, 0, 0, "┌" + "─" * max(0, w - 2) + "┐", marco, h, w)
+    if title:
+        title_str = f" {title} "
+        tx = max(2, (w - len(title_str)) // 2)
+        max_tw = max(0, w - tx - 1)
+        if len(title_str) > max_tw and max_tw >= 2:
+            title_str = title_str[:max_tw - 1] + "…"
+        elif len(title_str) > max_tw:
+            title_str = title_str[:max_tw]
+        safe_addstr(win, 0, tx, title_str, marco, h, w)
+    for y in range(1, min(bot, h - 1)):
+        safe_addstr(win, y, 0, "│", marco, h, w)
+        safe_addstr(win, y, max(0, w - 1), "│", marco, h, w)
+    if h > 1:
+        safe_addstr(win, bot, 0, "└" + "─" * max(0, w - 2) + "┘", marco, h, w)
 
 
 def draw_nav(win, h: int, w: int) -> None:
@@ -50,7 +47,7 @@ def draw_nav(win, h: int, w: int) -> None:
     tabs = " 0:Config │ 1:Listen │ 2:Expl │ 3:Playlist │ 4:Hist │ q:Salir "
     win.move(h - NAV_ROW, 0)
     win.clrtoeol()
-    win.addstr(h - NAV_ROW, max(0, (w - len(tabs)) // 2), tabs, nav)
+    safe_addstr(win, h - NAV_ROW, max(0, (w - len(tabs)) // 2), tabs, nav, h, w)
 
 
 def draw_status(win, h: int, w: int, audio, playing: bool, current_file, volume: int,
@@ -109,18 +106,18 @@ def draw_dialog(win, h: int, w: int, title: str, text: str,
     try:
         # Row 0: top border + title
         hz = "─" if compact else "═"
-        win.addstr(oy, ox, tl[0] + hz * ih + tl[1], dest)
+        safe_addstr(win, oy, ox, tl[0] + hz * ih + tl[1], dest, h, w)
         ttl = f" {title} "
         if len(ttl) > ih:
             ttl = ttl[:ih - 1] + "…"
-        win.addstr(oy, ox + 2, ttl, dest)
+        safe_addstr(win, oy, ox + 2, ttl, dest, h, w)
 
         def rline(body: str = "") -> None:
             s = body[:ih] if body else ""
             l = len(s)
             if l < ih:
                 s += " " * (ih - l)
-            win.addstr(oy, ox, vb + s + vb, dest)
+            safe_addstr(win, oy, ox, vb + s + vb, dest, h, w)
 
         # Row 1: empty
         oy += 1
@@ -156,7 +153,7 @@ def draw_dialog(win, h: int, w: int, title: str, text: str,
 
         # Row 4: bottom border
         oy += 1
-        win.addstr(oy, ox, bl[0] + hz * ih + bl[1], dest)
+        safe_addstr(win, oy, ox, bl[0] + hz * ih + bl[1], dest, h, w)
 
     except curses.error:
         pass
@@ -357,36 +354,36 @@ def draw_help(win, h: int, w: int, scroll: int = 0, tab: int = 0) -> None:
 
     try:
         # Top border
-        win.addstr(0, ox, "┌" + "─" * (box_w - 2) + "┐", marco)
+        safe_addstr(win, 0, ox, "┌" + "─" * (box_w - 2) + "┐", marco, h, w)
         max_tw = box_w - 4
 
         # Fill interior to hide underlying content
         for y in range(1, h - 1):
-            win.addstr(y, ox + 1, " " * (box_w - 2), texto)
+            safe_addstr(win, y, ox + 1, " " * (box_w - 2), texto, h, w)
 
         if compact:
             # Tab name as title in top border
             title = f" {tab_data['name']} "
             if len(title) <= box_w - 4:
                 tx = 2 + (box_w - 2 - len(title)) // 2
-                win.addstr(0, ox + tx, title, dest)
+                safe_addstr(win, 0, ox + tx, title, dest, h, w)
 
             # Vertical bars
             for y in range(1, h - 1):
-                win.addstr(y, ox, "│", marco)
-                win.addstr(y, ox + box_w - 1, "│", marco)
+                safe_addstr(win, y, ox, "│", marco, h, w)
+                safe_addstr(win, y, ox + box_w - 1, "│", marco, h, w)
 
             # Content
             for i, (text, attr) in enumerate(visible):
                 y = 1 + i
                 if attr is not None:
-                    win.addstr(y, ox + 2, text[:max_tw], curses.color_pair(attr))
+                    safe_addstr(win, y, ox + 2, text[:max_tw], curses.color_pair(attr), h, w)
 
             # Scroll indicators at right edge
             if scroll > 0:
-                win.addstr(1, ox + box_w - 2, "▲", nav)
+                safe_addstr(win, 1, ox + box_w - 2, "▲", nav, h, w)
             if scroll + list_h < total:
-                win.addstr(h - 2, ox + box_w - 2, "▼", nav)
+                safe_addstr(win, h - 2, ox + box_w - 2, "▼", nav, h, w)
         else:
             # Tab bar at row 1
             tab_names = [t["name"] for t in HELP_TABS]
@@ -398,36 +395,36 @@ def draw_help(win, h: int, w: int, scroll: int = 0, tab: int = 0) -> None:
                 attr = dest | curses.A_REVERSE if ti == tab else texto
                 if len(name) > remaining:
                     name = name[:max(1, remaining - 1)] + "…"
-                win.addstr(1, x, name, attr)
+                safe_addstr(win, 1, x, name, attr, h, w)
                 x += len(name)
                 ti += 1
                 if ti < len(tab_names) and x + 1 < ox + box_w - 2:
-                    win.addstr(1, x, "│", nav)
+                    safe_addstr(win, 1, x, "│", nav, h, w)
                     x += 1
 
             if x < ox + box_w - 1:
-                win.addstr(1, x, "─" * (ox + box_w - 1 - x), marco)
+                safe_addstr(win, 1, x, "─" * (ox + box_w - 1 - x), marco, h, w)
 
             # Vertical bars
             for y in range(2, h - 1):
-                win.addstr(y, ox, "│", marco)
-                win.addstr(y, ox + box_w - 1, "│", marco)
+                safe_addstr(win, y, ox, "│", marco, h, w)
+                safe_addstr(win, y, ox + box_w - 1, "│", marco, h, w)
 
             # Content
             for i, (text, attr) in enumerate(visible):
                 y = 2 + i
                 if attr is not None:
                     clipped = text[:max_tw] if len(text) <= max_tw else text[:max_tw - 1] + "…"
-                    win.addstr(y, ox + 2, clipped, curses.color_pair(attr))
+                    safe_addstr(win, y, ox + 2, clipped, curses.color_pair(attr), h, w)
 
             # Scroll indicators at right edge
             if scroll > 0:
-                win.addstr(1, ox + box_w - 2, "▲", nav)
+                safe_addstr(win, 1, ox + box_w - 2, "▲", nav, h, w)
             if scroll + list_h < total:
-                win.addstr(h - 2, ox + box_w - 2, "▼", nav)
+                safe_addstr(win, h - 2, ox + box_w - 2, "▼", nav, h, w)
 
         # Bottom border
-        win.addstr(h - 1, ox, "└" + "─" * (box_w - 2) + "┘", marco)
+        safe_addstr(win, h - 1, ox, "└" + "─" * (box_w - 2) + "┘", marco, h, w)
 
     except curses.error:
         pass

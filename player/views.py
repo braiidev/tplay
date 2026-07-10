@@ -171,20 +171,11 @@ def draw_mini_stack(app, win, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     dest = curses.color_pair(PAIR_DESTACAR)
 
-    try:
-        app.stdscr.addstr(0, 0, "┌" + "─" * max(0, w - 2) + "┐", dest)
-    except curses.error:
-        pass
-    try:
-        app.stdscr.addstr(h - 1, 0, "└" + "─" * max(0, w - 2) + "┘", dest)
-    except curses.error:
-        pass
+    safe_addstr(win, 0, 0, "┌" + "─" * max(0, w - 2) + "┐", dest, h, w)
+    safe_addstr(win, h - 1, 0, "└" + "─" * max(0, w - 2) + "┘", dest, h, w)
     for y in range(1, h - 1):
-        try:
-            app.stdscr.addstr(y, 0, "│", dest)
-            app.stdscr.addstr(y, max(0, w - 1), "│", dest)
-        except curses.error:
-            pass
+        safe_addstr(win, y, 0, "│", dest, h, w)
+        safe_addstr(win, y, max(0, w - 1), "│", dest, h, w)
 
     items = app.stack.items
     total = len(items)
@@ -222,23 +213,14 @@ def draw_listen_compact(app, h: int, w: int) -> None:
     if app.audio.playing:
         status = "❚❚" if app.paused else "▶"
     title = f" {status} Listen " if status else " Listen "
-    try:
-        app.stdscr.addstr(0, 0, "┌" + "─" * max(0, w - 2) + "┐", marco)
-        if w > len(title) + 2:
-            tx = max(2, (w - len(title)) // 2)
-            app.stdscr.addstr(0, tx, title[:w - tx - 1], marco)
-    except curses.error:
-        pass
-    try:
-        app.stdscr.addstr(h - 1, 0, "└" + "─" * max(0, w - 2) + "┘", marco)
-    except curses.error:
-        pass
+    safe_addstr(app.stdscr, 0, 0, "┌" + "─" * max(0, w - 2) + "┐", marco, h, w)
+    if w > len(title) + 2:
+        tx = max(2, (w - len(title)) // 2)
+        safe_addstr(app.stdscr, 0, tx, title[:w - tx - 1], marco, h, w)
+    safe_addstr(app.stdscr, h - 1, 0, "└" + "─" * max(0, w - 2) + "┘", marco, h, w)
     for y in range(1, h - 1):
-        try:
-            app.stdscr.addstr(y, 0, "│", marco)
-            app.stdscr.addstr(y, max(0, w - 1), "│", marco)
-        except curses.error:
-            pass
+        safe_addstr(app.stdscr, y, 0, "│", marco, h, w)
+        safe_addstr(app.stdscr, y, max(0, w - 1), "│", marco, h, w)
 
     if not app.stack.items or not app.audio.playing:
         msg = "Nada sonando."
@@ -310,31 +292,28 @@ def draw_listen_compact(app, h: int, w: int) -> None:
         oy = max(0, (h - goto_h) // 2)
         bw = min(22, w - 4)
         ox = (w - bw) // 2
-        try:
-            app.stdscr.addstr(oy, ox, "┌" + "─" * (bw - 2) + "┐", marco)
-            title = " Ir a "
-            tx = ox + 1 + (bw - 2 - len(title)) // 2
-            app.stdscr.addstr(oy, tx, title, dest)
-            for yy in range(1, goto_h - 1):
-                app.stdscr.addstr(oy + yy, ox, "│", marco)
-                app.stdscr.addstr(oy + yy, ox + bw - 1, "│", marco)
-                app.stdscr.addstr(oy + yy, ox + 1, " " * (bw - 2), texto)
-            app.stdscr.addstr(oy + goto_h - 1, ox, "└" + "─" * (bw - 2) + "┘", marco)
-            gm = f"{app.goto_mins:02d}"
-            gs = f"{app.goto_secs:02d}"
-            am = texto | curses.A_REVERSE if app.goto_field == 0 else texto
-            as_ = texto | curses.A_REVERSE if app.goto_field == 1 else texto
-            tmp = f"{gm}:{gs}"
-            tx2 = ox + 1 + (bw - 2 - len(tmp)) // 2
-            app.stdscr.addstr(oy + 1, tx2, gm, am)
-            app.stdscr.addstr(oy + 1, tx2 + 2, ":", texto)
-            app.stdscr.addstr(oy + 1, tx2 + 3, gs, as_)
-            ax = ox + 1 + (bw - 2 - 7) // 2
-            app.stdscr.addstr(oy + 2, ax, "← → ↑ ↓", texto)
-            ex = ox + 1 + (bw - 2 - 5) // 2
-            app.stdscr.addstr(oy + 3, ex, "Enter", dest)
-        except curses.error:
-            pass
+        safe_addstr(app.stdscr, oy, ox, "┌" + "─" * (bw - 2) + "┐", marco, h, w)
+        title = " Ir a "
+        tx = ox + 1 + (bw - 2 - len(title)) // 2
+        safe_addstr(app.stdscr, oy, tx, title, dest, h, w)
+        for yy in range(1, goto_h - 1):
+            safe_addstr(app.stdscr, oy + yy, ox, "│", marco, h, w)
+            safe_addstr(app.stdscr, oy + yy, ox + bw - 1, "│", marco, h, w)
+            safe_addstr(app.stdscr, oy + yy, ox + 1, " " * (bw - 2), texto, h, w)
+        safe_addstr(app.stdscr, oy + goto_h - 1, ox, "└" + "─" * (bw - 2) + "┘", marco, h, w)
+        gm = f"{app.goto_mins:02d}"
+        gs = f"{app.goto_secs:02d}"
+        am = texto | curses.A_REVERSE if app.goto_field == 0 else texto
+        as_ = texto | curses.A_REVERSE if app.goto_field == 1 else texto
+        tmp = f"{gm}:{gs}"
+        tx2 = ox + 1 + (bw - 2 - len(tmp)) // 2
+        safe_addstr(app.stdscr, oy + 1, tx2, gm, am, h, w)
+        safe_addstr(app.stdscr, oy + 1, tx2 + 2, ":", texto, h, w)
+        safe_addstr(app.stdscr, oy + 1, tx2 + 3, gs, as_, h, w)
+        ax = ox + 1 + (bw - 2 - 7) // 2
+        safe_addstr(app.stdscr, oy + 2, ax, "← → ↑ ↓", texto, h, w)
+        ex = ox + 1 + (bw - 2 - 5) // 2
+        safe_addstr(app.stdscr, oy + 3, ex, "Enter", dest, h, w)
 
 
 def draw_explorer(app, h: int, w: int) -> None:

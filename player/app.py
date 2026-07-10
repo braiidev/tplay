@@ -194,14 +194,13 @@ class PlayerApp:
             self.update_check_done = True
             return
         try:
-            try:
-                h, w = self.stdscr.getmaxyx()
-                self.stdscr.erase()
-                self.stdscr.addstr(h // 2, max(0, (w - 24) // 2),
-                                   " Buscando actualizaciones... ")
-                self.stdscr.refresh()
-            except curses.error:
-                pass
+            h, w = self.stdscr.getmaxyx()
+            self.stdscr.erase()
+            ui.safe_addstr(self.stdscr, h // 2, max(0, (w - 24) // 2),
+                           " Buscando actualizaciones... ", None, h, w)
+            self.stdscr.refresh()
+        except curses.error:
+            pass
             subprocess.run(["git", "fetch", "origin"], cwd=repo,
                            capture_output=True, timeout=10)
             result = subprocess.run(
@@ -852,7 +851,7 @@ class PlayerApp:
 
             if h < 8 or w < 40:
                 err = f"MIN 40x8, NOW({h}x{w})"
-                self.stdscr.addstr(0, 0, err[:w])
+                ui.safe_addstr(self.stdscr, 0, 0, err, None, h, w)
                 self.stdscr.refresh()
                 return
 
@@ -889,30 +888,23 @@ class PlayerApp:
             elif not self.meta_edit_mode and not compact:
                 ui.draw_nav(self.stdscr, h, w)
             if self.toast_ticks > 0:
-                try:
-                    self.stdscr.addstr(h - 3, 2, self.toast_msg, curses.color_pair(2))
-                except curses.error:
-                    pass
+                ui.safe_addstr(self.stdscr, h - 3, 2, self.toast_msg,
+                               curses.color_pair(2), h, w)
                 self.toast_ticks -= 1
             if self.awaiting_dest:
                 msg = " ¿Destino?  s:pila  |  p:lista  |  Esc:cancelar "
                 if len(msg) >= w:
                     msg = " s:stack  p:playlist  Esc:cancelar "
                 if len(msg) < w:
-                    try:
-                        dy = h - 2 if h < 16 else h - 3
-                        self.stdscr.addstr(dy, (w - len(msg)) // 2, msg, curses.A_REVERSE)
-                    except curses.error:
-                        pass
+                    dy = h - 2 if h < 16 else h - 3
+                    ui.safe_addstr(self.stdscr, dy, (w - len(msg)) // 2, msg,
+                                   curses.A_REVERSE, h, w)
             if self.update_available and not self.confirm_mode and not self.prompt_mode and not self.show_help:
                 if not compact:
                     msg = " ! Actualización disponible "
                     if w > len(msg) + 2:
-                        try:
-                            self.stdscr.addstr(0, w - len(msg) - 1, msg,
-                                               curses.color_pair(1))
-                        except curses.error:
-                            pass
+                        ui.safe_addstr(self.stdscr, 0, w - len(msg) - 1, msg,
+                                       curses.color_pair(1), h, w)
             if self.show_help:
                 ui.draw_help(self.stdscr, h, w, self.help_scroll, self.help_tab)
 
