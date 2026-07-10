@@ -36,6 +36,12 @@ def handle_listen(app, key: int) -> None:
             app.goto_field = 0
             app.goto_mode = True
             curses.curs_set(0)
+    elif key == ord("I"):
+        cur_item = app.stack.current
+        if cur_item and not _is_url(cur_item.path) and os.path.isfile(cur_item.path):
+            _open_tag_editor(app, cur_item.path)
+        else:
+            _toast(app, "No hay archivo para editar")
     elif key == ord("o"):
         _prompt(app, "URL de stream", _add_url_cb)
 
@@ -260,9 +266,36 @@ def handle_playlist(app, key: int) -> None:
         _confirm(app, f"¿Eliminar '{name}' de la lista?", lambda: _do_playlist_remove(app, app.playlist_cursor))
     elif key == ord("x"):
         _confirm(app, "¿Limpiar toda la lista?", lambda: _do_playlist_clear(app))
+    elif key == ord("I"):
+        if not app.playlist:
+            return
+        _, path = app.playlist[app.playlist_cursor]
+        if os.path.isfile(path):
+            _open_tag_editor(app, path)
+        else:
+            _toast(app, "Archivo inexistente")
+    elif key == ord("E"):
+        if not app.playlist:
+            return
+        name, full = app.playlist[app.playlist_cursor]
+        if not os.path.isfile(full):
+            _toast(app, "Archivo inexistente")
+            return
+
+        def _on_rename(app, old_path, new_path):
+            idx = app.playlist_cursor
+            if 0 <= idx < len(app.playlist):
+                app.playlist[idx] = (os.path.basename(new_path), new_path)
+                _save_playlist(app)
+            for entry in app.history:
+                if entry.get("path") == old_path:
+                    entry["path"] = new_path
+                    entry["name"] = os.path.basename(new_path)
+
+        _rename_file(app, full, name, _on_rename)
     elif key == ord("c"):
         _prompt(app, "Nombre de la nueva lista", _create_playlist_cb)
-    elif key == ord("e"):
+    elif key == ord("R"):
         if app.active_name == "default":
             return
         _prompt(app, f"Renombrar '{app.active_name}' a", _rename_playlist_cb)
@@ -332,6 +365,14 @@ def handle_history(app, key: int) -> None:
         return
     if key == ord("A"):
         _add_from_history(app, insert_mode="after_current")
+        return
+    if key == ord("I"):
+        entry = app.history[app.history_cursor]
+        path = entry.get("path", "")
+        if os.path.isfile(path):
+            _open_tag_editor(app, path)
+        else:
+            _toast(app, "Archivo inexistente")
         return
     if key == curses.KEY_DOWN:
         app.history_cursor = min(app.history_cursor + 1, len(app.history) - 1)
@@ -495,9 +536,7 @@ def _add_from_explorer(app, insert_mode: str = "append") -> None:
     _, is_dir, full = app.entries[app.cursor]
     if is_dir or not os.path.isfile(full):
         return
-    has_playlists = len(app.playlist_data) > 0 and any(
-        len(songs) > 0 for songs in app.playlist_data.values()
-    )
+    has_playlists = len(app.playlist_data) > 0
     if has_playlists:
         app.awaiting_dest = True
         app._pending_add_path = full
@@ -599,10 +638,9 @@ def _play_folder(app) -> None:
     app._play_current()
 
 
-def _start_rename(app) -> None:
-    if not app.entries:
-        return
-    name, _, full = app.entries[app.cursor]
+def _rename_file(app, full: str, name: str,
+                 on_rename=None) -> None:
+    """Renombrar archivo en disco. on_rename(app, old_path, new_path) si se necesita post-procesar."""
     _, ext = os.path.splitext(name)
 
     def _cb(app, buf):
@@ -614,20 +652,46 @@ def _start_rename(app) -> None:
         try:
             app._push_snapshot()
             os.rename(full, new_path)
-            app.entries = _list_dir(app.current_dir)
+            if on_rename:
+                on_rename(app, full, new_path)
         except Exception as e:
             _toast(app, f"Error al renombrar: {e}")
 
     _prompt(app, "Renombrar a", _cb, name)
 
 
-def _start_tag_edit(app) -> None:
+def _start_rename(app) -> None:
     if not app.entries:
         return
-    _, is_dir, full = app.entries[app.cursor]
-    if is_dir or not _is_media_file(full):
-        return
+    name, _, full = app.entries[app.cursor]
 
+    def _on_rename(app, old_path, new_path):
+        app.entries = _list_dir(app.current_dir)
+        _update_refs_after_rename(app, old_path, new_path)
+
+    _rename_file(app, full, name, _on_rename)
+
+
+def _update_refs_after_rename(app, old_path: str, new_path: str) -> None:
+    """Actualizar playlist e history que apuntaban a old_path."""
+    new_name = os.path.basename(new_path)
+    for pl_name in app.playlist_data:
+        songs = app.playlist_data[pl_name]
+        for i, (n, p) in enumerate(songs):
+            if p == old_path:
+                songs[i] = (new_name, new_path)
+    if app.active_name in app.playlist_data:
+        _save_playlist(app)
+    for entry in app.history:
+        if entry.get("path") == old_path:
+            entry["path"] = new_path
+            entry["name"] = new_name
+
+
+def _open_tag_editor(app, full: str) -> None:
+    if not _is_media_file(full):
+        _toast(app, "No es un archivo multimedia")
+        return
     meta = app.meta_cache.get(full)
     app.meta_edit_file = full
     app.meta_edit_fields = [
@@ -640,6 +704,15 @@ def _start_tag_edit(app) -> None:
     app.meta_edit_cursor = 0
     app.meta_edit_editing = False
     app.meta_edit_mode = True
+
+
+def _start_tag_edit(app) -> None:
+    if not app.entries:
+        return
+    _, is_dir, full = app.entries[app.cursor]
+    if is_dir:
+        return
+    _open_tag_editor(app, full)
 
 
 def _do_playlist_remove(app, idx: int) -> None:

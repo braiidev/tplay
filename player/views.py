@@ -2,7 +2,7 @@ import os
 import curses
 
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV
-from .file_utils import time_str, ext_label, is_url as _is_url, is_video_file
+from .file_utils import time_str, ext_label, is_url as _is_url, is_video_file as _is_video_file
 from .ui import safe_addstr, draw_box, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN
 from . import keybindings as kb
 from .handlers import _get_current_key
@@ -419,12 +419,17 @@ def draw_playlist(app, h: int, w: int) -> None:
     for row, abs_idx in enumerate(visible):
         y = (3 if app.playlist_filter_mode else 2) + row
         name, path = app.playlist[abs_idx]
-        meta = app.meta_cache.get(path)
-        display_name = f"{meta.get('artist', '?')} - {meta.get('title', name)}" if (meta and meta.get('title')) else name
-        icon = "►" if app.stack.current and app.stack.current.path == path and app.audio.playing else ("◉" if _is_video_file(path) else "♪")
-        line = f"  {icon} {display_name}"
-        dur = meta.get('length', 0) if meta else 0
-        dur_str = time_str(dur) if dur > 0 else ""
+        exists = os.path.isfile(path)
+        if exists:
+            meta = app.meta_cache.get(path)
+            display_name = f"{meta.get('artist', '?')} - {meta.get('title', name)}" if (meta and meta.get('title')) else name
+            icon = "►" if app.stack.current and app.stack.current.path == path and app.audio.playing else ("◉" if _is_video_file(path) else "♪")
+            line = f"  {icon} {display_name}"
+            dur = meta.get('length', 0) if meta else 0
+            dur_str = time_str(dur) if dur > 0 else ""
+        else:
+            line = f"  ♪ <Inexistente>"
+            dur_str = ""
         dur_w = len(dur_str) + 3 if dur_str else 0
         max_w = w - PLAYLIST_MARGIN - dur_w
         if len(line) > max_w:
@@ -467,9 +472,10 @@ def draw_history(app, h: int, w: int) -> None:
             dur_str = time_str(dur) if dur > 0 else ""
         dur_w = len(dur_str) + 3 if dur_str else 0
         if exists:
-            base = name.rsplit('.', 1)[0] if '.' in name else name
+            meta = app.meta_cache.get(path)
+            display = f"{meta.get('artist', '?')} - {meta.get('title', name)}" if (meta and meta.get('title')) else name
             icon = "◉" if _is_video_file(path) else "♪"
-            line = f"  {icon} {base}  ({count}x)"
+            line = f"  {icon} {display}  ({count}x)"
         else:
             line = f"  ~ Archivo Inexistente  ({count}x)"
         max_w = w - 4 - dur_w
