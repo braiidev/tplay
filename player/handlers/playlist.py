@@ -5,7 +5,7 @@ import os
 from typing import TYPE_CHECKING
 
 from ..stack import StackItem
-from .shared import _prompt, _toast, _confirm
+from .shared import _prompt, _toast, _confirm, _clamp_scroll
 from .shared import _open_tag_editor, _rename_file
 
 if TYPE_CHECKING:
@@ -54,7 +54,7 @@ def handle_playlist(app: PlayerApp, key: int) -> None:
         app.playlist_cursor = 0
     elif key == ord("G"):
         app.playlist_cursor = len(app.playlist) - 1
-    elif key in (ord("\n"), 10, 13):
+    elif key in (10, 13):
         if app.playlist:
             _play_playlist_enter(app)
     elif key == ord("d"):
@@ -132,11 +132,7 @@ def handle_playlist(app: PlayerApp, key: int) -> None:
         _save_playlist(app)
 
     h, _ = app.stdscr.getmaxyx()
-    list_h = h - app.LIST_H
-    if app.playlist_cursor < app.playlist_scroll:
-        app.playlist_scroll = app.playlist_cursor
-    elif app.playlist_cursor >= app.playlist_scroll + list_h:
-        app.playlist_scroll = app.playlist_cursor - list_h + 1
+    app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.LIST_H)
 
 
 def _handle_playlist_filter(app: PlayerApp, key: int) -> None:
@@ -148,7 +144,7 @@ def _handle_playlist_filter(app: PlayerApp, key: int) -> None:
         app.playlist_scroll = 0
         curses.curs_set(0)
         return
-    if key in (ord("\n"), 10, 13):
+    if key in (10, 13):
         if app.playlist_filtered and app.playlist_cursor < len(app.playlist_filtered):
             idx = app.playlist_filtered[app.playlist_cursor]
             app.playlist_cursor = idx
@@ -162,14 +158,12 @@ def _handle_playlist_filter(app: PlayerApp, key: int) -> None:
         if app.playlist_filtered:
             app.playlist_cursor = min(app.playlist_cursor + 1, len(app.playlist_filtered) - 1)
         h, _ = app.stdscr.getmaxyx()
-        list_h = h - app.FILTER_LIST_H
-        if app.playlist_cursor >= app.playlist_scroll + list_h:
-            app.playlist_scroll = app.playlist_cursor - list_h + 1
+        app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.FILTER_LIST_H)
         return
     if key == curses.KEY_UP:
         app.playlist_cursor = max(app.playlist_cursor - 1, 0)
-        if app.playlist_cursor < app.playlist_scroll:
-            app.playlist_scroll = app.playlist_cursor
+        h, _ = app.stdscr.getmaxyx()
+        app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.FILTER_LIST_H)
         return
     if key in (127, curses.KEY_BACKSPACE):
         app.playlist_filter = app.playlist_filter[:-1]

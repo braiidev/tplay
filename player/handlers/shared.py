@@ -29,6 +29,14 @@ def _confirm(app: PlayerApp, label: str, callback: Callable[..., None]) -> None:
     curses.flushinp()
 
 
+def _clamp_scroll(cursor: int, scroll: int, list_h: int) -> int:
+    if cursor < scroll:
+        return cursor
+    if cursor >= scroll + list_h:
+        return cursor - list_h + 1
+    return scroll
+
+
 def _page_size(app: PlayerApp) -> int:
     h, _ = app.stdscr.getmaxyx()
     return int(max(1, h - app.LIST_H))

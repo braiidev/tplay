@@ -56,7 +56,7 @@ def draw_nav(win: curses.window, h: int, w: int) -> None:
 def draw_status(win: curses.window, h: int, w: int, audio: Any, playing: bool, current_file: str | None, volume: int,
                 shuffle: bool, repeat: bool, active_name: str, current_view: int,
                 stack: Any = None) -> None:
-    if current_view in (1, 5, 6):
+    if current_view == 1:  # V_LISTEN — status en su propio layout
         return
     status = curses.color_pair(PAIR_DESTACAR)
     if playing:

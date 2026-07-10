@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from ..file_utils import is_url as _is_url
 from ..stack import StackItem
-from .shared import _prompt, _toast, _confirm
+from .shared import _prompt, _toast, _confirm, _clamp_scroll
 from .shared import _do_clear_stack, _save_stack_as_playlist_cb
 from .shared import _open_tag_editor
 
@@ -91,7 +91,7 @@ def handle_stack_view(app: PlayerApp, key: int) -> None:
         return
     if not app.stack.items:
         return
-    if key in (ord("\n"), ord("\r"), curses.KEY_ENTER):
+    if key in (10, 13):
         app.stack.playhead = app.stack_cursor
         app._play_current()
         app.show_stack_view = False
@@ -137,11 +137,7 @@ def handle_stack_view(app: PlayerApp, key: int) -> None:
         app.stack_cursor = max(app.stack_cursor - page, 0)
 
     h, _ = app.stdscr.getmaxyx()
-    list_h = h - 8
-    if app.stack_cursor < app.stack_scroll:
-        app.stack_scroll = app.stack_cursor
-    elif app.stack_cursor >= app.stack_scroll + list_h:
-        app.stack_scroll = app.stack_cursor - list_h + 1
+    app.stack_scroll = _clamp_scroll(app.stack_cursor, app.stack_scroll, h - 8)
 
 
 def handle_goto(app: PlayerApp, key: int) -> None:
@@ -149,7 +145,7 @@ def handle_goto(app: PlayerApp, key: int) -> None:
         app.goto_mode = False
         curses.flushinp()
         return
-    if key in (ord("\n"), 10, 13):
+    if key in (10, 13):
         target = app.goto_mins * 60 + app.goto_secs
         app.audio.player.set_time(target * 1000)
         app.goto_mode = False

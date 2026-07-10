@@ -475,14 +475,14 @@ class PlayerApp:
             self.dialog = None
             curses.curs_set(0)
             curses.flushinp()
-            if cb and (chr(key).lower() in ("s", "y") or key in (ord("\n"), 10, 13)):
+            if cb and (chr(key).lower() in ("s", "y") or key in (10, 13)):
                 cb()
         elif d["type"] == "prompt":
             if key == 27:
                 self.dialog = None
                 curses.curs_set(0)
                 curses.flushinp()
-            elif key in (ord("\n"), 10, 13):
+            elif key in (10, 13):
                 buf = d["buf"].strip()
                 cb = d["callback"]
                 self.dialog = None
@@ -536,7 +536,7 @@ class PlayerApp:
             return
         h, w = self.stdscr.getmaxyx()
         compact = h < 16
-        box_w = min(w - 2, w - 2) if compact else min(60, w - 10)
+        box_w = w - 2 if compact else min(60, w - 10)
         inner_w = box_w - 2
         field_w = max(1, inner_w - len(d["label"]) - 6)
         if len(d["buf"]) <= field_w:
@@ -836,7 +836,7 @@ class PlayerApp:
                                         len(self.meta_edit_fields) - 1)
         elif key in (ord("k"), curses.KEY_UP):
             self.meta_edit_cursor = max(self.meta_edit_cursor - 1, 0)
-        elif key in (10, 13, curses.KEY_ENTER):
+        elif key in (10, 13):
             self.meta_edit_editing = True
             fname = self.meta_edit_keys[self.meta_edit_cursor]
             self.meta_edit_buf = (self.meta_edit_changed.get(fname)
@@ -922,10 +922,10 @@ class PlayerApp:
 
             if self.meta_edit_editing:
                 cur = self.meta_edit_cursor
-                compact = h < 16
-                y0 = 3 if compact else 4
+                meta_cpt = h < 16
+                y0 = 3 if meta_cpt else 4
                 total = len(self.meta_edit_fields)
-                list_h = total if not compact else max(2, h - y0 - 1)
+                list_h = total if not meta_cpt else max(2, h - y0 - 1)
                 scroll = max(0, min(cur, total - list_h)) if total > list_h else 0
                 cy = y0 + (cur - scroll)
                 cx = 6 + len(self.meta_edit_labels[cur]) + len(self.meta_edit_buf)

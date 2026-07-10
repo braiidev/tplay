@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from ..file_utils import list_dir as _list_dir
 from ..stack import StackItem
-from .shared import _prompt, _toast, _confirm
+from .shared import _prompt, _toast, _confirm, _clamp_scroll
 from .shared import _page_size, _play_file_direct, _rename_file
 from .shared import _open_tag_editor
 
@@ -47,7 +47,7 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
         app.cursor = 0
     elif key == ord("G"):
         app.cursor = len(app.entries) - 1
-    elif key in (ord("\n"), 10, 13, curses.KEY_RIGHT):
+    elif key in (10, 13, curses.KEY_RIGHT):
         if app.entries:
             name, is_dir, full = app.entries[app.cursor]
             if is_dir:
@@ -97,11 +97,7 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
         app._redo()
 
     h, _ = app.stdscr.getmaxyx()
-    list_h = h - app.LIST_H
-    if app.cursor < app.scroll:
-        app.scroll = app.cursor
-    elif app.cursor >= app.scroll + list_h:
-        app.scroll = app.cursor - list_h + 1
+    app.scroll = _clamp_scroll(app.cursor, app.scroll, h - app.LIST_H)
 
 
 def _handle_explorer_filter(app: PlayerApp, key: int) -> None:
@@ -113,7 +109,7 @@ def _handle_explorer_filter(app: PlayerApp, key: int) -> None:
         app.scroll = 0
         curses.curs_set(0)
         return
-    if key in (ord("\n"), 10, 13):
+    if key in (10, 13):
         if app.explorer_filtered and app.cursor < len(app.explorer_filtered):
             idx = app.explorer_filtered[app.cursor]
             name, is_dir, full = app.entries[idx]
@@ -325,7 +321,7 @@ def _handle_file_op_picker(app: PlayerApp, key: int) -> None:
         app.cursor = 0
     elif key == ord("G"):
         app.cursor = len(app.entries) - 1
-    elif key in (ord("\n"), 10, 13, ord("C"), ord("V")):
+    elif key in (10, 13, ord("C"), ord("V")):
         if app.entries:
             _, is_dir, full = app.entries[app.cursor]
             if is_dir:

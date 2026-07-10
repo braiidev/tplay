@@ -5,7 +5,7 @@ import os
 from typing import TYPE_CHECKING
 
 from ..stack import StackItem
-from .shared import _toast, _confirm
+from .shared import _toast, _confirm, _clamp_scroll
 from .shared import _play_file_direct, _open_tag_editor
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ def handle_history(app: PlayerApp, key: int) -> None:
         return
     if not app.history:
         return
-    if key in (ord("\n"), 10, 13):
+    if key in (10, 13):
         entry = app.history[app.history_cursor]
         path = entry.get("path", "")
         if os.path.isfile(path):
@@ -50,11 +50,7 @@ def handle_history(app: PlayerApp, key: int) -> None:
     elif key == curses.KEY_UP:
         app.history_cursor = max(app.history_cursor - 1, 0)
     h, _ = app.stdscr.getmaxyx()
-    list_h = h - app.LIST_H
-    if app.history_cursor < app.history_scroll:
-        app.history_scroll = app.history_cursor
-    elif app.history_cursor >= app.history_scroll + list_h:
-        app.history_scroll = app.history_cursor - list_h + 1
+    app.history_scroll = _clamp_scroll(app.history_cursor, app.history_scroll, h - app.LIST_H)
 
 
 def _add_from_history(app: PlayerApp, insert_mode: str = "append") -> None:

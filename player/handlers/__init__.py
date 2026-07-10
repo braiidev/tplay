@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 __all__ = [
-    "_prompt", "_toast", "_confirm", "_page_size",
+    "_prompt", "_toast", "_confirm", "_page_size", "_clamp_scroll",
     "_play_file_direct", "_do_clear_stack", "_save_stack_as_playlist_cb",
     "_rename_file", "_update_refs_after_rename", "_open_tag_editor",
     "_handle_update", "_do_update", "_restart_app",
@@ -31,7 +31,7 @@ __all__ = [
     "_get_current_key",
 ]
 
-from .shared import _prompt, _toast, _confirm, _page_size
+from .shared import _prompt, _toast, _confirm, _page_size, _clamp_scroll
 from .shared import _play_file_direct, _do_clear_stack, _save_stack_as_playlist_cb
 from .shared import _rename_file, _update_refs_after_rename, _open_tag_editor
 from .shared import _handle_update, _do_update, _restart_app

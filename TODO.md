@@ -42,11 +42,11 @@
 
 | ID  | Descripción | Archivo | Estado |
 | --- | ----------- | ------- | ------ |
-| N1  | `min(w-2, w-2)` redundante | app.py:492 | [ ] |
-| N2  | `ord("\n")`/`10`/`13` redundantes en múltiples sitios | varios | [ ] |
-| N3  | Scroll-clamping duplicado en 6 handlers | handlers.py:140+ | [ ] |
-| N4  | Magic numbers `(1, 5, 6)` para vistas inexistentes | ui.py:59 | [ ] |
-| N5  | `compact` shadoweado dentro de `_draw()` | app.py:858 | [ ] |
+| N1  | `min(w-2, w-2)` redundante | app.py | ✅ |
+| N2  | `ord("\n")`/`10`/`13` unificado a `(10, 13)` en todos lados | varios | ✅ |
+| N3  | Scroll-clamping duplicado → `_clamp_scroll()` helper | handlers/shared.py | ✅ |
+| N4  | Magic numbers `(1, 5, 6)` → `== 1` + comentario | ui.py | ✅ |
+| N5  | `compact` shadow → `meta_cpt` | app.py | ✅ |
 
 ## 🟣 L5 — Metadata / Covers (pendiente discusión)
 
@@ -82,3 +82,8 @@
 - **U3** — toast en shuffle/repeat toggle
 - **U4** — confirm acepta 's' y 'y'
 - **U5** — sleep timer resetea al hacer stop manual
+- **N1** — min(w-2, w-2) → w-2
+- **N2** — ord("\n")/10/13 unificado a (10, 13)
+- **N3** — scroll-clamping → _clamp_scroll() helper
+- **N4** — magic numbers (1,5,6) limpiado
+- **N5** — compact shadow → meta_cpt

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 from ..config import THEME_NAMES, COLORS
 from .. import keybindings as kb
-from .shared import _toast
+from .shared import _toast, _clamp_scroll
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -28,7 +28,7 @@ def handle_config(app: PlayerApp, key: int) -> None:
         app.config_cursor = min(app.config_cursor + 1, total - 1)
     elif key == curses.KEY_UP:
         app.config_cursor = max(app.config_cursor - 1, 0)
-    elif key in (curses.KEY_RIGHT, ord("\n"), 10, 13):
+    elif key in (curses.KEY_RIGHT, 10, 13):
         if total == 0:
             return
         key_name, _, ctype = app.config_items[app.config_cursor]
@@ -55,11 +55,7 @@ def handle_config(app: PlayerApp, key: int) -> None:
             _config_int_dec(app, key_name)
 
     h, _ = app.stdscr.getmaxyx()
-    list_h = h - 5
-    if app.config_cursor < app.config_scroll:
-        app.config_scroll = app.config_cursor
-    elif app.config_cursor >= app.config_scroll + list_h:
-        app.config_scroll = app.config_cursor - list_h + 1
+    app.config_scroll = _clamp_scroll(app.config_cursor, app.config_scroll, h - 5)
 
 
 def _cycle_theme(app: PlayerApp, direction: int) -> None:
@@ -144,7 +140,7 @@ def handle_keybindings(app: PlayerApp, key: int) -> None:
         app.kb_cursor = min(app.kb_cursor + 1, len(kb.BINDABLE_ACTIONS) - 1)
     elif key == curses.KEY_UP:
         app.kb_cursor = max(app.kb_cursor - 1, 0)
-    elif key in (ord("\n"), 10, 13):
+    elif key in (10, 13):
         action = kb.BINDABLE_ACTIONS[app.kb_cursor]
         app.kb_capturing = True
         app.kb_capturing_action = action
