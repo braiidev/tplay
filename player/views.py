@@ -97,7 +97,7 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
             safe_addstr(app.stdscr, h - 4, 2,
                         "  [Enter]►  [Tab] Volver  [d]el  [x]clear  [J/K]orden  [s]guardar", texto, h, w)
             safe_addstr(app.stdscr, h - 3, 2,
-                        "  [r/R]modo item  [g]Inicio  [G]Fin  [o]URL", texto, h, w)
+                        "  [r/R]modo item  [g]Inicio  [G]Fin", texto, h, w)
         return
 
     draw_box(app.stdscr, h, w, "Listen")
@@ -192,7 +192,7 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
     line1 = " " + "   ".join(icons)
     line2 = " " + "   ".join(keys)
 
-    extra = "  [Tab] Pila │ [o] URL │ [g] Ir a │ [t/T] Tmp │ [h/l] Buscar │ [r]Azar [R]Rep [m]Sil"
+    extra = "  [Tab] Pila │ [g] Ir a │ [t/T] Tmp │ [h/l] Buscar │ [r]Azar [R]Rep [m]Sil"
 
     safe_addstr(app.stdscr, h - 5, 2, line1[:w - 4], dest, h, w)
     safe_addstr(app.stdscr, h - 4, 2, line2[:w - 4], texto, h, w)
