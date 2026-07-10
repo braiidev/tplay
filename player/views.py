@@ -8,6 +8,47 @@ from . import keybindings as kb
 from .handlers import _get_current_key
 
 
+def draw_item_row(win, y, name, path, meta, *,
+                  is_cursor=False, is_playing=False, is_stream=False,
+                  exists=True, suffix="", mode_tag="",
+                  left_margin=6, attr=None, cursor_attr=None,
+                  dur_attr=None, fallback_icon="♪",
+                  fallback_label="<Inexistente>", h=None, w=None):
+    if attr is None:
+        attr = curses.color_pair(PAIR_TEXTO)
+    if cursor_attr is None:
+        cursor_attr = attr
+    if dur_attr is None:
+        dur_attr = attr
+
+    if not exists:
+        line = f"  {fallback_icon} {fallback_label}{suffix}"
+        safe_addstr(win, y, 2, line, attr, h, w)
+        return
+
+    if is_stream:
+        display = f"[R] {name}"
+    elif meta and meta.get('title'):
+        display = f"{meta.get('artist', '?')} - {meta.get('title', name)}"
+    else:
+        display = name
+
+    icon = "►" if is_playing else ("◉" if _is_video_file(path) else "♪")
+    line = f"  {icon} {display}{mode_tag}{suffix}"
+
+    dur = meta.get('length', 0) if meta else 0
+    dur_str = time_str(dur) if dur > 0 else ""
+    dur_w = len(dur_str) + 3 if dur_str else 0
+    max_w = w - left_margin - dur_w
+    if len(line) > max_w:
+        line = line[:max_w - 1] + "…"
+
+    display_attr = (cursor_attr | curses.A_REVERSE) if is_cursor else attr
+    safe_addstr(win, y, 2, line, display_attr, h, w)
+    if dur_str:
+        safe_addstr(win, y, w - len(dur_str) - 2, dur_str, dur_attr, h, w)
+
+
 def _center(s: str, w: int) -> str:
     s = s.strip()
     if len(s) >= w:
@@ -33,35 +74,20 @@ def draw_listen(app, h: int, w: int) -> None:
             for row, item in enumerate(visible):
                 y = 2 + row
                 idx = app.stack_scroll + row
-                meta = app.meta_cache.get(item.path) if not _is_url(item.path) else None
                 is_stream = _is_url(item.path)
-                if is_stream:
-                    display_name = f"[R] {item.name}"
-                elif meta and meta.get('title'):
-                    display_name = f"{meta.get('artist', '?')} - {meta.get('title', item.name)}"
-                else:
-                    display_name = item.name
+                meta = app.meta_cache.get(item.path) if not is_stream else None
                 is_playing = (app.stack.playhead == idx) and app.audio.playing
-                icon = "►" if is_playing else ("◉" if _is_video_file(item.path) else "♪")
                 mode_tag = ""
                 if item.mode == "repeat_once":
                     mode_tag = " [1x]"
                 elif item.mode == "repeat_inf":
                     mode_tag = " [∞]"
-                line = f"  {icon} {display_name}{mode_tag}"
-                dur = meta.get('length', 0) if meta else 0
-                dur_str = time_str(dur) if dur > 0 else ""
-                dur_w = len(dur_str) + 3 if dur_str else 0
-                max_w = w - 8 - dur_w
-                if len(line) > max_w:
-                    line = line[:max_w - 1] + "…"
                 attr = dest if is_playing else texto
-                if idx == app.stack_cursor:
-                    safe_addstr(app.stdscr, y, 2, line, attr | curses.A_REVERSE, h, w)
-                else:
-                    safe_addstr(app.stdscr, y, 2, line, attr, h, w)
-                if dur_str:
-                    safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, attr, h, w)
+                draw_item_row(app.stdscr, y, item.name, item.path, meta,
+                              is_cursor=(idx == app.stack_cursor),
+                              is_playing=is_playing, is_stream=is_stream,
+                              mode_tag=mode_tag, left_margin=8, attr=attr,
+                              h=h, w=w)
             safe_addstr(app.stdscr, h - 4, 2,
                         "  [Enter]►  [Tab] Volver  [d]el  [x]clear  [J/K]orden  [s]guardar", texto, h, w)
             safe_addstr(app.stdscr, h - 3, 2,
@@ -420,29 +446,14 @@ def draw_playlist(app, h: int, w: int) -> None:
         y = (3 if app.playlist_filter_mode else 2) + row
         name, path = app.playlist[abs_idx]
         exists = os.path.isfile(path)
-        if exists:
-            meta = app.meta_cache.get(path)
-            display_name = f"{meta.get('artist', '?')} - {meta.get('title', name)}" if (meta and meta.get('title')) else name
-            icon = "►" if app.stack.current and app.stack.current.path == path and app.audio.playing else ("◉" if _is_video_file(path) else "♪")
-            line = f"  {icon} {display_name}"
-            dur = meta.get('length', 0) if meta else 0
-            dur_str = time_str(dur) if dur > 0 else ""
-        else:
-            line = f"  ♪ <Inexistente>"
-            dur_str = ""
-        dur_w = len(dur_str) + 3 if dur_str else 0
-        max_w = w - PLAYLIST_MARGIN - dur_w
-        if len(line) > max_w:
-            line = line[:max_w - 1] + "…"
-        attr = texto
+        meta = app.meta_cache.get(path) if exists else None
+        is_playing = app.stack.current and app.stack.current.path == path and app.audio.playing
         cur = app.playlist_cursor
         is_cursor = (cur < len(indices) and abs_idx == indices[cur])
-        if is_cursor:
-            safe_addstr(app.stdscr, y, 2, line, attr | curses.A_REVERSE, h, w)
-        else:
-            safe_addstr(app.stdscr, y, 2, line, attr, h, w)
-        if dur_str:
-            safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, attr, h, w)
+        draw_item_row(app.stdscr, y, name, path, meta,
+                      is_cursor=is_cursor, is_playing=is_playing,
+                      exists=exists, left_margin=PLAYLIST_MARGIN,
+                      attr=texto, dur_attr=texto, h=h, w=w)
 
 
 def draw_history(app, h: int, w: int) -> None:
@@ -465,29 +476,13 @@ def draw_history(app, h: int, w: int) -> None:
         path = entry.get("path", "")
         count = entry.get("count", 0)
         exists = os.path.isfile(path)
-        dur_str = ""
-        if exists:
-            meta = app.meta_cache.get(path)
-            dur = meta.get('length', 0) if meta else 0
-            dur_str = time_str(dur) if dur > 0 else ""
-        dur_w = len(dur_str) + 3 if dur_str else 0
-        if exists:
-            meta = app.meta_cache.get(path)
-            display = f"{meta.get('artist', '?')} - {meta.get('title', name)}" if (meta and meta.get('title')) else name
-            icon = "◉" if _is_video_file(path) else "♪"
-            line = f"  {icon} {display}  ({count}x)"
-        else:
-            line = f"  ~ Archivo Inexistente  ({count}x)"
-        max_w = w - 4 - dur_w
-        if len(line) > max_w:
-            line = line[:max_w - 1] + "…"
-        attr = destacar if idx == app.history_cursor else texto
-        if idx == app.history_cursor:
-            safe_addstr(app.stdscr, y, 2, line, attr | curses.A_REVERSE, h, w)
-        else:
-            safe_addstr(app.stdscr, y, 2, line, attr, h, w)
-        if dur_str:
-            safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, texto, h, w)
+        meta = app.meta_cache.get(path) if exists else None
+        draw_item_row(app.stdscr, y, name, path, meta,
+                      is_cursor=(idx == app.history_cursor),
+                      exists=exists, suffix=f" ({count}x)",
+                      left_margin=4, attr=texto, cursor_attr=destacar,
+                      dur_attr=texto, fallback_icon="~",
+                      fallback_label="Archivo Inexistente", h=h, w=w)
 
 
 def draw_config(app, h: int, w: int) -> None:
