@@ -4,6 +4,7 @@ import curses
 import os
 import shutil
 import subprocess
+import threading
 import time
 import copy
 from typing import TYPE_CHECKING, Any, Callable
@@ -97,6 +98,7 @@ class PlayerApp:
         self.config_scroll: int = 0
         self.update_available: bool = False
         self.update_check_done: bool = False
+        self._update_toast_shown: bool = False
         self.update_behind: int = 0
 
         self.history: list[dict[str, Any]] = load_history()
@@ -153,7 +155,7 @@ class PlayerApp:
         curses.start_color()
         curses.use_default_colors()
         self._apply_theme()
-        self._check_updates()
+        self._start_update_check()
         self._resume_session()
 
     @property
@@ -220,27 +222,24 @@ class PlayerApp:
             volume=self.audio.volume,
         )
 
-    def _check_updates(self) -> None:
-        repo = self._repo_dir
-        git_dir = os.path.join(repo, ".git")
+    def _start_update_check(self) -> None:
+        self.update_check_done = False
+        self.update_available = False
+        self.update_behind = 0
+        git_dir = os.path.join(self._repo_dir, ".git")
         if not os.path.isdir(git_dir):
             self.update_check_done = True
             return
-        try:
-            h, w = self.stdscr.getmaxyx()
-            self.stdscr.erase()
-            ui.safe_addstr(self.stdscr, h // 2, max(0, (w - 24) // 2),
-                           " Buscando actualizaciones... ", None, h, w)
-            self.stdscr.refresh()
-        except curses.error:
-            pass
+        t = threading.Thread(target=self._check_updates, daemon=True)
+        t.start()
 
+    def _check_updates(self) -> None:
         try:
-            subprocess.run(["git", "fetch", "origin"], cwd=repo,
+            subprocess.run(["git", "fetch", "origin"], cwd=self._repo_dir,
                            capture_output=True, timeout=10)
             result = subprocess.run(
                 ["git", "rev-list", "--count", "HEAD..origin/main"],
-                cwd=repo, capture_output=True, text=True, timeout=10,
+                cwd=self._repo_dir, capture_output=True, text=True, timeout=10,
             )
             behind = int(result.stdout.strip() or 0)
             self.update_behind = behind
@@ -405,6 +404,12 @@ class PlayerApp:
             if cur and cur != self._history_last:
                 self._add_history(cur)
                 self._history_last = cur
+            if self.update_check_done and not self._update_toast_shown:
+                self._update_toast_shown = True
+                if self.update_available:
+                    n = self.update_behind
+                    s = "s" if n != 1 else ""
+                    self.toast(f"Actualización disponible ({n} commit{s})")
             key = self.stdscr.getch()
             if key == curses.KEY_RESIZE:
                 curses.resizeterm(*self.stdscr.getmaxyx())
@@ -470,7 +475,7 @@ class PlayerApp:
             self.dialog = None
             curses.curs_set(0)
             curses.flushinp()
-            if cb and (chr(key).lower() == "s" or key in (ord("\n"), 10, 13)):
+            if cb and (chr(key).lower() in ("s", "y") or key in (ord("\n"), 10, 13)):
                 cb()
         elif d["type"] == "prompt":
             if key == 27:
@@ -636,6 +641,8 @@ class PlayerApp:
         if key in (ord("s"), ord("S")):
             if self.current_view != self.V_PLAYLIST and not self.show_stack_view:
                 self.audio.stop()
+                self.audio.sleep_timer_active = False
+                self.audio.sleep_timer_expired = False
                 curses.flushinp()
                 return True
         if key == ord("n"):
@@ -656,10 +663,12 @@ class PlayerApp:
             return True
         if key == ord("r"):
             self.stack.shuffle = not self.stack.shuffle
+            self.toast("Aleatorio: " + ("ON" if self.stack.shuffle else "OFF"))
             curses.flushinp()
             return True
         if key == ord("R"):
             self.stack.repeat = not self.stack.repeat
+            self.toast("Repetir: " + ("ON" if self.stack.repeat else "OFF"))
             curses.flushinp()
             return True
         if key == ord("m"):

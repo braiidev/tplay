@@ -33,10 +33,10 @@
 | ID  | Descripción | Archivo | Estado |
 | --- | ----------- | ------- | ------ |
 | U1  | Sin PgDn/PgUp ni g/G en vista Playlist | handlers/playlist.py | ✅ |
-| U2  | Update check bloquea UI al inicio (git fetch sync, hasta 10s) | app.py:198-226 | [ ] |
-| U3  | Sin toast al toggle shuffle/repeat | app.py:615-622 | [ ] |
-| U4  | Confirm dialog usa "s" para sí (vs "y" estándar) | app.py:431 | [ ] |
-| U5  | Sleep timer muestra "FIN" tras stop manual | audio.py:62 | [ ] |
+| U2  | Update check bloquea UI al inicio → async thread | app.py:156 | ✅ |
+| U3  | Toast al toggle shuffle/repeat agregado | app.py:663-664 | ✅ |
+| U4  | Confirm acepta 's' y 'y' (ambos) | app.py:478 | ✅ |
+| U5  | Sleep timer resetea al hacer stop manual | app.py:643-644 | ✅ |
 
 ## ⚪ CLEANUP (deuda técnica menor)
 
@@ -78,3 +78,7 @@
 - **A5** — playlist property con validación de entries inválidas (log)
 - **A6** — deferred imports se mantienen diferidos
 - **U1** — PgDn, PgUp, g, G en vista Playlist
+- **U2** — update check async (threading.Thread), UI sin bloqueo
+- **U3** — toast en shuffle/repeat toggle
+- **U4** — confirm acepta 's' y 'y'
+- **U5** — sleep timer resetea al hacer stop manual
