@@ -946,7 +946,12 @@ def _confirm_file_op(app: PlayerApp, dest_dir: str) -> None:
     label = "Copiar" if mode == "copy" else "Mover"
     name = os.path.basename(src)
     dest_name = os.path.basename(dest_dir)
-    _confirm(app, f"¿{label} '{name}' a '{dest_name}'?", lambda: _do_file_op(app, dest_dir))
+    dest = os.path.join(dest_dir, name)
+    if os.path.exists(dest):
+        _confirm(app, f"'{name}' ya existe en '{dest_name}'. Si continuas se sobreescribirá. ¿Continuar?",
+                 lambda: _do_file_op(app, dest_dir))
+    else:
+        _confirm(app, f"¿{label} '{name}' a '{dest_name}'?", lambda: _do_file_op(app, dest_dir))
 
 
 def _handle_file_op_picker(app: PlayerApp, key: int) -> None:
