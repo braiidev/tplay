@@ -506,10 +506,12 @@ def draw_history(app: PlayerApp, h: int, w: int) -> None:
         name = entry.get("name", "?")
         path = entry.get("path", "")
         count = entry.get("count", 0)
-        exists = os.path.isfile(path)
-        meta = app.meta_cache.get(path) if exists else None
+        is_stream = _is_url(path)
+        exists = is_stream or os.path.isfile(path)
+        meta = app.meta_cache.get(path) if exists and not is_stream else None
         draw_item_row(app.stdscr, y, name, path, meta,
                       is_cursor=(idx == app.history_cursor),
+                      is_stream=is_stream,
                       exists=exists, suffix=f" ({count}x)",
                       left_margin=4, attr=texto, cursor_attr=destacar,
                       dur_attr=texto, fallback_icon="~",

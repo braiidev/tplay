@@ -415,9 +415,10 @@ class PlayerApp:
             return
         self._play_next()
 
-    def _add_history(self, path: str) -> None:
+    def _add_history(self, path: str, name: str | None = None) -> None:
         self.history = [h for h in self.history if h.get("path") != path]
-        self.history.insert(0, {"name": os.path.basename(path), "path": path, "count": 1})
+        entry_name = name if name else os.path.basename(path)
+        self.history.insert(0, {"name": entry_name, "path": path, "count": 1})
         if len(self.history) > 100:
             self.history.pop()
 

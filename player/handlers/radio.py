@@ -57,7 +57,7 @@ def _do_play_radio(app: PlayerApp) -> None:
     app.stack.items = [item]
     app.audio.play_file(r["url"])
     app.current_view = app.V_LISTEN
-    app._add_history(r["url"])
+    app._add_history(r["url"], name=r["name"])
 
 
 def _do_delete_radio(app: PlayerApp) -> None:
