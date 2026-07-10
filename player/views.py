@@ -2,7 +2,7 @@ import os
 import curses
 
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV
-from .file_utils import time_str, ext_label, is_url as _is_url
+from .file_utils import time_str, ext_label, is_url as _is_url, is_video_file
 from .ui import safe_addstr, draw_box, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN
 from . import keybindings as kb
 from .handlers import _get_current_key
@@ -42,7 +42,7 @@ def draw_listen(app, h: int, w: int) -> None:
                 else:
                     display_name = item.name
                 is_playing = (app.stack.playhead == idx) and app.audio.playing
-                icon = "►" if is_playing else "♪"
+                icon = "►" if is_playing else ("◉" if _is_video_file(item.path) else "♪")
                 mode_tag = ""
                 if item.mode == "repeat_once":
                     mode_tag = " [1x]"
@@ -189,7 +189,7 @@ def draw_mini_stack(app, win, h: int, w: int) -> None:
         y = 1 + i
         idx = app.stack_scroll + i
         is_playing = (app.stack.playhead == idx) and app.audio.playing
-        icon = "►" if is_playing else "♪"
+        icon = "►" if is_playing else ("◉" if _is_video_file(item.path) else "♪")
         line = f" {icon} {item.name}"
         max_w = w - 3
         if len(line) > max_w:
@@ -362,7 +362,8 @@ def draw_explorer(app, h: int, w: int) -> None:
             dur_str = ""
         else:
             base = name.rsplit('.', 1)[0] if '.' in name else name
-            line = f"  ♪ {base}  [{label}]"
+            icon = "◉" if _is_video_file(full) else "♪"
+            line = f"  {icon} {base}  [{label}]"
             attr = texto
             meta = app.meta_cache.get(full)
             dur = meta.get('length', 0) if meta else 0
@@ -420,7 +421,7 @@ def draw_playlist(app, h: int, w: int) -> None:
         name, path = app.playlist[abs_idx]
         meta = app.meta_cache.get(path)
         display_name = f"{meta.get('artist', '?')} - {meta.get('title', name)}" if (meta and meta.get('title')) else name
-        icon = "►" if app.stack.current and app.stack.current.path == path and app.audio.playing else "♪"
+        icon = "►" if app.stack.current and app.stack.current.path == path and app.audio.playing else ("◉" if _is_video_file(path) else "♪")
         line = f"  {icon} {display_name}"
         dur = meta.get('length', 0) if meta else 0
         dur_str = time_str(dur) if dur > 0 else ""
@@ -467,7 +468,8 @@ def draw_history(app, h: int, w: int) -> None:
         dur_w = len(dur_str) + 3 if dur_str else 0
         if exists:
             base = name.rsplit('.', 1)[0] if '.' in name else name
-            line = f"  ♪ {base}  ({count}x)"
+            icon = "◉" if _is_video_file(path) else "♪"
+            line = f"  {icon} {base}  ({count}x)"
         else:
             line = f"  ~ Archivo Inexistente  ({count}x)"
         max_w = w - 4 - dur_w

@@ -60,3 +60,7 @@ _URL_SCHEMES = ("http://", "https://", "rtmp://", "mms://", "rtsp://", "ftp://")
 
 def is_url(path: str) -> bool:
     return path.lower().startswith(_URL_SCHEMES)
+
+
+def is_video_file(path: str) -> bool:
+    return path.lower().endswith(VIDEO_EXT)
