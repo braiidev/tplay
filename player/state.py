@@ -16,13 +16,14 @@ def load_state() -> dict[str, Any]:
     except (FileNotFoundError, json.JSONDecodeError, ValueError):
         return {"playing": False, "file": "", "position": 0,
                 "stack_items": [], "playhead": -1, "shuffle": False,
-                "repeat": False, "volume": 75}
+                "repeat": False, "volume": 75, "rate": 1.0}
 
 
 def save_state(playing: bool, file: str = "", position: int = 0,
                stack_items: list[dict[str, Any]] | None = None,
                playhead: int = -1, shuffle: bool = False,
-               repeat: bool = False, volume: int = 75) -> None:
+               repeat: bool = False, volume: int = 75,
+               rate: float = 1.0) -> None:
     try:
         os.makedirs(CONFIG_DIR, exist_ok=True)
         with open(STATE_FILE, "w") as f:
@@ -35,6 +36,7 @@ def save_state(playing: bool, file: str = "", position: int = 0,
                 "shuffle": shuffle,
                 "repeat": repeat,
                 "volume": volume,
+                "rate": rate,
             }, f)
     except (OSError, PermissionError):
         pass

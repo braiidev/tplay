@@ -243,6 +243,7 @@ class PlayerApp:
             shuffle=self.stack.shuffle,
             repeat=self.stack.repeat,
             volume=self.audio.volume,
+            rate=self.audio.rate,
         )
 
     def _start_update_check(self) -> None:
@@ -336,6 +337,9 @@ class PlayerApp:
         vol = st.get("volume", 75)
         if 0 <= vol <= 100:
             self.audio.set_volume(vol)
+        rate = st.get("rate", 1.0)
+        if rate != 1.0:
+            self.audio.set_rate(rate)
         if st.get("playing") and self.stack.current and os.path.isfile(self.stack.current.path):
             self.audio.play_file(self.stack.current.path)
             pos = st.get("position", 0)

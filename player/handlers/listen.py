@@ -72,6 +72,12 @@ def handle_listen(app: PlayerApp, key: int) -> None:
         _toast(app, "Repetir: " + ("ON" if app.stack.repeat else "OFF"))
     elif key == ord("m"):
         app.audio.toggle_mute()
+    elif key == ord("w"):
+        app.audio.set_rate(app.audio.rate + 0.25)
+        _toast(app, f"Velocidad: {app.audio.rate:.2f}x")
+    elif key == ord("W"):
+        app.audio.set_rate(app.audio.rate - 0.25)
+        _toast(app, f"Velocidad: {app.audio.rate:.2f}x")
     elif key == ord("t"):
         app._toggle_sleep_timer()
     elif key == ord("T"):

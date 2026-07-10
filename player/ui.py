@@ -75,6 +75,8 @@ def draw_status(win: curses.window, h: int, w: int, audio: Any, playing: bool, c
             txt += " [R]"
         if audio.muted:
             txt += " [M]"
+        if audio.rate != 1.0:
+            txt += f" [{audio.rate:.2f}x]"
         timer_str = audio.sleep_timer_str()
         if timer_str:
             txt += f" {timer_str}"
@@ -233,6 +235,11 @@ HELP_TABS: list[HelpTab] = [
             ("", None),
             ("    r         Aleatorio ON/OFF", PAIR_TEXTO),
             ("    R         Repetir ON/OFF", PAIR_TEXTO),
+            ("", None),
+            ("  VELOCIDAD", PAIR_DESTACAR),
+            ("", None),
+            ("    w         Aumentar velocidad (+0.25x)", PAIR_TEXTO),
+            ("    W         Disminuir velocidad (-0.25x)", PAIR_TEXTO),
             ("", None),
             ("  TIEMPO", PAIR_DESTACAR),
             ("", None),

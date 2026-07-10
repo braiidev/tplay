@@ -23,6 +23,7 @@ class AudioEngine:
     sleep_timer_expired: bool
     muted: bool
     _prev_volume: int
+    rate: float
 
     def __init__(self) -> None:
         self._saved_stderr = os.dup(2)
@@ -43,6 +44,7 @@ class AudioEngine:
         self.sleep_timer_expired = False
         self.muted = False
         self._prev_volume = 50
+        self.rate = 1.0
 
     @property
     def is_playing(self) -> bool:
@@ -63,6 +65,7 @@ class AudioEngine:
         self.paused = False
         self.current_file = None
         self.sleep_timer_active = False
+        self.rate = 1.0
 
     def toggle_mute(self) -> None:
         if self.muted:
@@ -78,6 +81,10 @@ class AudioEngine:
         self.player.audio_set_volume(self.volume)
         if self.volume > 0:
             self.muted = False
+
+    def set_rate(self, rate: float) -> None:
+        self.rate = max(0.25, min(4.0, rate))
+        self.player.set_rate(self.rate)
 
     def play_file(self, path: str) -> None:
         old = self.player.get_media()

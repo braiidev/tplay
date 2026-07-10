@@ -178,6 +178,8 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
         "[R]" if app.stack.repeat  else "   ",
         "[M]" if app.audio.muted   else "   ",
     ]
+    if app.audio.rate != 1.0:
+        st_parts.append(f"[{app.audio.rate:.2f}x]")
     states_i = _center(" ".join(st_parts), cw[5])
 
     icons = [prev_i, play_i, next_i, stop_i, vol_i, states_i]
@@ -305,6 +307,8 @@ def draw_listen_compact(app: PlayerApp, h: int, w: int) -> None:
         states += " R"
     if app.audio.muted:
         states += " M"
+    if app.audio.rate != 1.0:
+        states += f" {app.audio.rate:.2f}x"
     if app.audio.sleep_timer_active:
         states += " ◴"
     elif app.audio.sleep_timer_expired:

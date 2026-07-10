@@ -82,7 +82,7 @@ player/
 - **F28** — Streaming/Radio (URL, M3U, radios guardadas) ← ✅ hecho (vista Radios con `5`, persistente, historial automático)
 
 ### Últimos tags de versión
-- v1.5.24 — fix: auditoría UI — dead text, omisiones, colores, naming, HELP_TABS, cursor inexistentes, historial radios
+- v1.5.25 — feat: F2 speed control (w/W ±0.25x, 0.25x–4.0x, persistente en state.json)
 - v1.5.23 — fix: Stack d con confirmación, audio para al último item, eliminar helper [o] obsoleto
 - v1.5.22 — feat: ←/→ para mover cursor en Explorer filter, Playlist filter y Meta editor
 - v1.5.21 — feat: filtros con cursor visual, hjk global→Listen, s/S consistente, radio e/E cyclic, dir picker, KEYBINDINGS.md
