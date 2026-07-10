@@ -668,8 +668,8 @@ def _rename_file(app: PlayerApp, full: str, name: str,
             return
         if os.path.exists(new_path):
             _confirm(app,
-                     f"'{buf}' ya existe. ¿Sobrescribir?",
-                     lambda a: _do_rename(a, full, new_path))
+                     f"'{buf}' ya existe. Si continuas se sobreescribirá. ¿Continuar?",
+                     lambda: _do_rename(app, full, new_path))
         else:
             _do_rename(app, full, new_path)
 
