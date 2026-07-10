@@ -538,9 +538,7 @@ def _add_from_explorer(app, insert_mode: str = "append") -> None:
         return
     has_playlists = len(app.playlist_data) > 0
     if has_playlists:
-        app.awaiting_dest = True
-        app._pending_add_path = full
-        app._pending_add_mode = insert_mode
+        app.dialog = {"type": "dest", "path": full, "mode": insert_mode}
     else:
         item = StackItem(path=full, name=os.path.basename(full))
         if insert_mode == "after_current":
@@ -1123,10 +1121,8 @@ def _save_keybindings(app) -> None:
 # ── Prompt helpers ──
 
 def _prompt(app, label: str, callback, initial: str = "") -> None:
-    app.prompt_mode = True
-    app.prompt_label = label
-    app.prompt_buf = initial
-    app.prompt_callback = callback
+    app.dialog = {"type": "prompt", "label": label, "buf": initial,
+                  "callback": callback, "scroll": 0}
     curses.curs_set(1)
     curses.flushinp()
 
@@ -1136,9 +1132,7 @@ def _toast(app, msg: str) -> None:
 
 
 def _confirm(app, label: str, callback) -> None:
-    app.confirm_mode = True
-    app.confirm_label = label
-    app.confirm_callback = callback
+    app.dialog = {"type": "confirm", "label": label, "callback": callback}
     curses.flushinp()
 
 

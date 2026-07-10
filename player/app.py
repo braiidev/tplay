@@ -49,11 +49,7 @@ class PlayerApp:
         self.playlist_cursor = 0
         self.playlist_scroll = 0
 
-        self.prompt_mode = False
-        self.prompt_buf = ""
-        self.prompt_label = ""
-        self.prompt_callback = None
-        self.prompt_scroll = 0
+        self.dialog: dict | None = None  # {"type": "confirm"|"prompt"|"dest", ...}
 
         self.meta_cache = MetadataCache()
         self.stack = Stack()
@@ -104,10 +100,6 @@ class PlayerApp:
         self.undo_stack = []
         self.redo_stack = []
 
-        self.confirm_mode = False
-        self.confirm_label = ""
-        self.confirm_callback = None
-
         self.file_op_mode = None
         self.file_op_source = None
         self._file_undo = None
@@ -117,9 +109,7 @@ class PlayerApp:
         self.toast_msg = ""
         self.toast_ticks = 0
 
-        self.awaiting_dest = False
-        self._pending_add_path = ""
-        self._pending_add_mode: str = "append"
+        self.dialog: dict | None = None
 
         self._setup_keybindings()
         self._build_config_tabs()
@@ -361,10 +351,8 @@ class PlayerApp:
                 self._history_last = cur
             key = self.stdscr.getch()
             if key != -1:
-                if self.confirm_mode:
-                    self._handle_confirm(key)
-                elif self.prompt_mode:
-                    self._handle_prompt(key)
+                if self.dialog:
+                    self._handle_dialog_key(key)
                 elif self.meta_edit_mode:
                     self._handle_meta_edit(key)
                 else:
@@ -381,10 +369,6 @@ class PlayerApp:
             return
         if self.current_view == self.V_CONFIG and self.kb_keybinding_view:
             handlers.handle_keybindings(self, key)
-            return
-
-        if self.awaiting_dest:
-            self._handle_dest_key(key)
             return
 
         # Config tab navigation with H/L (Shift) — before hjkl aliasing
@@ -417,39 +401,82 @@ class PlayerApp:
         if handler:
             handler(self, key)
 
-    def _handle_dest_key(self, key: int) -> None:
-        if key in (27,):
-            self.awaiting_dest = False
-            self._pending_add_path = ""
+    def _handle_dialog_key(self, key: int) -> None:
+        d = self.dialog
+        if d["type"] == "confirm":
+            cb = d["callback"]
+            self.dialog = None
+            curses.curs_set(0)
             curses.flushinp()
-            return
-        if key == ord("s"):
-            item = StackItem(path=self._pending_add_path,
-                             name=os.path.basename(self._pending_add_path))
-            if self._pending_add_mode == "append":
-                self.stack.append(item)
-            elif self._pending_add_mode == "after_current":
-                self.stack.insert_after_current(item)
-            if self.stack.playhead == 0 and not self.audio.playing:
-                self._play_current()
-        elif key == ord("p"):
-            name = os.path.basename(self._pending_add_path)
-            self._push_snapshot()
-            if self._pending_add_mode == "after_current":
-                pos = self.playlist_cursor + 1 if self.playlist else 0
-                self.playlist.insert(pos, (name, self._pending_add_path))
+            if cb and (chr(key).lower() == "s" or key in (ord("\n"), 10, 13)):
+                cb()
+        elif d["type"] == "prompt":
+            if key == 27:
+                self.dialog = None
+                curses.curs_set(0)
+                curses.flushinp()
+            elif key in (ord("\n"), 10, 13):
+                buf = d["buf"].strip()
+                cb = d["callback"]
+                self.dialog = None
+                curses.curs_set(0)
+                if cb:
+                    cb(self, buf)
+            elif key in (127, curses.KEY_BACKSPACE):
+                d["buf"] = d["buf"][:-1]
+                self._clamp_prompt_scroll()
+            elif key == curses.KEY_LEFT:
+                d["scroll"] = max(0, d["scroll"] - 5)
+            elif key == curses.KEY_RIGHT:
+                d["scroll"] = min(len(d["buf"]), d["scroll"] + 5)
+            elif 32 <= key <= 126 and len(d["buf"]) < 60:
+                d["buf"] += chr(key)
+                self._clamp_prompt_scroll()
+        elif d["type"] == "dest":
+            if key in (27,):
+                self.dialog = None
+                curses.flushinp()
+                return
+            if key == ord("s"):
+                item = StackItem(path=d["path"],
+                                 name=os.path.basename(d["path"]))
+                if d["mode"] == "append":
+                    self.stack.append(item)
+                elif d["mode"] == "after_current":
+                    self.stack.insert_after_current(item)
+                if self.stack.playhead == 0 and not self.audio.playing:
+                    self._play_current()
+            elif key == ord("p"):
+                name = os.path.basename(d["path"])
+                self._push_snapshot()
+                if d["mode"] == "after_current":
+                    pos = self.playlist_cursor + 1 if self.playlist else 0
+                    self.playlist.insert(pos, (name, d["path"]))
+                else:
+                    self.playlist.append((name, d["path"]))
+                handlers._save_playlist(self)
+                self.toast(f"Añadido a '{self.active_name}'")
             else:
-                self.playlist.append((name, self._pending_add_path))
-            handlers._save_playlist(self)
-            self.toast(f"Añadido a '{self.active_name}'")
-        else:
-            self.awaiting_dest = False
-            self._pending_add_path = ""
+                self.dialog = None
+                curses.flushinp()
+                return
+            self.dialog = None
             curses.flushinp()
+
+    def _clamp_prompt_scroll(self) -> None:
+        d = self.dialog
+        if not d or d["type"] != "prompt":
             return
-        self.awaiting_dest = False
-        self._pending_add_path = ""
-        curses.flushinp()
+        h, w = self.stdscr.getmaxyx()
+        compact = h < 16
+        box_w = min(w - 2, w - 2) if compact else min(60, w - 10)
+        inner_w = box_w - 2
+        field_w = max(1, inner_w - len(d["label"]) - 6)
+        if len(d["buf"]) <= field_w:
+            d["scroll"] = 0
+        else:
+            max_scroll = len(d["buf"]) - field_w
+            d["scroll"] = max(0, min(d["scroll"], max_scroll))
 
     def _handle_key_help(self, key: int) -> bool:
         if key in (ord("?"), curses.KEY_F1, getattr(curses, "KEY_HELP", -1)):
@@ -520,19 +547,12 @@ class PlayerApp:
             self.explorer_filter_mode = False
             self.playlist_filter_mode = False
             self.kb_keybinding_view = False
-            self.confirm_mode = False
-            self.confirm_label = ""
-            self.confirm_callback = None
-            self.prompt_mode = False
-            self.prompt_buf = ""
-            self.prompt_label = ""
-            self.prompt_callback = None
+            self.dialog = None
             self.meta_edit_mode = False
             self.meta_edit_editing = False
             self.meta_edit_changed = {}
             self.file_op_mode = None
             self.file_op_source = None
-            self.awaiting_dest = False
             curses.curs_set(0)
             curses.flushinp()
             return True
@@ -692,70 +712,6 @@ class PlayerApp:
             pass
         return True
 
-    # ── Toast ──
-
-    def toast(self, msg: str, duration: int = 60) -> None:
-        self.toast_msg = msg
-        self.toast_ticks = duration
-
-    # ── Prompt ──
-
-    def _handle_prompt(self, key: int) -> None:
-        if key == 27:
-            self.prompt_mode = False
-            self.prompt_buf = ""
-            self.prompt_label = ""
-            self.prompt_callback = None
-            self.prompt_scroll = 0
-            curses.curs_set(0)
-            curses.flushinp()
-        elif key in (ord("\n"), 10, 13):
-            buf = self.prompt_buf.strip()
-            self.prompt_mode = False
-            self.prompt_label = ""
-            self.prompt_buf = ""
-            self.prompt_scroll = 0
-            curses.curs_set(0)
-            cb = self.prompt_callback
-            self.prompt_callback = None
-            if cb:
-                cb(self, buf)
-        elif key in (127, curses.KEY_BACKSPACE):
-            self.prompt_buf = self.prompt_buf[:-1]
-            self._clamp_prompt_scroll()
-        elif key == curses.KEY_LEFT:
-            self.prompt_scroll = max(0, self.prompt_scroll - 5)
-        elif key == curses.KEY_RIGHT:
-            self.prompt_scroll = min(len(self.prompt_buf), self.prompt_scroll + 5)
-        elif 32 <= key <= 126 and len(self.prompt_buf) < 60:
-            self.prompt_buf += chr(key)
-            self._clamp_prompt_scroll()
-
-    def _clamp_prompt_scroll(self) -> None:
-        if not self.prompt_mode:
-            self.prompt_scroll = 0
-            return
-        h, w = self.stdscr.getmaxyx()
-        compact = h < 16
-        box_w = min(w - 2, w - 2) if compact else min(60, w - 10)
-        inner_w = box_w - 2
-        field_w = max(1, inner_w - len(self.prompt_label) - 6)
-        if len(self.prompt_buf) <= field_w:
-            self.prompt_scroll = 0
-        else:
-            max_scroll = len(self.prompt_buf) - field_w
-            self.prompt_scroll = max(0, min(self.prompt_scroll, max_scroll))
-
-    def _handle_confirm(self, key: int) -> None:
-        cb = self.confirm_callback
-        self.confirm_mode = False
-        self.confirm_label = ""
-        self.confirm_callback = None
-        curses.curs_set(0)
-        curses.flushinp()
-        if cb and (chr(key).lower() == "s" or key in (ord("\n"), 10, 13)):
-            cb()
-
     # ── Meta Editor ──
 
     def _handle_meta_edit(self, key: int) -> None:
@@ -825,7 +781,7 @@ class PlayerApp:
 
             needs_cursor = ((self.current_view == self.V_EXPLORER and self.explorer_filter_mode)
                             or (self.current_view == self.V_PLAYLIST and self.playlist_filter_mode)
-                            or self.prompt_mode
+                            or (self.dialog and self.dialog["type"] == "prompt")
                             or self.meta_edit_editing)
             if needs_cursor:
                 curses.curs_set(1)
@@ -845,24 +801,26 @@ class PlayerApp:
                 self.toast_ticks = 0
             else:
                 self._draw_status(h, w)
-            if self.confirm_mode:
-                ui.draw_dialog(self.stdscr, h, w, "Confirmar", self.confirm_label,
-                               is_confirm=True, compact=compact)
-            elif self.prompt_mode:
-                ui.draw_dialog(self.stdscr, h, w, "Entrada", self.prompt_label,
-                               compact=compact, prompt_buf=self.prompt_buf,
-                               prompt_scroll=self.prompt_scroll)
+            if self.dialog:
+                d = self.dialog
+                if d["type"] == "confirm":
+                    ui.draw_dialog(self.stdscr, h, w, "Confirmar", d["label"],
+                                   is_confirm=True, compact=compact)
+                elif d["type"] == "prompt":
+                    ui.draw_dialog(self.stdscr, h, w, "Entrada", d["label"],
+                                   compact=compact, prompt_buf=d["buf"],
+                                   prompt_scroll=d["scroll"])
+                elif d["type"] == "dest":
+                    ui.draw_dialog(self.stdscr, h, w, "Destino",
+                                   "s: Pila  |  p: Lista  |  Esc: Cancelar",
+                                   compact=compact)
             elif not self.meta_edit_mode and not compact:
                 ui.draw_nav(self.stdscr, h, w)
             if self.toast_ticks > 0:
                 ui.safe_addstr(self.stdscr, h - 3, 2, self.toast_msg,
                                curses.color_pair(2), h, w)
                 self.toast_ticks -= 1
-            if self.awaiting_dest:
-                ui.draw_dialog(self.stdscr, h, w, "Destino",
-                               "s: Pila  |  p: Lista  |  Esc: Cancelar",
-                               compact=compact)
-            if self.update_available and not self.confirm_mode and not self.prompt_mode and not self.show_help:
+            if self.update_available and not self.dialog and not self.show_help:
                 if not compact:
                     msg = " ! Actualización disponible "
                     if w > len(msg) + 2:
