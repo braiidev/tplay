@@ -61,8 +61,8 @@
 | ID  | Feature | Prioridad | Estado |
 | --- | ------- | --------- | ------ |
 | F2  | Ecualizador gráfico (VLC API) | Alta | [ ] |
-| F4  | Exportar playlist a M3U/PLS | Baja | [ ] |
-| F8  | Cover art (chafa/viu) | Media | [ ] |
+| F4  | Exportar playlist a M3U/PLS | Media | ✅ |
+| F8  | Cover art (chafa/viu) | Baja | [ ] |
 | F28 | Streaming/Radio (URL, M3U, radios guardadas) | Media | △ |
 
 ## ✅ Completado
@@ -92,3 +92,4 @@
 - **C4** — _restart_app ruta incorrecta tras A4 → usa `app._repo_dir`
 - **L5** — descartado: tags faltantes → "desconocido" (ok), covers no interesan
 - **U6** — toast más lento (40 ticks ≈ 2s) + dismiss con Enter/Space/Esc
+- **F4** — export stack como M3U extendido vía `X` en Stack/Playlist a music_dir

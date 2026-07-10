@@ -3,6 +3,7 @@ from __future__ import annotations
 __all__ = [
     "_prompt", "_toast", "_confirm", "_page_size", "_clamp_scroll",
     "_play_file_direct", "_do_clear_stack", "_save_stack_as_playlist_cb",
+    "_export_as_m3u", "_prompt_export_m3u",
     "_rename_file", "_update_refs_after_rename", "_open_tag_editor",
     "_handle_update", "_do_update", "_restart_app",
     "handle_listen", "_add_url_cb", "handle_stack_view", "handle_goto",
@@ -33,6 +34,7 @@ __all__ = [
 
 from .shared import _prompt, _toast, _confirm, _page_size, _clamp_scroll
 from .shared import _play_file_direct, _do_clear_stack, _save_stack_as_playlist_cb
+from .shared import _export_as_m3u, _prompt_export_m3u
 from .shared import _rename_file, _update_refs_after_rename, _open_tag_editor
 from .shared import _handle_update, _do_update, _restart_app
 

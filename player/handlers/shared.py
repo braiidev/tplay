@@ -64,6 +64,33 @@ def _save_stack_as_playlist_cb(app: PlayerApp, name: str) -> None:
         _toast(app, f"Lista '{name}' creada desde pila")
 
 
+def _export_as_m3u(app: PlayerApp, filename: str) -> None:
+    if not app.stack.items:
+        _toast(app, "Stack vacío, nada que exportar")
+        return
+    filename = filename.strip()
+    if not filename:
+        return
+    if not filename.endswith(".m3u"):
+        filename += ".m3u"
+    music_dir = app.config.get("music_dir", os.path.expanduser("~/Music"))
+    dest = os.path.join(music_dir, filename)
+    try:
+        lines: list[str] = ["#EXTM3U\n"]
+        for item in app.stack.items:
+            lines.append(f"#EXTINF:-1,{item.name}\n")
+            lines.append(f"{item.path}\n")
+        with open(dest, "w", encoding="utf-8") as f:
+            f.writelines(lines)
+        _toast(app, f"Exportado a {filename}")
+    except Exception as e:
+        _toast(app, f"Error al exportar: {e}")
+
+
+def _prompt_export_m3u(app: PlayerApp) -> None:
+    _prompt(app, "Exportar pila como M3U", _export_as_m3u, "tplay_stack.m3u")
+
+
 def _rename_file(app: PlayerApp, full: str, name: str,
                  on_rename: Callable[..., None] | None = None) -> None:
     _, ext = os.path.splitext(name)
