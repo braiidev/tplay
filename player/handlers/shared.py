@@ -44,7 +44,7 @@ def _page_size(app: PlayerApp) -> int:
 
 
 def _play_file_direct(app: PlayerApp, path: str) -> None:
-    if not os.path.isfile(path):
+    if not _is_url(path) and not os.path.isfile(path):
         return
     app.stack.items = [StackItem(path=path, name=os.path.basename(path))]
     app.audio.play_file(path)
