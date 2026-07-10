@@ -255,7 +255,7 @@ HELP_TABS: list[HelpTab] = [
             ("", None),
             ("    j / k     Cursor abajo / arriba", 2),
             ("    Enter     Reproducir elemento", 2),
-            ("    d / x     Eliminar elemento / limpiar", 2),
+            ("    d / x     Eliminar / limpiar (confirma)", 2),
             ("    J / K     Reordenar elemento", 2),
             ("    s         Guardar pila como lista", 2),
             ("    r / R     Modo elemento (normal/1x/∞)", 2),

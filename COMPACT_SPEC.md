@@ -103,6 +103,8 @@
 | `g` / `G`         | Ir al inicio / fin                                    |
 | `Tab` / `Esc`     | Cerrar Stack                                          |
 
+> **Audio al vaciar Stack**: al eliminar el último item (`d` o `x`), se detiene la reproducción automáticamente.
+
 ##### Modos por item (Stack)
 
 | Modo          | Comportamiento                                                         |

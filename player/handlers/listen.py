@@ -13,6 +13,15 @@ if TYPE_CHECKING:
     from player.app import PlayerApp
 
 
+def _do_stack_remove(app: PlayerApp, index: int) -> None:
+    app._push_snapshot()
+    app.stack.remove(index)
+    if not app.stack.items:
+        app.audio.stop()
+    elif app.stack_cursor >= len(app.stack.items):
+        app.stack_cursor = len(app.stack.items) - 1
+
+
 def handle_listen(app: PlayerApp, key: int) -> None:
     SEEK_STEP = 5000
     if key in (ord("\t"),):
@@ -106,10 +115,10 @@ def handle_stack_view(app: PlayerApp, key: int) -> None:
     elif key in (curses.KEY_UP, ord("k")):
         app.stack_cursor = max(app.stack_cursor - 1, 0)
     elif key in (ord("d"),):
-        app._push_snapshot()
-        app.stack.remove(app.stack_cursor)
-        if app.stack_cursor >= len(app.stack.items) and app.stack_cursor > 0:
-            app.stack_cursor -= 1
+        if app.stack.items:
+            idx = app.stack_cursor
+            name = app.stack.items[idx].name
+            _confirm(app, f"¿Eliminar '{name}'?", lambda i=idx: _do_stack_remove(app, i))
     elif key in (ord("x"),):
         _confirm(app, "¿Limpiar toda la pila?", lambda: _do_clear_stack(app))
     elif key in (ord("s"),):
