@@ -29,6 +29,7 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
     if key == ord("/"):
         app.explorer_filter_mode = True
         app.explorer_filter = ""
+        app.explorer_filter_cursor = 0
         app.explorer_filtered = list(range(len(app.entries)))
         app.cursor = 0
         app.scroll = 0
@@ -115,6 +116,7 @@ def _handle_explorer_filter(app: PlayerApp, key: int) -> None:
         app.explorer_filter_mode = False
         app.explorer_filter = ""
         app.explorer_filtered = []
+        app.explorer_filter_cursor = 0
         app.cursor = 0
         app.scroll = 0
         return
@@ -132,6 +134,7 @@ def _handle_explorer_filter(app: PlayerApp, key: int) -> None:
             app.explorer_filter_mode = False
             app.explorer_filter = ""
             app.explorer_filtered = []
+            app.explorer_filter_cursor = 0
         return
     if key == curses.KEY_DOWN:
         if app.explorer_filtered:
@@ -140,12 +143,24 @@ def _handle_explorer_filter(app: PlayerApp, key: int) -> None:
     if key == curses.KEY_UP:
         app.cursor = max(app.cursor - 1, 0)
         return
+    cur = app.explorer_filter_cursor
+    if key in (curses.KEY_LEFT, ord("h")):
+        if cur > 0:
+            app.explorer_filter_cursor = cur - 1
+        return
+    if key in (curses.KEY_RIGHT, ord("l")):
+        if cur < len(app.explorer_filter):
+            app.explorer_filter_cursor = cur + 1
+        return
     if key in (127, curses.KEY_BACKSPACE):
-        app.explorer_filter = app.explorer_filter[:-1]
-        _do_explorer_filter(app)
+        if cur > 0:
+            app.explorer_filter = app.explorer_filter[:cur - 1] + app.explorer_filter[cur:]
+            app.explorer_filter_cursor = cur - 1
+            _do_explorer_filter(app)
         return
     if 32 <= key <= 126:
-        app.explorer_filter += chr(key)
+        app.explorer_filter = app.explorer_filter[:cur] + chr(key) + app.explorer_filter[cur:]
+        app.explorer_filter_cursor = cur + 1
         _do_explorer_filter(app)
 
 

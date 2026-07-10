@@ -295,8 +295,16 @@ HELP_TABS: list[HelpTab] = [
             ("", None),
             ("    ↑ / ↓     Navegar campos", 2),
             ("    Enter     Editar campo", 2),
+            ("    ← / →     Mover cursor en campo", 2),
             ("    s         Guardar cambios", 2),
             ("    Esc       Cancelar", 2),
+            ("", None),
+            ("  FILTRO (/)", 3),
+            ("", None),
+            ("    ← / →     Mover cursor", 2),
+            ("    ↑ / ↓     Navegar resultados", 2),
+            ("    Enter     Seleccionar", 2),
+            ("    Esc       Cancelar filtro", 2),
         ]
     },
     {
@@ -321,6 +329,13 @@ HELP_TABS: list[HelpTab] = [
             ("    a / A     Añadir a pila (final/tras)", 2),
             ("    J / K     Reordenar elementos", 2),
             ("    /         Filtrar elementos", 2),
+            ("", None),
+            ("  FILTRO (/)", 3),
+            ("", None),
+            ("    ← / →     Mover cursor", 2),
+            ("    ↑ / ↓     Navegar resultados", 2),
+            ("    Enter     Seleccionar", 2),
+            ("    Esc       Cancelar filtro", 2),
         ]
     },
     {

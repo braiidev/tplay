@@ -70,10 +70,12 @@ class PlayerApp:
         self.playlist_filter: str = ""
         self.playlist_filtered: list[int] = []
         self.playlist_filter_mode: bool = False
+        self.playlist_filter_cursor: int = 0
 
         self.explorer_filter: str = ""
         self.explorer_filtered: list[int] = []
         self.explorer_filter_mode: bool = False
+        self.explorer_filter_cursor: int = 0
 
         self.show_help: bool = False
         self.help_tab: int = 0
@@ -91,6 +93,7 @@ class PlayerApp:
         self.meta_edit_cursor: int = 0
         self.meta_edit_editing: bool = False
         self.meta_edit_buf: str = ""
+        self.meta_edit_cursor_pos: int = 0
         self.meta_edit_labels: list[str] = ['Título', 'Artista', 'Álbum', 'Género']
         self.meta_edit_keys: list[str] = ['title', 'artist', 'album', 'genre']
 
@@ -832,6 +835,7 @@ class PlayerApp:
 
     def _handle_meta_edit(self, key: int) -> None:
         if self.meta_edit_editing:
+            cur = self.meta_edit_cursor_pos
             if key == 27:
                 self.meta_edit_editing = False
             elif key in (10, 13):
@@ -843,10 +847,19 @@ class PlayerApp:
                 elif fname in self.meta_edit_changed:
                     del self.meta_edit_changed[fname]
                 self.meta_edit_editing = False
+            elif key in (curses.KEY_LEFT, ord("h")):
+                if cur > 0:
+                    self.meta_edit_cursor_pos = cur - 1
+            elif key in (curses.KEY_RIGHT, ord("l")):
+                if cur < len(self.meta_edit_buf):
+                    self.meta_edit_cursor_pos = cur + 1
             elif key in (127, curses.KEY_BACKSPACE):
-                self.meta_edit_buf = self.meta_edit_buf[:-1]
+                if cur > 0:
+                    self.meta_edit_buf = self.meta_edit_buf[:cur - 1] + self.meta_edit_buf[cur:]
+                    self.meta_edit_cursor_pos = cur - 1
             elif 32 <= key <= 126 and len(self.meta_edit_buf) < 60:
-                self.meta_edit_buf += chr(key)
+                self.meta_edit_buf = self.meta_edit_buf[:cur] + chr(key) + self.meta_edit_buf[cur:]
+                self.meta_edit_cursor_pos = cur + 1
             return
         if key in (ord("q"), 27):
             self.meta_edit_mode = False
@@ -864,6 +877,7 @@ class PlayerApp:
             fname = self.meta_edit_keys[self.meta_edit_cursor]
             self.meta_edit_buf = (self.meta_edit_changed.get(fname)
                                   or self.meta_edit_fields[self.meta_edit_cursor][2])
+            self.meta_edit_cursor_pos = len(self.meta_edit_buf)
 
     def _save_meta_edits(self) -> None:
         import mutagen

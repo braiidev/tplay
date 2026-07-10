@@ -368,7 +368,7 @@ def draw_explorer(app: PlayerApp, h: int, w: int) -> None:
             app.stdscr.addstr(y, 2, body[:w - 4], destacar)
         except curses.error:
             pass
-        cx = 2 + len(prefix) + len(app.explorer_filter)
+        cx = 2 + len(prefix) + app.explorer_filter_cursor
         if cx < w - 1:
             try:
                 app.stdscr.chgat(y, cx, 1, destacar | curses.A_REVERSE)
@@ -448,7 +448,7 @@ def draw_playlist(app: PlayerApp, h: int, w: int) -> None:
             app.stdscr.addstr(2, 2, body[:w - 4], destacar)
         except curses.error:
             pass
-        cx = 2 + len(prefix) + len(app.playlist_filter)
+        cx = 2 + len(prefix) + app.playlist_filter_cursor
         if cx < w - 1:
             try:
                 app.stdscr.chgat(2, cx, 1, destacar | curses.A_REVERSE)
@@ -694,7 +694,7 @@ def draw_meta_editor(app: PlayerApp, win: curses.window, h: int, w: int) -> None
                 win.addstr(row, cx, display[:w - cx - 2], attr)
             except curses.error:
                 pass
-            cur_in_buf = len(buf)
+            cur_in_buf = app.meta_edit_cursor_pos
             if cx + cur_in_buf < w - 1:
                 try:
                     win.chgat(row, cx + cur_in_buf, 1, attr | curses.A_REVERSE)

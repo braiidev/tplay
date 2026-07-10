@@ -30,6 +30,7 @@ def handle_playlist(app: PlayerApp, key: int) -> None:
             return
         app.playlist_filter_mode = True
         app.playlist_filter = ""
+        app.playlist_filter_cursor = 0
         app.playlist_filtered = list(range(len(app.playlist)))
         app.playlist_cursor = 0
         app.playlist_scroll = 0
@@ -141,6 +142,7 @@ def _handle_playlist_filter(app: PlayerApp, key: int) -> None:
         app.playlist_filter_mode = False
         app.playlist_filter = ""
         app.playlist_filtered = []
+        app.playlist_filter_cursor = 0
         app.playlist_cursor = 0
         app.playlist_scroll = 0
         return
@@ -152,6 +154,7 @@ def _handle_playlist_filter(app: PlayerApp, key: int) -> None:
             app.playlist_filter_mode = False
             app.playlist_filter = ""
             app.playlist_filtered = []
+            app.playlist_filter_cursor = 0
         return
     if key == curses.KEY_DOWN:
         if app.playlist_filtered:
@@ -164,12 +167,24 @@ def _handle_playlist_filter(app: PlayerApp, key: int) -> None:
         h, _ = app.stdscr.getmaxyx()
         app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.FILTER_LIST_H)
         return
+    cur = app.playlist_filter_cursor
+    if key in (curses.KEY_LEFT, ord("h")):
+        if cur > 0:
+            app.playlist_filter_cursor = cur - 1
+        return
+    if key in (curses.KEY_RIGHT, ord("l")):
+        if cur < len(app.playlist_filter):
+            app.playlist_filter_cursor = cur + 1
+        return
     if key in (127, curses.KEY_BACKSPACE):
-        app.playlist_filter = app.playlist_filter[:-1]
-        _do_playlist_filter(app)
+        if cur > 0:
+            app.playlist_filter = app.playlist_filter[:cur - 1] + app.playlist_filter[cur:]
+            app.playlist_filter_cursor = cur - 1
+            _do_playlist_filter(app)
         return
     if 32 <= key <= 126:
-        app.playlist_filter += chr(key)
+        app.playlist_filter = app.playlist_filter[:cur] + chr(key) + app.playlist_filter[cur:]
+        app.playlist_filter_cursor = cur + 1
         _do_playlist_filter(app)
         return
 
@@ -223,6 +238,7 @@ def _switch_playlist(app: PlayerApp, name: str) -> None:
         app.playlist_filter_mode = False
         app.playlist_filter = ""
         app.playlist_filtered = []
+        app.playlist_filter_cursor = 0
 
 
 def _create_playlist_cb(app: PlayerApp, name: str) -> None:
