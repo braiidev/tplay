@@ -267,6 +267,13 @@ def handle_dir_picker(app: PlayerApp, key: int) -> None:
         app.dir_picker_cursor = min(app.dir_picker_cursor + 1, max(0, total - 1))
     elif key in (curses.KEY_UP, ord("k")):
         app.dir_picker_cursor = max(app.dir_picker_cursor - 1, 0)
+    elif key in (curses.KEY_RIGHT, ord("l")):
+        if total > 0 and app.dir_picker_cursor < total:
+            _, _, full = app.dir_picker_entries[app.dir_picker_cursor]
+            app.dir_picker_path = full
+            _reload_dir_picker(app)
+            app.dir_picker_cursor = 0
+            app.dir_picker_scroll = 0
     elif key in (curses.KEY_LEFT, ord("h"), 127, curses.KEY_BACKSPACE):
         parent = os.path.dirname(app.dir_picker_path.rstrip("/"))
         if parent and parent != app.dir_picker_path:

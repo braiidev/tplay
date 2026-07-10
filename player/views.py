@@ -716,7 +716,7 @@ def draw_dir_picker(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
     draw_box(win, h, w, f"Dir: {title}")
 
     entries = app.dir_picker_entries
-    list_h = h - 4
+    list_h = h - 5
     visible = entries[app.dir_picker_scroll:app.dir_picker_scroll + list_h]
 
     if not entries:
@@ -734,5 +734,5 @@ def draw_dir_picker(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
             else:
                 safe_addstr(win, y, 2, line, destacar, h, w)
 
-    footer = "  Enter=selecc  h=padre  ~=home  g/G=inicio/fin  Esc=cancelar"
-    safe_addstr(win, h - 2, 2, footer[:w - 4], nav, h, w)
+    hints = "  Enter=seleccionar  h/l=subir/bajar  Esc=cancelar"
+    safe_addstr(win, h - 3, 2, hints[:w - 4], nav, h, w)
