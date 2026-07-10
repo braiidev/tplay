@@ -200,6 +200,8 @@ class PlayerApp:
             self.stdscr.refresh()
         except curses.error:
             pass
+
+        try:
             subprocess.run(["git", "fetch", "origin"], cwd=repo,
                            capture_output=True, timeout=10)
             result = subprocess.run(
