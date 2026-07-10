@@ -487,12 +487,7 @@ class PlayerApp:
         return False
 
     def _handle_key_mode_specific(self, key: int) -> bool:
-        h, w = self.stdscr.getmaxyx()
-        _compact = h < 16 or w < 61
         if self.current_view == self.V_LISTEN and self.show_stack_view:
-            if _compact:
-                self._handle_compact_stack(key)
-                return True
             handlers.handle_stack_view(self, key)
             return True
         if self.current_view == self.V_LISTEN and self.goto_mode:
@@ -512,30 +507,6 @@ class PlayerApp:
                 handlers.handle_playlist(self, key)
                 return True
         return False
-
-    def _handle_compact_stack(self, key: int) -> None:
-        if key in (ord("\t"), 27):
-            self.show_stack_view = False
-            curses.flushinp()
-            return
-        if not self.stack.items:
-            return
-        if key in (ord("\n"), ord("\r"), curses.KEY_ENTER):
-            self.stack.playhead = self.stack_cursor
-            self._play_current()
-            self.show_stack_view = False
-            return
-        if key in (curses.KEY_DOWN, ord("j")):
-            self.stack_cursor = min(self.stack_cursor + 1, len(self.stack.items) - 1)
-        elif key in (curses.KEY_UP, ord("k")):
-            self.stack_cursor = max(self.stack_cursor - 1, 0)
-
-        h, _ = self.stdscr.getmaxyx()
-        list_h = h - 2
-        if self.stack_cursor < self.stack_scroll:
-            self.stack_scroll = self.stack_cursor
-        elif self.stack_cursor >= self.stack_scroll + list_h:
-            self.stack_scroll = self.stack_cursor - list_h + 1
 
     def _handle_key_view_switch(self, key: int) -> bool:
         if ord("0") <= key <= ord("4"):
