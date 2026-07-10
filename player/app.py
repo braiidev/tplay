@@ -690,6 +690,7 @@ class PlayerApp:
             "stack_playhead": self.stack.playhead,
             "stack_shuffle": self.stack.shuffle,
             "stack_repeat": self.stack.repeat,
+            "file_undo": self._file_undo,
         }
 
     def _restore_snapshot(self, snap: dict[str, Any]) -> None:
@@ -710,6 +711,7 @@ class PlayerApp:
         if not self.undo_stack:
             return
         self.redo_stack.append(self._snapshot_state())
+        self._apply_file_undo()
         self._restore_snapshot(self.undo_stack.pop())
         self.playlist_cursor = max(0, min(self.playlist_cursor, len(self.playlist) - 1))
 
@@ -717,24 +719,38 @@ class PlayerApp:
         if not self.redo_stack:
             return
         self.undo_stack.append(self._snapshot_state())
-        self._restore_snapshot(self.redo_stack.pop())
+        snap = self.redo_stack.pop()
+        fu = snap.get("file_undo")
+        if fu:
+            self._apply_file_redo(fu)
+        self._restore_snapshot(snap)
         self.playlist_cursor = max(0, min(self.playlist_cursor, len(self.playlist) - 1))
 
-    def _undo_file_op(self) -> bool:
+    def _apply_file_undo(self) -> None:
         if not self._file_undo:
-            return False
-        info = self._file_undo
+            return
+        import shutil
+        fu = self._file_undo
         self._file_undo = None
         try:
-            if info["type"] == "move":
-                shutil.move(info["dest"], info["src"])
-            elif info["type"] == "copy":
-                if os.path.isfile(info["dest"]):
-                    os.remove(info["dest"])
+            if fu["type"] == "move":
+                shutil.move(fu["dest"], fu["src"])
+            elif fu["type"] == "copy" and os.path.isfile(fu["dest"]):
+                os.remove(fu["dest"])
             self.entries = _list_dir(self.current_dir)
         except Exception:
             pass
-        return True
+
+    def _apply_file_redo(self, fu: dict[str, Any]) -> None:
+        import shutil
+        try:
+            if fu["type"] == "move":
+                shutil.move(fu["src"], fu["dest"])
+            elif fu["type"] == "copy":
+                shutil.copy2(fu["src"], fu["dest"])
+            self.entries = _list_dir(self.current_dir)
+        except Exception:
+            pass
 
     # ── Meta Editor ──
 

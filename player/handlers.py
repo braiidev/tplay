@@ -221,9 +221,8 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
         app.entries = _list_dir(app.current_dir)
         app.cursor = 0
         app.scroll = 0
-    elif key == ord("u"):
-        if not app._undo_file_op() and app.undo_stack:
-            app._undo()
+    elif key == ord("u") and app.undo_stack:
+        app._undo()
     elif key == ord("U"):
         app._redo()
 
@@ -1002,11 +1001,11 @@ def _handle_file_op_picker(app: PlayerApp, key: int) -> None:
         app.entries = _list_dir(app.current_dir)
         app.cursor = 0
         app.scroll = 0
-    elif key in (ord("u"), ord("U")):
-        if key == ord("u"):
-            app._undo_file_op()
-        else:
-            app._redo()
+    elif key == ord("u") and app.undo_stack:
+        app._undo()
+        return
+    elif key == ord("U"):
+        app._redo()
         return
 
     h, _ = app.stdscr.getmaxyx()
