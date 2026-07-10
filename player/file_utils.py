@@ -5,9 +5,11 @@ from typing import Any
 
 AUDIO_EXT: tuple[str, ...] = (".mp3", ".flac", ".wav", ".ogg")
 VIDEO_EXT: tuple[str, ...] = (".mp4", ".mkv", ".avi", ".mov")
-ALLOWED_EXT: tuple[str, ...] = AUDIO_EXT + VIDEO_EXT
+PLAYLIST_EXT: tuple[str, ...] = (".m3u", ".pls")
+ALLOWED_EXT: tuple[str, ...] = AUDIO_EXT + VIDEO_EXT + PLAYLIST_EXT
 EXT_LABEL: dict[str, str] = {".mp3": "mp3", ".flac": "flac", ".wav": "wav", ".ogg": "ogg",
-                             ".mp4": "vid", ".mkv": "vid", ".avi": "vid", ".mov": "vid"}
+                             ".mp4": "vid", ".mkv": "vid", ".avi": "vid", ".mov": "vid",
+                             ".m3u": "PL", ".pls": "PL"}
 
 
 def is_media(name: str) -> bool:
@@ -68,3 +70,7 @@ def is_url(path: str) -> bool:
 
 def is_video_file(path: str) -> bool:
     return path.lower().endswith(VIDEO_EXT)
+
+
+def is_playlist_file(path: str) -> bool:
+    return path.lower().endswith(PLAYLIST_EXT)

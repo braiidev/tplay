@@ -8,7 +8,6 @@ from ..file_utils import is_url as _is_url
 from ..stack import StackItem
 from .shared import _prompt, _toast, _confirm, _clamp_scroll
 from .shared import _do_clear_stack, _save_stack_as_playlist_cb, _prompt_export_m3u
-from .shared import _prompt_import_m3u_pls
 from .shared import _open_tag_editor
 
 if TYPE_CHECKING:
@@ -113,8 +112,6 @@ def handle_stack_view(app: PlayerApp, key: int) -> None:
             _prompt(app, "Guardar pila como lista", _save_stack_as_playlist_cb)
     elif key in (ord("X"),):
         _prompt_export_m3u(app)
-    elif key in (ord("O"),):
-        _prompt_import_m3u_pls(app)
     elif key == ord("K"):
         if app.stack_cursor > 0:
             app._push_snapshot()

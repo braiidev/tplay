@@ -92,4 +92,4 @@
 - **C4** — _restart_app ruta incorrecta tras A4 → usa `app._repo_dir`
 - **L5** — descartado: tags faltantes → "desconocido" (ok), covers no interesan
 - **U6** — toast más lento (40 ticks ≈ 2s) + dismiss con Enter/Space/Esc
-- **F4** — export/import M3U/PLS: `X` exporta stack a M3U, `O` importa M3U/PLS a Stack (Listen) o Playlist activa
+- **F4** — export/import M3U/PLS: `X` exporta stack a M3U; Explorer .m3u/.pls con `Enter` carga al Stack, `a`/`A` crea Playlist automática

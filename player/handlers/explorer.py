@@ -6,10 +6,11 @@ import shutil
 from typing import TYPE_CHECKING
 
 from ..file_utils import list_dir as _list_dir
+from ..file_utils import is_playlist_file as _is_playlist_file
 from ..stack import StackItem
 from .shared import _prompt, _toast, _confirm, _clamp_scroll
 from .shared import _page_size, _play_file_direct, _rename_file
-from .shared import _open_tag_editor
+from .shared import _open_tag_editor, _parse_m3u, _parse_pls
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -55,6 +56,16 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
                 app.entries = _list_dir(full)
                 app.cursor = 0
                 app.scroll = 0
+            elif _is_playlist_file(full):
+                ext = os.path.splitext(full)[1].lower()
+                paths = _parse_pls(full) if ext == ".pls" else _parse_m3u(full)
+                if not paths:
+                    _toast(app, "Playlist vacía o inválida")
+                else:
+                    items = [StackItem(path=p, name=os.path.basename(p)) for p in paths]
+                    app.stack.items = items
+                    app._play_current()
+                    app.current_view = app.V_LISTEN
             else:
                 _play_file_direct(app, full)
     elif key == ord("a"):
@@ -237,6 +248,23 @@ def _add_from_explorer(app: PlayerApp, insert_mode: str = "append") -> None:
         return
     _, is_dir, full = app.entries[app.cursor]
     if is_dir or not os.path.isfile(full):
+        return
+    if _is_playlist_file(full):
+        ext = os.path.splitext(full)[1].lower()
+        paths = _parse_pls(full) if ext == ".pls" else _parse_m3u(full)
+        if not paths:
+            _toast(app, "Playlist vacía o inválida")
+            return
+        pl_name = os.path.splitext(os.path.basename(full))[0]
+        app._push_snapshot()
+        for p in paths:
+            entry = (os.path.basename(p), p)
+            if pl_name not in app.playlist_data:
+                app.playlist_data[pl_name] = []
+            app.playlist_data[pl_name].append(entry)
+        from ..playlist import save_all as _save_all
+        _save_all(app.playlist_data, app.active_name)
+        _toast(app, f"Importada '{pl_name}' con {len(paths)} canciones")
         return
     has_playlists = len(app.playlist_data) > 0
     if has_playlists:
