@@ -327,13 +327,13 @@ def handle_playlist(app: PlayerApp, key: int) -> None:
             _save_playlist(app)
     elif key in (curses.KEY_LEFT, ord("[")):
         names = list(app.playlist_data.keys())
-        if len(names) > 1:
+        if len(names) > 1 and app.active_name in app.playlist_data:
             app._push_snapshot()
             idx = names.index(app.active_name)
             _switch_playlist(app, names[(idx - 1) % len(names)])
     elif key in (curses.KEY_RIGHT, ord("]")):
         names = list(app.playlist_data.keys())
-        if len(names) > 1:
+        if len(names) > 1 and app.active_name in app.playlist_data:
             app._push_snapshot()
             idx = names.index(app.active_name)
             _switch_playlist(app, names[(idx + 1) % len(names)])

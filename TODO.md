@@ -6,7 +6,7 @@
 | --- | ----------- | ------- | ------ |
 | C1  | Renombrar con overwrite: callback lambda aridad incorrecta + mensaje pobre | handlers.py:672 | ✅ |
 | C2  | `next()` sin default + `del` sin pop al borrar playlist activa | handlers.py:893 | ✅ |
-| C3  | `list.index()` sin try/except al cambiar de playlist con `[`/`]` → ValueError si active_name no está en names | handlers.py:332,338 | [ ] |
+| C3  | `list.index()` sin try/except al cambiar de playlist con `[`/`]` | handlers.py:332,338 | ✅ |
 
 ## 🟠 BUG (comportamiento incorrecto)
 
