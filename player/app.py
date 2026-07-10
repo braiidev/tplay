@@ -425,9 +425,7 @@ class PlayerApp:
                     self.toast(f"Actualización disponible ({n} commit{s})")
             key = self.stdscr.getch()
             if key == curses.KEY_RESIZE:
-                curses.resizeterm(*self.stdscr.getmaxyx())
                 self.stdscr.clear()
-                self.stdscr.refresh()
                 continue
             if key != -1:
                 if self.toast_ticks > 0 and key in (10, 13, 32, 27) and not self.dialog and not self.show_help:
@@ -876,6 +874,20 @@ class PlayerApp:
         try:
             h, w = self.stdscr.getmaxyx()
             self.stdscr.erase()
+
+            self.scroll = max(0, self.scroll)
+            self.cursor = max(0, self.cursor)
+            self.playlist_scroll = max(0, self.playlist_scroll)
+            self.playlist_cursor = max(0, self.playlist_cursor)
+            self.history_scroll = max(0, self.history_scroll)
+            self.history_cursor = max(0, self.history_cursor)
+            self.stack_cursor = max(0, self.stack_cursor)
+            self.stack_scroll = max(0, self.stack_scroll)
+            self.radio_cursor = max(0, self.radio_cursor)
+            self.radio_scroll = max(0, self.radio_scroll)
+            self.config_cursor = max(0, self.config_cursor)
+            self.config_scroll = max(0, self.config_scroll)
+            self.help_scroll = max(0, self.help_scroll)
 
             minimal = self.config.get("ui_minimal", False)
             compact = minimal or h < 16 or (self.current_view == self.V_LISTEN and w < 61)
