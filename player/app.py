@@ -401,6 +401,11 @@ class PlayerApp:
                 self._add_history(cur)
                 self._history_last = cur
             key = self.stdscr.getch()
+            if key == curses.KEY_RESIZE:
+                curses.resizeterm(*self.stdscr.getmaxyx())
+                self.stdscr.clear()
+                self.stdscr.refresh()
+                continue
             if key != -1:
                 if self.dialog:
                     self._handle_dialog_key(key)
