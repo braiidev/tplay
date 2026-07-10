@@ -361,7 +361,19 @@ def draw_explorer(app: PlayerApp, h: int, w: int) -> None:
         offset = 1
 
     if app.explorer_filter_mode:
-        safe_addstr(app.stdscr, 2 + offset, 2, f"> {app.explorer_filter}", destacar, h, w)
+        y = 2 + offset
+        prefix = "> "
+        body = prefix + app.explorer_filter
+        try:
+            app.stdscr.addstr(y, 2, body[:w - 4], destacar)
+        except curses.error:
+            pass
+        cx = 2 + len(prefix) + len(app.explorer_filter)
+        if cx < w - 1:
+            try:
+                app.stdscr.chgat(y, cx, 1, destacar | curses.A_REVERSE)
+            except curses.error:
+                pass
         offset += 1
 
     list_h = h - LIST_H - offset - (0 if h < 16 else 1)
@@ -430,7 +442,18 @@ def draw_playlist(app: PlayerApp, h: int, w: int) -> None:
     draw_box(app.stdscr, h, w, f"Playlist [{app.active_name}]{pos}{extra}")
 
     if app.playlist_filter_mode:
-        safe_addstr(app.stdscr, 2, 2, f"> {app.playlist_filter}", destacar, h, w)
+        prefix = "> "
+        body = prefix + app.playlist_filter
+        try:
+            app.stdscr.addstr(2, 2, body[:w - 4], destacar)
+        except curses.error:
+            pass
+        cx = 2 + len(prefix) + len(app.playlist_filter)
+        if cx < w - 1:
+            try:
+                app.stdscr.chgat(2, cx, 1, destacar | curses.A_REVERSE)
+            except curses.error:
+                pass
 
     if not app.playlist:
         if not app.playlist_data:
@@ -667,7 +690,16 @@ def draw_meta_editor(app: PlayerApp, win: curses.window, h: int, w: int) -> None
             buf = app.meta_edit_buf
             cx = pad_x + len(f"  {label}: ")
             display = buf if buf else ""
-            safe_addstr(win, row, cx, display, attr | curses.A_REVERSE, h, w)
+            try:
+                win.addstr(row, cx, display[:w - cx - 2], attr)
+            except curses.error:
+                pass
+            cur_in_buf = len(buf)
+            if cx + cur_in_buf < w - 1:
+                try:
+                    win.chgat(row, cx + cur_in_buf, 1, attr | curses.A_REVERSE)
+                except curses.error:
+                    pass
 
     # Status line only if room
     status_row = y0 + len(visible)

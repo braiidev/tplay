@@ -834,7 +834,6 @@ class PlayerApp:
         if self.meta_edit_editing:
             if key == 27:
                 self.meta_edit_editing = False
-                curses.curs_set(0)
             elif key in (10, 13):
                 new_val = self.meta_edit_buf.strip()
                 fname = self.meta_edit_keys[self.meta_edit_cursor]
@@ -844,7 +843,6 @@ class PlayerApp:
                 elif fname in self.meta_edit_changed:
                     del self.meta_edit_changed[fname]
                 self.meta_edit_editing = False
-                curses.curs_set(0)
             elif key in (127, curses.KEY_BACKSPACE):
                 self.meta_edit_buf = self.meta_edit_buf[:-1]
             elif 32 <= key <= 126 and len(self.meta_edit_buf) < 60:
@@ -866,7 +864,6 @@ class PlayerApp:
             fname = self.meta_edit_keys[self.meta_edit_cursor]
             self.meta_edit_buf = (self.meta_edit_changed.get(fname)
                                   or self.meta_edit_fields[self.meta_edit_cursor][2])
-            curses.curs_set(1)
 
     def _save_meta_edits(self) -> None:
         import mutagen
@@ -912,11 +909,7 @@ class PlayerApp:
                 self.stdscr.refresh()
                 return
 
-            needs_cursor = ((self.current_view == self.V_EXPLORER and self.explorer_filter_mode)
-                            or (self.current_view == self.V_PLAYLIST and self.playlist_filter_mode)
-                            or self.meta_edit_editing)
-            if needs_cursor:
-                curses.curs_set(1)
+            needs_cursor = False
 
             if self.meta_edit_mode:
                 views.draw_meta_editor(self, self.stdscr, h, w)
@@ -963,28 +956,6 @@ class PlayerApp:
                                        curses.color_pair(1), h, w)
             if self.show_help:
                 ui.draw_help(self.stdscr, h, w, self.help_scroll, self.help_tab)
-
-            if self.meta_edit_editing:
-                cur = self.meta_edit_cursor
-                meta_cpt = h < 16
-                y0 = 3 if meta_cpt else 4
-                total = len(self.meta_edit_fields)
-                list_h = total if not meta_cpt else max(2, h - y0 - 1)
-                scroll = max(0, min(cur, total - list_h)) if total > list_h else 0
-                cy = y0 + (cur - scroll)
-                cx = 6 + len(self.meta_edit_labels[cur]) + len(self.meta_edit_buf)
-                try:
-                    self.stdscr.move(cy, cx)
-                except curses.error:
-                    pass
-                curses.curs_set(1)
-            elif self.current_view == self.V_EXPLORER and self.explorer_filter_mode:
-                y = 3 if self.file_op_mode else 2
-                self.stdscr.move(y, 4 + len(self.explorer_filter))
-                curses.curs_set(1)
-            elif self.current_view == self.V_PLAYLIST and self.playlist_filter_mode:
-                self.stdscr.move(2, 4 + len(self.playlist_filter))
-                curses.curs_set(1)
 
             self.stdscr.refresh()
         except curses.error:

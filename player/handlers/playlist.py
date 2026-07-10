@@ -33,7 +33,6 @@ def handle_playlist(app: PlayerApp, key: int) -> None:
         app.playlist_filtered = list(range(len(app.playlist)))
         app.playlist_cursor = 0
         app.playlist_scroll = 0
-        curses.curs_set(1)
         return
     if key == curses.KEY_DOWN:
         if app.playlist:
@@ -144,7 +143,6 @@ def _handle_playlist_filter(app: PlayerApp, key: int) -> None:
         app.playlist_filtered = []
         app.playlist_cursor = 0
         app.playlist_scroll = 0
-        curses.curs_set(0)
         return
     if key in (10, 13):
         if app.playlist_filtered and app.playlist_cursor < len(app.playlist_filtered):
@@ -154,7 +152,6 @@ def _handle_playlist_filter(app: PlayerApp, key: int) -> None:
             app.playlist_filter_mode = False
             app.playlist_filter = ""
             app.playlist_filtered = []
-            curses.curs_set(0)
         return
     if key == curses.KEY_DOWN:
         if app.playlist_filtered:
@@ -226,7 +223,6 @@ def _switch_playlist(app: PlayerApp, name: str) -> None:
         app.playlist_filter_mode = False
         app.playlist_filter = ""
         app.playlist_filtered = []
-        curses.curs_set(0)
 
 
 def _create_playlist_cb(app: PlayerApp, name: str) -> None:

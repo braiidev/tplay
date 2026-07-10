@@ -32,7 +32,6 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
         app.explorer_filtered = list(range(len(app.entries)))
         app.cursor = 0
         app.scroll = 0
-        curses.curs_set(1)
         return
 
     if key == curses.KEY_DOWN:
@@ -118,7 +117,6 @@ def _handle_explorer_filter(app: PlayerApp, key: int) -> None:
         app.explorer_filtered = []
         app.cursor = 0
         app.scroll = 0
-        curses.curs_set(0)
         return
     if key in (10, 13):
         if app.explorer_filtered and app.cursor < len(app.explorer_filtered):
@@ -134,7 +132,6 @@ def _handle_explorer_filter(app: PlayerApp, key: int) -> None:
             app.explorer_filter_mode = False
             app.explorer_filter = ""
             app.explorer_filtered = []
-            curses.curs_set(0)
         return
     if key == curses.KEY_DOWN:
         if app.explorer_filtered:
