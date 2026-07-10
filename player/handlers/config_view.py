@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import curses
+import os
 from typing import TYPE_CHECKING, Any
 
 from ..config import THEME_NAMES, COLORS
@@ -45,6 +46,8 @@ def handle_config(app: PlayerApp, key: int) -> None:
         elif ctype == "action" and key_name == "update":
             from .shared import _handle_update
             _handle_update(app)
+        elif ctype == "path":
+            _open_dir_picker(app, key_name)
     elif key == curses.KEY_LEFT:
         if total == 0:
             return
@@ -57,6 +60,8 @@ def handle_config(app: PlayerApp, key: int) -> None:
             _cycle_color(app, key_name, -1)
         elif ctype == "int":
             _config_int_dec(app, key_name)
+        elif ctype == "path":
+            _open_dir_picker(app, key_name)
 
     h, _ = app.stdscr.getmaxyx()
     app.config_scroll = _clamp_scroll(app.config_cursor, app.config_scroll, h - 5)
@@ -218,3 +223,67 @@ def _save_keybindings(app: PlayerApp) -> None:
     from ..config import save as _save_config
     app.config["keybinding_mode"] = app.keybinding_mode
     _save_config(app.config)
+
+
+# ── Directory Picker ──
+
+def _open_dir_picker(app: PlayerApp, key_name: str) -> None:
+    current = app.config.get(key_name, os.path.expanduser("~/Music"))
+    app.dir_picker_mode = True
+    app.dir_picker_config_key = key_name
+    app.dir_picker_path = os.path.abspath(current)
+    _reload_dir_picker(app)
+    app.dir_picker_cursor = 0
+    app.dir_picker_scroll = 0
+    curses.flushinp()
+
+
+def _reload_dir_picker(app: PlayerApp) -> None:
+    from ..file_utils import list_dir
+    all_entries = list_dir(app.dir_picker_path)
+    app.dir_picker_entries = [(n, d, f) for n, d, f in all_entries if d]
+
+
+def handle_dir_picker(app: PlayerApp, key: int) -> None:
+    total = len(app.dir_picker_entries)
+
+    if key == 27:
+        app.dir_picker_mode = False
+        curses.flushinp()
+        return
+
+    if key in (10, 13):
+        if total > 0 and app.dir_picker_cursor < total:
+            _, _, full = app.dir_picker_entries[app.dir_picker_cursor]
+            app.config[app.dir_picker_config_key] = full
+            from ..config import save as _save_config
+            _save_config(app.config)
+            _toast(app, f"Directorio: {full}")
+        app.dir_picker_mode = False
+        curses.flushinp()
+        return
+
+    if key in (curses.KEY_DOWN, ord("j")):
+        app.dir_picker_cursor = min(app.dir_picker_cursor + 1, max(0, total - 1))
+    elif key in (curses.KEY_UP, ord("k")):
+        app.dir_picker_cursor = max(app.dir_picker_cursor - 1, 0)
+    elif key in (curses.KEY_LEFT, ord("h"), 127, curses.KEY_BACKSPACE):
+        parent = os.path.dirname(app.dir_picker_path.rstrip("/"))
+        if parent and parent != app.dir_picker_path:
+            app.dir_picker_path = parent
+            _reload_dir_picker(app)
+            app.dir_picker_cursor = 0
+            app.dir_picker_scroll = 0
+    elif key == ord("~"):
+        app.dir_picker_path = os.path.expanduser("~")
+        _reload_dir_picker(app)
+        app.dir_picker_cursor = 0
+        app.dir_picker_scroll = 0
+    elif key == ord("g"):
+        app.dir_picker_cursor = 0
+    elif key == ord("G"):
+        app.dir_picker_cursor = max(0, total - 1)
+
+    h, _ = app.stdscr.getmaxyx()
+    list_h = max(1, h - 4)
+    app.dir_picker_scroll = _clamp_scroll(app.dir_picker_cursor, app.dir_picker_scroll, list_h)

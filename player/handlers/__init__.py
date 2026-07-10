@@ -32,6 +32,7 @@ __all__ = [
     "_build_bindings_from_current", "_save_keybindings",
     "_get_current_key",
     "handle_radio",
+    "handle_dir_picker",
 ]
 
 from .shared import _prompt, _toast, _confirm, _page_size, _clamp_scroll
@@ -68,5 +69,6 @@ from .config_view import handle_keybindings
 from .config_view import _open_keybindings, _toggle_keybinding_mode
 from .config_view import _assign_key, _get_current_key
 from .config_view import _build_bindings_from_current, _save_keybindings
+from .config_view import handle_dir_picker
 
 from .radio import handle_radio

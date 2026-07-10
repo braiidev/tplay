@@ -337,9 +337,24 @@ HELP_TABS: list[HelpTab] = [
             ("    Esc       Volver", 2),
         ]
     },
+    {
+        "name": "Radio",
+        "lines": [
+            ("", None),
+            ("  RADIOS", 3),
+            ("", None),
+            ("    Enter     Reproducir radio", 2),
+            ("    a         Agregar radio", 2),
+            ("    d         Eliminar radio", 2),
+            ("    e         Editar nombre", 2),
+            ("    E         Editar URL", 2),
+            ("    s         Guardar radios", 2),
+            ("    X         Exportar M3U", 2),
+        ]
+    },
 ]
 
-VIEW_TO_HELP_TAB: dict[int, int] = {1: 1, 2: 2, 3: 3, 4: 4, 0: 5}
+VIEW_TO_HELP_TAB: dict[int, int] = {1: 1, 2: 2, 3: 3, 4: 4, 0: 5, 5: 6}
 
 
 def draw_help(win: curses.window, h: int, w: int, scroll: int = 0, tab: int = 0) -> None:

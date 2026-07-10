@@ -562,6 +562,8 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
             line = f"  {labels.get(key, key)}"
         if ctype in ("choice", "color", "int", "bool"):
             line += "  ← →"
+        elif ctype == "path":
+            line += "  Enter"
         max_w = w - 4
         if len(line) > max_w:
             line = line[:max_w - 1] + "…"
@@ -700,3 +702,37 @@ def draw_radio(app: PlayerApp, h: int, w: int) -> None:
         safe_addstr(win, y, url_start, url_display, attr, h, w)
     if not radios:
         safe_addstr(win, y0, 2, "  Sin radios guardadas", texto, h, w)
+
+
+def draw_dir_picker(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
+    texto = curses.color_pair(PAIR_TEXTO)
+    destacar = curses.color_pair(PAIR_DESTACAR)
+    nav = curses.color_pair(PAIR_NAV)
+
+    title = app.dir_picker_path
+    max_tw = w - 20
+    if len(title) > max_tw and max_tw > 4:
+        title = "…" + title[-(max_tw - 1):]
+    draw_box(win, h, w, f"Dir: {title}")
+
+    entries = app.dir_picker_entries
+    list_h = h - 4
+    visible = entries[app.dir_picker_scroll:app.dir_picker_scroll + list_h]
+
+    if not entries:
+        safe_addstr(win, h // 2, 2, "  (sin subdirectorios)", texto, h, w)
+    else:
+        for i, (name, _, full) in enumerate(visible):
+            y = 2 + i
+            idx = app.dir_picker_scroll + i
+            line = f"  [+]/ {name}"
+            max_w = w - 4
+            if len(line) > max_w:
+                line = line[:max_w - 1] + "…"
+            if idx == app.dir_picker_cursor:
+                safe_addstr(win, y, 2, line, destacar | curses.A_REVERSE, h, w)
+            else:
+                safe_addstr(win, y, 2, line, destacar, h, w)
+
+    footer = "  Enter=selecc  h=padre  ~=home  g/G=inicio/fin  Esc=cancelar"
+    safe_addstr(win, h - 2, 2, footer[:w - 4], nav, h, w)

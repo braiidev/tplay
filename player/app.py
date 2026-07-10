@@ -122,6 +122,13 @@ class PlayerApp:
         self.file_op_source: str | None = None
         self._file_undo: dict[str, Any] | None = None
 
+        self.dir_picker_mode: bool = False
+        self.dir_picker_config_key: str = ""
+        self.dir_picker_path: str = ""
+        self.dir_picker_entries: list[tuple[str, bool, str]] = []
+        self.dir_picker_cursor: int = 0
+        self.dir_picker_scroll: int = 0
+
         self.kb_keybinding_view: bool = False
 
         self.toast_msg: str = ""
@@ -442,6 +449,9 @@ class PlayerApp:
     def _handle_key(self, key: int) -> None:
         if self._handle_key_help(key):
             return
+        if self.dir_picker_mode:
+            handlers.handle_dir_picker(self, key)
+            return
         if self._handle_key_mode_specific(key):
             return
         if self._handle_key_view_switch(key):
@@ -633,6 +643,7 @@ class PlayerApp:
             self.meta_edit_changed = {}
             self.file_op_mode = None
             self.file_op_source = None
+            self.dir_picker_mode = False
             curses.curs_set(0)
             curses.flushinp()
             return True
@@ -888,6 +899,8 @@ class PlayerApp:
             self.config_cursor = max(0, self.config_cursor)
             self.config_scroll = max(0, self.config_scroll)
             self.help_scroll = max(0, self.help_scroll)
+            self.dir_picker_cursor = max(0, self.dir_picker_cursor)
+            self.dir_picker_scroll = max(0, self.dir_picker_scroll)
 
             minimal = self.config.get("ui_minimal", False)
             compact = minimal or h < 16 or (self.current_view == self.V_LISTEN and w < 61)
@@ -907,6 +920,8 @@ class PlayerApp:
 
             if self.meta_edit_mode:
                 views.draw_meta_editor(self, self.stdscr, h, w)
+            elif self.dir_picker_mode:
+                views.draw_dir_picker(self, self.stdscr, h, w)
             elif self.current_view == self.V_CONFIG and self.kb_keybinding_view:
                 views.draw_keybindings(self, h, w)
             elif compact and self.current_view == self.V_LISTEN:
