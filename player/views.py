@@ -549,6 +549,8 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
         idx = app.config_scroll + i
         if ctype == "color":
             line = f"  {label}: {cc.get(key, 'Blanco')}"
+        elif ctype == "bool":
+            line = f"  {label}: {'Sí' if app.config.get(key, True) else 'No'}"
         elif key == "keybindings":
             mode_label = "Default" if app.keybinding_mode == "default" else "Custom"
             line = f"  {label}  [{mode_label}]"
@@ -558,7 +560,7 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
                 line += "  !"
         else:
             line = f"  {labels.get(key, key)}"
-        if ctype in ("choice", "color", "int"):
+        if ctype in ("choice", "color", "int", "bool"):
             line += "  ← →"
         max_w = w - 4
         if len(line) > max_w:

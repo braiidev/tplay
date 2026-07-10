@@ -340,6 +340,7 @@ class PlayerApp:
             ]},
             {"name": "Apariencia", "items": [
                 ("theme", "Tema", "choice"),
+                ("ui_navbar", "Barra de navegación", "bool"),
             ]},
             {"name": "Sistema", "items": [
                 ("keybindings", "Keybindings", "action"),
@@ -918,7 +919,7 @@ class PlayerApp:
                     ui.draw_dialog(self.stdscr, h, w, "Destino",
                                    "s: Pila  |  p: Lista  |  Esc: Cancelar",
                                    compact=compact)
-            elif not self.meta_edit_mode and not compact:
+            elif not self.meta_edit_mode and not compact and self.config.get("ui_navbar", True):
                 ui.draw_nav(self.stdscr, h, w)
             if self.toast_ticks > 0:
                 ui.safe_addstr(self.stdscr, h - 3, 2, self.toast_msg,

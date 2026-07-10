@@ -34,6 +34,8 @@ def handle_config(app: PlayerApp, key: int) -> None:
         key_name, _, ctype = app.config_items[app.config_cursor]
         if ctype == "choice":
             _cycle_theme(app, 1)
+        elif ctype == "bool":
+            _toggle_bool(app, key_name)
         elif ctype == "color":
             _cycle_color(app, key_name, 1)
         elif ctype == "int":
@@ -49,6 +51,8 @@ def handle_config(app: PlayerApp, key: int) -> None:
         key_name, _, ctype = app.config_items[app.config_cursor]
         if ctype == "choice":
             _cycle_theme(app, -1)
+        elif ctype == "bool":
+            _toggle_bool(app, key_name)
         elif ctype == "color":
             _cycle_color(app, key_name, -1)
         elif ctype == "int":
@@ -103,6 +107,12 @@ def _config_int_dec(app: PlayerApp, key_name: str) -> None:
     elif key_name == "sleep_timer_minutes":
         val = app.config.get("sleep_timer_minutes", 30)
         app.config["sleep_timer_minutes"] = max(val - 1, 1)
+    _save_config(app.config)
+
+
+def _toggle_bool(app: PlayerApp, key_name: str) -> None:
+    app.config[key_name] = not app.config.get(key_name, True)
+    from ..config import save as _save_config
     _save_config(app.config)
 
 

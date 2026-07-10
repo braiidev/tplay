@@ -16,6 +16,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "sleep_timer_minutes": 30,
     "keybinding_mode": "default",
     "keybindings": {},
+    "ui_navbar": True,
 }
 
 COLORS: dict[str, int] = {
