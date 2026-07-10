@@ -21,3 +21,11 @@
 | E2 | Inconsistencia de funcion entre <E> de Explorer (editar archivo) y <e> de Playlist, solo funciona <E> de explorer, <e> de playlist hay que cambiarlo a <E> para editar el archivo | - |✅|
 | E3 | Si cambio un nombre - metadada en Explorer, solo Listen se "Entera" del cambio, Playlist e Historial siguen mostrando informacion erronea o inexistente | - | ✅ |
 | E4 | En <E> de explorer si un archivo recibe el nombre de otro, este lo pisa sin ninguna confirmacion | - | 
+
+## Mejoras
+
+| ID | Mejora | Compl. | Estado |
+|----|--------|--------|--------|
+| M1 | Refactor: reducir duplicación entre vistas, extraer lógica común de dibujado de items y metadata | - | ▢ |
+| M2 | Refactor: unificar manejo de errores y toasts | - | ▢ |
+| M3 | Refactor: tipado completo con mypy | - | ▢ |

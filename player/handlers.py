@@ -643,19 +643,29 @@ def _rename_file(app, full: str, name: str,
     """Renombrar archivo en disco. on_rename(app, old_path, new_path) si se necesita post-procesar."""
     _, ext = os.path.splitext(name)
 
+    def _do_rename(app, old_path, new_path):
+        try:
+            app._push_snapshot()
+            os.rename(old_path, new_path)
+            if on_rename:
+                on_rename(app, old_path, new_path)
+        except Exception as e:
+            _toast(app, f"Error al renombrar: {e}")
+
     def _cb(app, buf):
         if not buf or buf == name:
             return
         if not os.path.splitext(buf)[1]:
             buf += ext
         new_path = os.path.join(os.path.dirname(full), buf)
-        try:
-            app._push_snapshot()
-            os.rename(full, new_path)
-            if on_rename:
-                on_rename(app, full, new_path)
-        except Exception as e:
-            _toast(app, f"Error al renombrar: {e}")
+        if new_path == full:
+            return
+        if os.path.exists(new_path):
+            _confirm(app,
+                     f"'{buf}' ya existe. ¿Sobrescribir?",
+                     lambda a: _do_rename(a, full, new_path))
+        else:
+            _do_rename(app, full, new_path)
 
     _prompt(app, "Renombrar a", _cb, name)
 
