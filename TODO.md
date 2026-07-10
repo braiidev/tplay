@@ -53,7 +53,7 @@
 
 | ID  | Descripción | Estado |
 | --- | ----------- | ------ |
-| L5  | Covers/metadata errors — discutir enfoque | [ ] |
+| L5  | Covers/metadata errors — discutir enfoque | ❌ sin acción |
 
 ## 🟢 FEATURES
 
@@ -89,3 +89,4 @@
 - **N4** — magic numbers (1,5,6) limpiado
 - **N5** — compact shadow → meta_cpt
 - **C4** — _restart_app ruta incorrecta tras A4 → usa `app._repo_dir`
+- **L5** — descartado: tags faltantes → "desconocido" (ok), covers no interesan

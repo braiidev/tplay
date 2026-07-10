@@ -69,10 +69,10 @@ player/
 - **M1-M3** — draw_item_row unificada, dialog system unificado, mypy strict
 
 ### Pendiente
-- **L5** — covers/metadata errors (pendiente discusión)
+- ~~**L5** — covers/metadata errors~~ ❌ sin acción
 - **F2** — Ecualizador gráfico (VLC API)
 - **F4** — Exportar playlist a M3U/PLS
-- **F8** — Cover art (chafa/viu)
+- **F8** — Cover art (chafa/viu) ← descartado por ahora
 - **F28** — Streaming/Radio (URL, M3U, radios guardadas)
 
 ### Últimos tags de versión
