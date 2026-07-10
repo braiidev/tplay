@@ -142,7 +142,7 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 |-------|--------|
 | `j` / `k` / `↑↓` | Cursor arriba/abajo |
 | `g` / `G` | Inicio / Fin |
-| `Enter` | Reproducir archivo |
+| `Enter` | Reproducir archivo / radio |
 | `d` | Eliminar entrada |
 | `x` | Limpiar historial |
 | `a` | Añadir a pila (final) |

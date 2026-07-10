@@ -346,7 +346,7 @@ HELP_TABS: list[HelpTab] = [
             ("", None),
             ("  HISTORIAL", PAIR_DESTACAR),
             ("", None),
-            ("    Enter     Reproducir archivo", PAIR_TEXTO),
+            ("    Enter     Reproducir archivo / radio", PAIR_TEXTO),
             ("    d         Eliminar entrada", PAIR_TEXTO),
             ("    x         Limpiar todo", PAIR_TEXTO),
             ("    a / A     Añadir a pila (final/tras)", PAIR_TEXTO),
