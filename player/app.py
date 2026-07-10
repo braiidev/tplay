@@ -107,7 +107,6 @@ class PlayerApp:
         self.confirm_mode = False
         self.confirm_label = ""
         self.confirm_callback = None
-        self.confirm_is_info = False
 
         self.file_op_mode = None
         self.file_op_source = None
@@ -776,15 +775,11 @@ class PlayerApp:
 
     def _handle_confirm(self, key: int) -> None:
         cb = self.confirm_callback
-        is_info = self.confirm_is_info
         self.confirm_mode = False
         self.confirm_label = ""
         self.confirm_callback = None
-        self.confirm_is_info = False
         curses.curs_set(0)
         curses.flushinp()
-        if is_info:
-            return
         if cb and (chr(key).lower() == "s" or key in (ord("\n"), 10, 13)):
             cb()
 
@@ -878,9 +873,8 @@ class PlayerApp:
             else:
                 self._draw_status(h, w)
             if self.confirm_mode:
-                title = "Información" if self.confirm_is_info else "Confirmar"
-                ui.draw_dialog(self.stdscr, h, w, title, self.confirm_label,
-                               is_confirm=not self.confirm_is_info, compact=compact)
+                ui.draw_dialog(self.stdscr, h, w, "Confirmar", self.confirm_label,
+                               is_confirm=True, compact=compact)
             elif self.prompt_mode:
                 ui.draw_dialog(self.stdscr, h, w, "Entrada", self.prompt_label,
                                compact=compact, prompt_buf=self.prompt_buf,

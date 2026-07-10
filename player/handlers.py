@@ -1056,7 +1056,6 @@ def _confirm(app, label: str, callback) -> None:
     app.confirm_mode = True
     app.confirm_label = label
     app.confirm_callback = callback
-    app.confirm_is_info = callback is None
     curses.flushinp()
 
 
