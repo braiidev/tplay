@@ -7,6 +7,7 @@
 | C1  | Renombrar con overwrite: callback lambda aridad incorrecta + mensaje pobre | handlers.py:672 | ✅ |
 | C2  | `next()` sin default + `del` sin pop al borrar playlist activa | handlers.py:893 | ✅ |
 | C3  | `list.index()` sin try/except al cambiar de playlist con `[`/`]` | handlers.py:332,338 | ✅ |
+| C4  | `_restart_app` usa `__file__` con ruta incorrecta tras split A4 — `execv` ejecuta `player/app.py` en vez de `app.py` raíz | handlers/shared.py:157 | [ ] |
 
 ## 🟠 BUG (comportamiento incorrecto)
 

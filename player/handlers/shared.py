@@ -149,13 +149,12 @@ def _do_update(app: PlayerApp) -> None:
 
 
 def _restart_app(app: PlayerApp) -> None:
-    import os, sys
+    import sys
     try:
         app._save_session()
         app.audio.player.stop()
         curses.endwin()
-        repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        app_path = os.path.join(repo, "app.py")
+        app_path = os.path.join(app._repo_dir, "app.py")
         os.execv(sys.executable, [sys.executable, app_path])
     except Exception:
         _toast(app, "Error al reiniciar, reiniciá manualmente")
