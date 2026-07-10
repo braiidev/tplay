@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 from .audio import AudioEngine
 from .config import load as load_config, save as save_config, apply_theme
+from .config import PAIR_TEXTO, PAIR_DESTACAR
 from .playlist import load_all as load_all_playlists, save_all as save_playlists
 from .metadata import MetadataCache
 from .file_utils import list_dir as _list_dir
@@ -960,14 +961,14 @@ class PlayerApp:
                 ui.draw_nav(self.stdscr, h, w)
             if self.toast_ticks > 0:
                 ui.safe_addstr(self.stdscr, h - 3, 2, self.toast_msg,
-                               curses.color_pair(2), h, w)
+                               curses.color_pair(PAIR_TEXTO), h, w)
                 self.toast_ticks -= 1
             if self.update_available and not self.dialog and not self.show_help:
                 if not compact:
                     msg = " ! Actualización disponible "
                     if w > len(msg) + 2:
                         ui.safe_addstr(self.stdscr, 0, w - len(msg) - 1, msg,
-                                       curses.color_pair(1), h, w)
+                                       curses.color_pair(PAIR_DESTACAR), h, w)
             if self.show_help:
                 ui.draw_help(self.stdscr, h, w, self.help_scroll, self.help_tab)
 

@@ -65,7 +65,7 @@ def _center(s: str, w: int) -> str:
 
 def draw_listen(app: PlayerApp, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
-    dest = curses.color_pair(PAIR_DESTACAR)
+    destacar = curses.color_pair(PAIR_DESTACAR)
     nav = curses.color_pair(PAIR_NAV)
 
     if app.show_stack_view:
@@ -88,7 +88,7 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
                     mode_tag = " [1x]"
                 elif item.mode == "repeat_inf":
                     mode_tag = " [∞]"
-                attr = dest if is_playing else texto
+                attr = destacar if is_playing else texto
                 draw_item_row(app.stdscr, y, item.name, item.path, meta,
                               is_cursor=(idx == app.stack_cursor),
                               is_playing=is_playing, is_stream=is_stream,
@@ -97,14 +97,14 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
             safe_addstr(app.stdscr, h - 4, 2,
                         "  [Enter]►  [Tab] Volver  [d]el  [x]clear  [J/K]orden  [s]guardar", texto, h, w)
             safe_addstr(app.stdscr, h - 3, 2,
-                        "  [r/R]modo item  [g]Inicio  [G]Fin", texto, h, w)
+                        "  [r/R]modo  [g/G]Inicio/Fin  [X]export  [u/U]deshacer", texto, h, w)
         return
 
     draw_box(app.stdscr, h, w, "Listen")
     mid = max(3, (h - 8) // 2)
 
     if not app.stack.items or not app.audio.playing:
-        safe_addstr(app.stdscr, mid - 1, 2, "  Nada sonando.", dest, h, w)
+        safe_addstr(app.stdscr, mid - 1, 2, "  Nada sonando.", destacar, h, w)
         safe_addstr(app.stdscr, mid + 1, 2, "  Abrí [2] Explorador y seleccioná un archivo", texto, h, w)
         return
 
@@ -117,14 +117,14 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
     estado = "► PLAY" if not app.paused else "|| PAUSE"
 
     if is_stream:
-        safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}  [STREAM]", dest, h, w)
+        safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}  [STREAM]", destacar, h, w)
         safe_addstr(app.stdscr, mid - 1, 2, f"  {cur_item.name}", texto, h, w)
         safe_addstr(app.stdscr, mid, 2, f"  {cur_item.path}", texto, h, w)
     else:
         artist = (meta.get('artist') if meta else None) or "Artista desconocido"
         album = (meta.get('album') if meta else None) or "Álbum desconocido"
         title = (meta.get('title') if meta else None) or cur_item.name
-        safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}", dest, h, w)
+        safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}", destacar, h, w)
         tw = w - 6
         title_s = title[:tw - 1] + "…" if len(title) > tw else title
         safe_addstr(app.stdscr, mid - 1, 2, f"    {title_s}", texto, h, w)
@@ -194,20 +194,21 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
 
     extra = "  [Tab] Pila │ [g] Ir a │ [t/T] Tmp │ [h/l] Buscar │ [r]Azar [R]Rep [m]Sil"
 
-    safe_addstr(app.stdscr, h - 5, 2, line1[:w - 4], dest, h, w)
+    safe_addstr(app.stdscr, h - 5, 2, line1[:w - 4], destacar, h, w)
     safe_addstr(app.stdscr, h - 4, 2, line2[:w - 4], texto, h, w)
     safe_addstr(app.stdscr, h - 3, 2, extra[:w - 4], nav, h, w)
 
 
 def draw_mini_stack(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
+    marco = curses.color_pair(PAIR_MARCO)
     texto = curses.color_pair(PAIR_TEXTO)
-    dest = curses.color_pair(PAIR_DESTACAR)
+    destacar = curses.color_pair(PAIR_DESTACAR)
 
-    safe_addstr(win, 0, 0, "┌" + "─" * max(0, w - 2) + "┐", dest, h, w)
-    safe_addstr(win, h - 1, 0, "└" + "─" * max(0, w - 2) + "┘", dest, h, w)
+    safe_addstr(win, 0, 0, "┌" + "─" * max(0, w - 2) + "┐", marco, h, w)
+    safe_addstr(win, h - 1, 0, "└" + "─" * max(0, w - 2) + "┘", marco, h, w)
     for y in range(1, h - 1):
-        safe_addstr(win, y, 0, "│", dest, h, w)
-        safe_addstr(win, y, max(0, w - 1), "│", dest, h, w)
+        safe_addstr(win, y, 0, "│", marco, h, w)
+        safe_addstr(win, y, max(0, w - 1), "│", marco, h, w)
 
     items = app.stack.items
     total = len(items)
@@ -226,7 +227,7 @@ def draw_mini_stack(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
         max_w = w - 3
         if len(line) > max_w:
             line = line[:max_w - 1] + "…"
-        attr = dest if is_playing else texto
+        attr = destacar if is_playing else texto
         if idx == app.stack_cursor:
             safe_addstr(win, y, 1, line, attr | curses.A_REVERSE, h, w)
         else:
@@ -239,7 +240,7 @@ def draw_listen_compact(app: PlayerApp, h: int, w: int) -> None:
         return
     marco = curses.color_pair(PAIR_MARCO)
     texto = curses.color_pair(PAIR_TEXTO)
-    dest = curses.color_pair(PAIR_DESTACAR)
+    destacar = curses.color_pair(PAIR_DESTACAR)
 
     status = ""
     if app.audio.playing:
@@ -256,7 +257,7 @@ def draw_listen_compact(app: PlayerApp, h: int, w: int) -> None:
 
     if not app.stack.items or not app.audio.playing:
         msg = "Nada sonando."
-        safe_addstr(app.stdscr, h // 2, (w - len(msg)) // 2, msg, dest, h, w)
+        safe_addstr(app.stdscr, h // 2, (w - len(msg)) // 2, msg, destacar, h, w)
         return
 
     cur_item = app.stack.current
@@ -272,7 +273,7 @@ def draw_listen_compact(app: PlayerApp, h: int, w: int) -> None:
     else:
         title_text = (meta.get('title') if meta else None) or cur_item.name
     t = title_text[:max_w - 1] + "…" if len(title_text) > max_w else title_text
-    safe_addstr(app.stdscr, 2, 2, t, dest, h, w)
+    safe_addstr(app.stdscr, 2, 2, t, destacar, h, w)
 
     if not is_stream:
         artist = (meta.get('artist') if meta else None) or "?"
@@ -316,7 +317,7 @@ def draw_listen_compact(app: PlayerApp, h: int, w: int) -> None:
             display = no_states
         else:
             display = controls[:max_w]
-    safe_addstr(app.stdscr, h - 2, 2, display, dest, h, w)
+    safe_addstr(app.stdscr, h - 2, 2, display, destacar, h, w)
 
     # ── Goto overlay for compact ──
     if app.goto_mode:
@@ -327,7 +328,7 @@ def draw_listen_compact(app: PlayerApp, h: int, w: int) -> None:
         safe_addstr(app.stdscr, oy, ox, "┌" + "─" * (bw - 2) + "┐", marco, h, w)
         title = " Ir a "
         tx = ox + 1 + (bw - 2 - len(title)) // 2
-        safe_addstr(app.stdscr, oy, tx, title, dest, h, w)
+        safe_addstr(app.stdscr, oy, tx, title, destacar, h, w)
         for yy in range(1, goto_h - 1):
             safe_addstr(app.stdscr, oy + yy, ox, "│", marco, h, w)
             safe_addstr(app.stdscr, oy + yy, ox + bw - 1, "│", marco, h, w)
@@ -345,7 +346,7 @@ def draw_listen_compact(app: PlayerApp, h: int, w: int) -> None:
         ax = ox + 1 + (bw - 2 - 7) // 2
         safe_addstr(app.stdscr, oy + 2, ax, "← → ↑ ↓", texto, h, w)
         ex = ox + 1 + (bw - 2 - 5) // 2
-        safe_addstr(app.stdscr, oy + 3, ex, "Enter", dest, h, w)
+        safe_addstr(app.stdscr, oy + 3, ex, "Enter", destacar, h, w)
 
 
 def draw_explorer(app: PlayerApp, h: int, w: int) -> None:
@@ -517,7 +518,7 @@ def draw_history(app: PlayerApp, h: int, w: int) -> None:
 def draw_config(app: PlayerApp, h: int, w: int) -> None:
     draw_box(app.stdscr, h, w, "Configuración")
     texto = curses.color_pair(PAIR_TEXTO)
-    dest = curses.color_pair(PAIR_DESTACAR)
+    destacar = curses.color_pair(PAIR_DESTACAR)
     nav = curses.color_pair(PAIR_NAV)
 
     labels = {
@@ -544,7 +545,7 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
         if ti == app.config_tab_idx:
             safe_addstr(app.stdscr, 1, x, "[", nav, h, w)
             x += 1
-            safe_addstr(app.stdscr, 1, x, display_name, dest, h, w)
+            safe_addstr(app.stdscr, 1, x, display_name, destacar, h, w)
             x += len(display_name)
             safe_addstr(app.stdscr, 1, x, "]", nav, h, w)
             x += 1
@@ -591,7 +592,7 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
         if len(line) > max_w:
             line = line[:max_w - 1] + "…"
         if idx == cur:
-            safe_addstr(app.stdscr, y, 2, line, dest | curses.A_REVERSE, h, w)
+            safe_addstr(app.stdscr, y, 2, line, destacar | curses.A_REVERSE, h, w)
         else:
             safe_addstr(app.stdscr, y, 2, line, texto, h, w)
 
