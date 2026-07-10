@@ -12,16 +12,18 @@ player/
 ├── app.py             # Clase PlayerApp — loop, diálogos, draw
 ├── audio.py           # AudioEngine — wrapper vlc, sleep timer, stderr→error.log
 ├── config.py          # Colores, temas, constantes UI (lazy mkdir)
+├── favorites.py       # Persistencia de favoritos (favorites.json)
 ├── file_utils.py      # list_dir, time_str, ext_label, is_url, is_video_file
 ├── handlers/          # Manejadores de teclas por vista (package)
-│   ├── __init__.py    # Re-exporta todo (60 símbolos)
-│   ├── shared.py      # _prompt, _toast, _confirm, _clamp_scroll, _play_file_direct, _rename, _open_tag_editor, update/restart
+│   ├── __init__.py    # Re-exporta todo (65 símbolos)
+│   ├── shared.py      # _prompt, _toast, _confirm, _clamp_scroll, _play_file_direct, _toggle_favorite, _rename, _open_tag_editor, update/restart
 │   ├── listen.py      # handle_listen, handle_stack_view, handle_goto
-│   ├── explorer.py    # handle_explorer, file ops (delete, mkdir, rename, copy/move), explorer filter
+│   ├── explorer.py    # handle_explorer, file ops (delete, mkdir, rename, copy/move), explorer filter, multi-select
 │   ├── playlist.py    # handle_playlist, playlist filter, playlist CRUD (save/switch/create/delete/rename)
 │   ├── history.py     # handle_history, history ops (add/remove/clear)
 │   ├── config_view.py # handle_config, keybinding editor (handle_keybindings), theme/color/int cycling
-│   └── radio.py       # handle_radio, add/edit/delete/export radios
+│   ├── radio.py       # handle_radio, add/edit/delete/export radios
+│   └── favorites.py   # handle_favorites (d=remove, Enter=play, a/A=stack, f=toggle)
 ├── keybindings.py     # Mapa de teclas, resolución de conflictos
 ├── metadata.py        # MetadataCache — cache LRU de mutagen
 ├── playlist.py        # Carga/guarda playlists JSON
@@ -29,7 +31,7 @@ player/
 ├── stack.py           # Stack, StackItem — cola de reproducción
 ├── state.py           # Snapshot/restore para undo/redo + state.json (stack persistente)
 ├── ui.py              # safe_addstr, draw_box, draw_dialog, draw_nav, draw_status, draw_help
-└── views.py           # draw_listen, draw_explorer, draw_playlist, draw_history, draw_config, draw_meta_editor
+└── views.py           # draw_listen, draw_explorer, draw_playlist, draw_history, draw_config, draw_meta_editor, draw_favorites
 ```
 
 ## Convenciones de tipado (mypy strict)
@@ -45,7 +47,7 @@ player/
 - Para `mutagen.File` usar `# type: ignore[attr-defined]`
 - `# type: ignore` solo como último recurso
 
-## Estado actual (v1.5.26)
+## Estado actual (v1.5.27)
 
 ### Completado (session actual)
 - **B2** — undo unificado (file_undo integrado en snapshots)
@@ -53,7 +55,7 @@ player/
 - **A2** — KEY_RESIZE handling (resizeterm + clear + refresh)
 - **A1** — stderr redirigido a `~/.config/tplay/data/error.log` (append)
 - **A3** — os.makedirs lazy, solo en save()
-- **A4** — handlers.py partido en handlers/ package (7 archivos por vista)
+- **A4** — handlers.py partido en handlers/ package (8 archivos por vista)
 - **A5** — playlist property valida entries inválidas (log a stderr)
 - **A6** — deferred imports mantenidos (sin riesgo circular)
 - **U1** — PgDn, PgUp, g, G en vista Playlist
@@ -72,6 +74,7 @@ player/
 - **M1-M3** — draw_item_row unificada, dialog system unificado, mypy strict
 - **F5** — Multi-select Explorer (Tab marca, Enter carga marcados, ✓ visual)
 - **F6** — Favoritos: vista 6 (nueva), f/F desde Explorer, d desde Favoritos, persistencia JSON
+- **F7** — f toggle global: `f` add/remove favoritos en todas las vistas (Listen, Stack, Explorer, Playlist, History, Radio, Favoritos)
 
 ### Pendiente
 - ~~**L5** — covers/metadata errors~~ ❌ sin acción
@@ -115,7 +118,8 @@ Se maneja desde `_handle_dialog_key()` en app.py y se dibuja unificado en `_draw
     ├── config.json     # Configuración (volumen, tema, etc.)
     ├── state.json      # Estado de sesión (stack, playhead, shuffle, repeat, posición)
     ├── history.json    # Historial de reproducción (últimos 100)
+    ├── favorites.json  # Favoritos (path + name, lista persistente)
     ├── error.log       # Stderr de VLC/mutagen (append)
     ├── playlists/      # Playlists guardadas
     └── radios.json     # Radios guardadas
-
+```
