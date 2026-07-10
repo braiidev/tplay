@@ -663,7 +663,7 @@ class PlayerApp:
             curses.flushinp()
             return True
         if key in (ord("s"), ord("S")):
-            if self.current_view != self.V_PLAYLIST and not self.show_stack_view:
+            if self.current_view not in (self.V_PLAYLIST, self.V_RADIO) and not self.show_stack_view:
                 self.audio.stop()
                 self.audio.sleep_timer_active = False
                 self.audio.sleep_timer_expired = False
@@ -677,35 +677,13 @@ class PlayerApp:
             self._play_prev()
             curses.flushinp()
             return True
-        if key in (ord("+"), ord("k")):
+        if key in (ord("+"),):
             self.audio.set_volume(self.audio.volume + 5)
             curses.flushinp()
             return True
-        if key in (ord("-"), ord("j")):
+        if key in (ord("-"),):
             self.audio.set_volume(self.audio.volume - 5)
             curses.flushinp()
-            return True
-        if key == ord("r"):
-            self.stack.shuffle = not self.stack.shuffle
-            self.toast("Aleatorio: " + ("ON" if self.stack.shuffle else "OFF"))
-            curses.flushinp()
-            return True
-        if key == ord("R"):
-            self.stack.repeat = not self.stack.repeat
-            self.toast("Repetir: " + ("ON" if self.stack.repeat else "OFF"))
-            curses.flushinp()
-            return True
-        if key == ord("m"):
-            self.audio.toggle_mute()
-            curses.flushinp()
-            return True
-        if key == ord("t"):
-            self._toggle_sleep_timer()
-            return True
-        if key == ord("T"):
-            handlers._prompt(self, "Minutos temporizador",
-                             lambda a, b: self._setup_sleep_timer(b),
-                             str(self.config.get("sleep_timer_minutes", 30)))
             return True
         if key == ord("q"):
             self._save_session()
@@ -720,6 +698,10 @@ class PlayerApp:
         if key == 27:
             if self.file_op_mode:
                 return False  # Let view handler (_handle_file_op_picker) handle it
+            if self.current_view == self.V_HISTORY and not any(
+                (self.show_stack_view, self.goto_mode, self.kb_keybinding_view, self.dir_picker_mode)
+            ):
+                return False  # Let history handler set view to Listen
             self.show_stack_view = False
             self.goto_mode = False
             self.kb_keybinding_view = False

@@ -84,7 +84,7 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
         _start_delete(app)
     elif key == ord("M"):
         _start_mkdir(app)
-    elif key == ord("R"):
+    elif key == curses.KEY_F5:
         app.entries = _list_dir(app.current_dir)
         app.cursor = 0
         app.scroll = 0

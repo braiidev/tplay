@@ -47,6 +47,24 @@ def handle_listen(app: PlayerApp, key: int) -> None:
             _open_tag_editor(app, cur_item.path)
         else:
             _toast(app, "No hay archivo para editar")
+    elif key in (ord("k"),):
+        app.audio.set_volume(app.audio.volume + 5)
+    elif key in (ord("j"),):
+        app.audio.set_volume(app.audio.volume - 5)
+    elif key == ord("r"):
+        app.stack.shuffle = not app.stack.shuffle
+        _toast(app, "Aleatorio: " + ("ON" if app.stack.shuffle else "OFF"))
+    elif key == ord("R"):
+        app.stack.repeat = not app.stack.repeat
+        _toast(app, "Repetir: " + ("ON" if app.stack.repeat else "OFF"))
+    elif key == ord("m"):
+        app.audio.toggle_mute()
+    elif key == ord("t"):
+        app._toggle_sleep_timer()
+    elif key == ord("T"):
+        _prompt(app, "Minutos temporizador",
+                lambda a, b: app._setup_sleep_timer(b),
+                str(app.config.get("sleep_timer_minutes", 30)))
 
 
 def handle_stack_view(app: PlayerApp, key: int) -> None:
