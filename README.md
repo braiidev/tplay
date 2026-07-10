@@ -31,18 +31,18 @@ tplay
 | Tecla       | Acción                |
 |-------------|-----------------------|
 | `0`         | Config                |
-| `1`         | Explorador            |
-| `2`         | Playlist              |
-| `3`         | Now Playing           |
-| `4`         | Búsqueda              |
+| `1`         | Listen (reproducción) |
+| `2`         | Explorador            |
+| `3`         | Playlist              |
+| `4`         | Historial             |
 | `Space`     | Play / Pause          |
 | `s`         | Stop                  |
-| `n` / `p`   | Siguiente / Anterior  |
+| `n` / `b`   | Siguiente / Anterior  |
 | `+` / `-`   | Volumen               |
 | `q`         | Salir                |
 | `?` / `F1`  | Ayuda completa        |
 
-> Ver todas las teclas en `SPEC_PLAYER.md`.
+> Ver todas las teclas en `COMPACT_SPEC.md`.
 
 ## Personalización
 
@@ -62,15 +62,18 @@ Config persistente: `~/.config/tplay/data/config.json`
 ├── install.sh
 ├── requirements.txt
 ├── player/
-│   ├── app.py          # Orquestación
-│   ├── audio.py        # VLC wrapper
-│   ├── config.py       # Config y temas
-│   ├── file_utils.py   # Helpers
-│   ├── handlers.py     # Input por vista
-│   ├── keybindings.py  # Bindings
-│   ├── metadata.py     # ID3 (mutagen)
-│   ├── playlist.py     # Playlists
-│   ├── ui.py           # Primitivas UI
-│   └── views.py        # Dibujado por vista
-└── SPEC_PLAYER.md      # Documentación completa
+│   ├── __init__.py        # main() + CLI args
+│   ├── app.py             # Orquestación
+│   ├── audio.py           # VLC wrapper
+│   ├── config.py          # Config y temas
+│   ├── file_utils.py      # Helpers
+│   ├── handlers.py        # Input por vista
+│   ├── keybindings.py     # Bindings
+│   ├── metadata.py        # ID3 (mutagen)
+│   ├── playlist.py        # Playlists
+│   ├── stack.py           # Stack de reproducción
+│   ├── state.py           # Persistencia sesión
+│   ├── ui.py              # Primitivas UI
+│   └── views.py           # Dibujado por vista
+└── COMPACT_SPEC.md        # Documentación completa
 ```
