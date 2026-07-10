@@ -91,6 +91,69 @@ def _prompt_export_m3u(app: PlayerApp) -> None:
     _prompt(app, "Exportar pila como M3U", _export_as_m3u, "tplay_stack.m3u")
 
 
+def _parse_m3u(filepath: str) -> list[str]:
+    paths: list[str] = []
+    base = os.path.dirname(os.path.abspath(filepath))
+    with open(filepath, "r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            p = line if os.path.isabs(line) else os.path.normpath(os.path.join(base, line))
+            if os.path.isfile(p):
+                paths.append(p)
+    return paths
+
+
+def _parse_pls(filepath: str) -> list[str]:
+    paths: list[str] = []
+    base = os.path.dirname(os.path.abspath(filepath))
+    with open(filepath, "r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            line = line.strip()
+            if line.lower().startswith("file"):
+                _, _, val = line.partition("=")
+                val = val.strip()
+                if val:
+                    p = val if os.path.isabs(val) else os.path.normpath(os.path.join(base, val))
+                    if os.path.isfile(p):
+                        paths.append(p)
+    return paths
+
+
+def _import_m3u_pls_cb(app: PlayerApp, filepath: str) -> None:
+    filepath = filepath.strip()
+    if not filepath:
+        return
+    if not os.path.isfile(filepath):
+        _toast(app, "Archivo no encontrado")
+        return
+    ext = os.path.splitext(filepath)[1].lower()
+    if ext == ".pls":
+        paths = _parse_pls(filepath)
+    else:
+        paths = _parse_m3u(filepath)
+    if not paths:
+        _toast(app, "No se encontraron canciones válidas")
+        return
+    items = [StackItem(path=p, name=os.path.basename(p)) for p in paths]
+    if app.current_view == app.V_LISTEN:
+        for item in items:
+            app.stack.append(item)
+        _toast(app, f"Importadas {len(items)} canciones al Stack")
+    else:
+        app._push_snapshot()
+        app.playlist_data[app.active_name].extend([(item.name, item.path) for item in items])
+        from ..playlist import save_all as _save_all
+        _save_all(app.playlist_data, app.active_name)
+        _toast(app, f"Importadas {len(items)} canciones a '{app.active_name}'")
+
+
+def _prompt_import_m3u_pls(app: PlayerApp) -> None:
+    music_dir = app.config.get("music_dir", os.path.expanduser("~/Music"))
+    _prompt(app, "Importar M3U/PLS", _import_m3u_pls_cb, os.path.join(music_dir, ""))
+
+
 def _rename_file(app: PlayerApp, full: str, name: str,
                  on_rename: Callable[..., None] | None = None) -> None:
     _, ext = os.path.splitext(name)

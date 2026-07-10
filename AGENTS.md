@@ -72,7 +72,7 @@ player/
 ### Pendiente
 - ~~**L5** — covers/metadata errors~~ ❌ sin acción
 - **F2** — Ecualizador gráfico (VLC API)
-- **F4** — Exportar playlist a M3U/PLS ← ✅ hecho (M3U extendido, tecla X)
+- **F4** — Exportar/Importar M3U/PLS ← ✅ hecho (M3U extendido, `X` export, `O` import)
 - **F8** — Cover art (chafa/viu) ← descartado por ahora
 - **F28** — Streaming/Radio (URL, M3U, radios guardadas)
 
