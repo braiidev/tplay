@@ -24,9 +24,9 @@
 | A1  | stderr redirigido a log (~/.config/tplay/data/error.log) — VLC/mutagen errores capturados | audio.py | ✅ |
 | A2  | Sin manejo de KEY_RESIZE → UI corrupta al redimensionar terminal | app.py | ✅ |
 | A3  | `os.makedirs` lazy — solo en save(), no al importar | config.py | ✅ |
-| A4  | handlers.py monolítico (1183 líneas, 60+ funciones) | handlers.py | [ ] |
-| A5  | Playlist property retorna lista mutable interna | app.py:160 | [ ] |
-| A6  | Deferred imports (from .config import save) dentro de funciones | handlers.py:867+ | [ ] |
+| A4  | handlers.py monolítico → handlers/ package con 7 archivos por vista | handlers.py | ✅ |
+| A5  | Playlist property valida entries inválidas (log a stderr) | app.py:160 | ✅ |
+| A6  | Deferred imports se dejan diferidos (sin riesgo de circulares) | handlers/*.py | ✅ |
 
 ## 🔵 UX (experiencia de usuario)
 
@@ -74,3 +74,6 @@
 - **A2** — KEY_RESIZE handling, resize sin corrupción de UI
 - **A1** — stderr redirigido a error.log (data/) en vez de /dev/null
 - **A3** — os.makedirs lazy, solo dentro de save()
+- **A4** — handlers.py partido en handlers/ package por vista (7 archivos)
+- **A5** — playlist property con validación de entries inválidas (log)
+- **A6** — deferred imports se mantienen diferidos

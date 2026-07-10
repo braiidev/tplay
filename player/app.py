@@ -158,7 +158,12 @@ class PlayerApp:
 
     @property
     def playlist(self) -> list[tuple[str, str]]:
-        return self.playlist_data.get(self.active_name, [])
+        pl: list[tuple[str, str]] = self.playlist_data.get(self.active_name, [])
+        for i, entry in enumerate(pl):
+            if not isinstance(entry, (list, tuple)) or len(entry) != 2:
+                import sys
+                print(f"[tplay] playlist[{i}] inválido: {entry!r}", file=sys.stderr)
+        return pl
 
     @property
     def paused(self) -> bool:
