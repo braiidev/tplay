@@ -139,15 +139,27 @@ def draw_dialog(win: curses.window, h: int, w: int, title: str, text: str,
             if prompt_cursor_pos < 0:
                 prompt_cursor_pos = len(prompt_buf)
             visible = prompt_buf[prompt_scroll:prompt_scroll + field_w]
-            if len(prompt_buf) > prompt_scroll + field_w:
+            has_ellipsis = len(prompt_buf) > prompt_scroll + field_w
+            if has_ellipsis:
                 visible += "…"
-            rline(f"  {text}: {visible}")
-            cur_in_visible = max(0, min(prompt_cursor_pos - prompt_scroll, len(visible)))
-            if visible.endswith("…") and cur_in_visible >= len(visible) - 1:
-                cur_in_visible = max(0, len(visible) - 1)
-            cx = ox + 1 + len(f"  {text}: ") + cur_in_visible
-            win.move(oy, min(cx, w - 2))
-            curses.curs_set(1)
+            body = f"  {text}: {visible}"
+            s = body[:ih]
+            if len(s) < ih:
+                s += " " * (ih - len(s))
+            try:
+                win.addstr(oy, ox, vb + s + vb, dest)
+            except curses.error:
+                pass
+            cur_in_visible = max(0, min(prompt_cursor_pos - prompt_scroll, len(prompt_buf) - prompt_scroll))
+            if has_ellipsis and cur_in_visible >= field_w:
+                cur_in_visible = field_w - 1
+            cx = len(f"  {text}: ") + cur_in_visible
+            if cx < ih:
+                try:
+                    win.chgat(oy, ox + 1 + cx, 1, dest | curses.A_REVERSE)
+                except curses.error:
+                    pass
+            curses.curs_set(0)
 
         # Row 3: buttons or empty
         oy += 1

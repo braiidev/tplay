@@ -914,7 +914,6 @@ class PlayerApp:
 
             needs_cursor = ((self.current_view == self.V_EXPLORER and self.explorer_filter_mode)
                             or (self.current_view == self.V_PLAYLIST and self.playlist_filter_mode)
-                            or (self.dialog is not None and self.dialog["type"] == "prompt")
                             or self.meta_edit_editing)
             if needs_cursor:
                 curses.curs_set(1)

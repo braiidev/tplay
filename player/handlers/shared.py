@@ -17,7 +17,7 @@ def _prompt(app: PlayerApp, label: str, callback: Callable[..., None],
             initial: str = "") -> None:
     app.dialog = {"type": "prompt", "label": label, "buf": initial,
                   "callback": callback, "scroll": 0, "cursor_pos": len(initial)}
-    curses.curs_set(1)
+    curses.curs_set(0)
     curses.flushinp()
 
 
