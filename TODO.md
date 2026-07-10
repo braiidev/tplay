@@ -38,6 +38,7 @@
 | U3  | Toast al toggle shuffle/repeat agregado | app.py:663-664 | ✅ |
 | U4  | Confirm acepta 's' y 'y' (ambos) | app.py:478 | ✅ |
 | U5  | Sleep timer resetea al hacer stop manual | app.py:643-644 | ✅ |
+| U6  | Toast se borra muy rápido (3 frames) — aumentar duración + dismiss con Enter/Space/Esc | app.py | ✅ |
 
 ## ⚪ CLEANUP (deuda técnica menor)
 
@@ -90,3 +91,4 @@
 - **N5** — compact shadow → meta_cpt
 - **C4** — _restart_app ruta incorrecta tras A4 → usa `app._repo_dir`
 - **L5** — descartado: tags faltantes → "desconocido" (ok), covers no interesan
+- **U6** — toast más lento (40 ticks ≈ 2s) + dismiss con Enter/Space/Esc

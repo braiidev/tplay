@@ -417,7 +417,9 @@ class PlayerApp:
                 self.stdscr.refresh()
                 continue
             if key != -1:
-                if self.dialog:
+                if self.toast_ticks > 0 and key in (10, 13, 32, 27) and not self.dialog and not self.show_help:
+                    self.toast_ticks = 0
+                elif self.dialog:
                     self._handle_dialog_key(key)
                 elif self.meta_edit_mode:
                     self._handle_meta_edit(key)
@@ -729,7 +731,7 @@ class PlayerApp:
 
     def toast(self, msg: str) -> None:
         self.toast_msg = msg
-        self.toast_ticks = 3
+        self.toast_ticks = 40
 
     # ── Undo / Redo ──
 

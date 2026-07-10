@@ -65,6 +65,7 @@ player/
 - **N4** — magic numbers (1,5,6) limpiado en ui.py
 - **N5** — compact shadow → meta_cpt en _draw()
 - **C4** — _restart_app ruta incorrecta tras split en handlers/ package → usa `app._repo_dir` en vez de `__file__`
+- **U6** — toast: duración 3→40 ticks, dismiss con Enter/Space/Esc
 - **L1-L4**, **L2.7**, **E1-E5** — auditorías previas
 - **M1-M3** — draw_item_row unificada, dialog system unificado, mypy strict
 
