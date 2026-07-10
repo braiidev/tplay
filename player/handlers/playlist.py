@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from ..stack import StackItem
 from .shared import _prompt, _toast, _confirm, _clamp_scroll
-from .shared import _open_tag_editor, _rename_file, _prompt_export_m3u
+from .shared import _open_tag_editor, _rename_file, _prompt_export_m3u, _toggle_favorite
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -132,6 +132,10 @@ def handle_playlist(app: PlayerApp, key: int) -> None:
         _save_playlist(app)
     elif key == ord("X"):
         _prompt_export_m3u(app)
+    elif key == ord("f"):
+        if app.playlist:
+            name, path = app.playlist[app.playlist_cursor]
+            _toggle_favorite(app, path, name)
 
     h, _ = app.stdscr.getmaxyx()
     app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.LIST_H)

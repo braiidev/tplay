@@ -8,10 +8,9 @@ from typing import TYPE_CHECKING
 from ..file_utils import list_dir as _list_dir
 from ..file_utils import is_playlist_file as _is_playlist_file
 from ..stack import StackItem
-from ..favorites import save_favorites
 from .shared import _prompt, _toast, _confirm, _clamp_scroll
 from .shared import _page_size, _play_file_direct, _rename_file
-from .shared import _open_tag_editor, _parse_m3u, _parse_pls
+from .shared import _open_tag_editor, _parse_m3u, _parse_pls, _toggle_favorite
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -102,13 +101,7 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
         if app.entries:
             name, is_dir, full = app.entries[app.cursor]
             if not is_dir:
-                exists = any(f["path"] == full for f in app.favorites)
-                if exists:
-                    _toast(app, "Ya está en favoritos")
-                else:
-                    app.favorites.append({"path": full, "name": name})
-                    save_favorites(app.favorites)
-                    _toast(app, f"Añadido: {name}")
+                _toggle_favorite(app, full, name)
     elif key == curses.KEY_F5:
         app.entries = _list_dir(app.current_dir)
         app.cursor = 0

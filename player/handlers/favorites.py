@@ -4,7 +4,7 @@ import curses
 import os
 from typing import TYPE_CHECKING
 
-from .shared import _toast, _clamp_scroll
+from .shared import _toast, _clamp_scroll, _toggle_favorite
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -62,6 +62,9 @@ def handle_favorites(app: PlayerApp, key: int) -> None:
         idx = max(app.stack.playhead, 0)
         app.stack.items.insert(idx + 1, StackItem(path=path, name=entry.get("name", os.path.basename(path))))
         _toast(app, "Añadido tras actual")
+    elif key == ord("f"):
+        entry = app.favorites[app.favorites_cursor]
+        _toggle_favorite(app, entry["path"], entry.get("name", ""))
 
     h, _ = app.stdscr.getmaxyx()
     list_h = h - 4

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from ..file_utils import is_url as _is_url
 from .shared import _prompt, _toast, _confirm, _clamp_scroll
 from .shared import _do_clear_stack, _save_stack_as_playlist_cb, _prompt_export_m3u
-from .shared import _open_tag_editor
+from .shared import _open_tag_editor, _toggle_favorite
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -78,6 +78,14 @@ def handle_listen(app: PlayerApp, key: int) -> None:
     elif key == ord("W"):
         app.audio.set_rate(app.audio.rate - 0.25)
         _toast(app, f"Velocidad: {app.audio.rate:.2f}x")
+    elif key == ord("f"):
+        cur_item = app.stack.current
+        if cur_item and not _is_url(cur_item.path):
+            _toggle_favorite(app, cur_item.path, cur_item.name)
+        elif app.current_file and not _is_url(app.current_file):
+            _toggle_favorite(app, app.current_file, os.path.basename(app.current_file))
+        else:
+            _toast(app, "No hay archivo local para añadir")
     elif key == ord("t"):
         app._toggle_sleep_timer()
     elif key == ord("T"):
@@ -125,6 +133,10 @@ def handle_stack_view(app: PlayerApp, key: int) -> None:
             idx = app.stack_cursor
             name = app.stack.items[idx].name
             _confirm(app, f"¿Eliminar '{name}'?", lambda i=idx: _do_stack_remove(app, i))
+    elif key == ord("f"):
+        if app.stack.items and app.stack_cursor < len(app.stack.items):
+            item = app.stack.items[app.stack_cursor]
+            _toggle_favorite(app, item.path, item.name)
     elif key in (ord("x"),):
         _confirm(app, "¿Limpiar toda la pila?", lambda: _do_clear_stack(app))
     elif key in (ord("s"),):

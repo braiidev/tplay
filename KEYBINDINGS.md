@@ -232,7 +232,7 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 | `R` | — | repeat | cycle mode | — | rename PL | — | — | — | — |
 | `a` | — | — | — | add stack | — | add stack | add radio | — | add stack |
 | `A` | — | — | — | add after | — | add after | — | — | add after |
-| `f` | — | — | — | add fav | — | — | — | — | — |
+| `f` | — | toggle fav | toggle fav | toggle fav | toggle fav | toggle fav | toggle fav | — | toggle fav |
 | `F` | — | — | — | open favs | — | — | — | — | — |
 | `g` | — | goto | top | top | top | — | top | — |
 | `G` | — | — | bottom | bottom | bottom | — | bottom | — |

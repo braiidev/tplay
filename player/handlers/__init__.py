@@ -6,7 +6,7 @@ __all__ = [
     "_export_as_m3u", "_prompt_export_m3u",
     "_parse_m3u", "_parse_pls",
     "_rename_file", "_update_refs_after_rename", "_open_tag_editor",
-    "_handle_update", "_do_update", "_restart_app",
+    "_handle_update", "_do_update", "_restart_app", "_toggle_favorite",
     "handle_listen", "handle_stack_view", "handle_goto",
     "handle_explorer",
     "_handle_explorer_filter", "_do_explorer_filter",
@@ -41,7 +41,7 @@ from .shared import _play_file_direct, _do_clear_stack, _save_stack_as_playlist_
 from .shared import _export_as_m3u, _prompt_export_m3u
 from .shared import _parse_m3u, _parse_pls
 from .shared import _rename_file, _update_refs_after_rename, _open_tag_editor
-from .shared import _handle_update, _do_update, _restart_app
+from .shared import _handle_update, _do_update, _restart_app, _toggle_favorite
 
 from .listen import handle_listen, handle_stack_view, handle_goto
 

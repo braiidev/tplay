@@ -255,3 +255,16 @@ def _restart_app(app: PlayerApp) -> None:
         os.execv(sys.executable, [sys.executable, app_path])
     except Exception:
         _toast(app, "Error al reiniciar, reiniciá manualmente")
+
+
+def _toggle_favorite(app: PlayerApp, path: str, name: str) -> None:
+    from ..favorites import save_favorites
+    idx = next((i for i, f in enumerate(app.favorites) if f["path"] == path), -1)
+    if idx >= 0:
+        app.favorites.pop(idx)
+        save_favorites(app.favorites)
+        _toast(app, f"Eliminado de favoritos: {name}")
+    else:
+        app.favorites.append({"path": path, "name": name})
+        save_favorites(app.favorites)
+        _toast(app, f"Añadido a favoritos: {name}")

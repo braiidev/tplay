@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from ..stack import StackItem
 from ..radios import save_radios
-from .shared import _prompt, _toast, _confirm, _clamp_scroll
+from .shared import _prompt, _toast, _confirm, _clamp_scroll, _toggle_favorite
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -118,6 +118,10 @@ def handle_radio(app: PlayerApp, key: int) -> None:
         return
     if key == ord("X"):
         _do_export_radios_m3u(app)
+        return
+    if key == ord("f") and app.radios:
+        r = app.radios[app.radio_cursor]
+        _toggle_favorite(app, r["url"], r["name"])
         return
     if not app.radios:
         return

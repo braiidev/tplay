@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from ..file_utils import is_url as _is_url
 from ..stack import StackItem
 from .shared import _toast, _confirm, _clamp_scroll
-from .shared import _play_file_direct, _open_tag_editor
+from .shared import _play_file_direct, _open_tag_editor, _toggle_favorite
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -45,6 +45,12 @@ def handle_history(app: PlayerApp, key: int) -> None:
             _open_tag_editor(app, path)
         else:
             _toast(app, "Archivo inexistente")
+        return
+    if key == ord("f"):
+        entry = app.history[app.history_cursor]
+        path = entry.get("path", "")
+        name = entry.get("name", os.path.basename(path))
+        _toggle_favorite(app, path, name)
         return
     if key == curses.KEY_DOWN:
         app.history_cursor = min(app.history_cursor + 1, len(app.history) - 1)

@@ -81,6 +81,7 @@ player/
 - **F28** — Streaming/Radio (URL, M3U, radios guardadas) ← ✅ hecho (vista Radios con `5`, persistente, historial automático)
 
 ### Últimos tags de versión
+- v1.5.27 — feat: f toggle favoritos global (Listen, Stack, Explorer, Playlist, History, Radio, Favoritos)
 - v1.5.26 — feat: F5 multi-select Explorer + F6 Favoritos (vista 6, f/F, d, persistencia JSON)
 - v1.5.25 — feat: F2 speed control (w/W ±0.25x, 0.25x–4.0x, persistente en state.json)
 - v1.5.23 — fix: Stack d con confirmación, audio para al último item, eliminar helper [o] obsoleto
