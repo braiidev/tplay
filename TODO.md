@@ -21,9 +21,9 @@
 
 | ID  | Descripción | Archivo | Estado |
 | --- | ----------- | ------- | ------ |
-| A1  | stderr redirigido a /dev/null永久 — silencia errores de VLC, mutagen, etc. | audio.py:25-28 | [ ] |
+| A1  | stderr redirigido a log (~/.config/tplay/data/error.log) — VLC/mutagen errores capturados | audio.py | ✅ |
 | A2  | Sin manejo de KEY_RESIZE → UI corrupta al redimensionar terminal | app.py | ✅ |
-| A3  | `os.makedirs` como side effect al importar config.py | config.py:10 | [ ] |
+| A3  | `os.makedirs` lazy — solo en save(), no al importar | config.py | ✅ |
 | A4  | handlers.py monolítico (1183 líneas, 60+ funciones) | handlers.py | [ ] |
 | A5  | Playlist property retorna lista mutable interna | app.py:160 | [ ] |
 | A6  | Deferred imports (from .config import save) dentro de funciones | handlers.py:867+ | [ ] |
@@ -72,3 +72,5 @@
 - **M3** — mypy strict, 0 errores en 13 archivos
 - **B3/B4** — stack persistente entre sesiones (state.json + stack_items, shuffle, repeat, playhead, volumen)
 - **A2** — KEY_RESIZE handling, resize sin corrupción de UI
+- **A1** — stderr redirigido a error.log (data/) en vez de /dev/null
+- **A3** — os.makedirs lazy, solo dentro de save()

@@ -4,6 +4,9 @@ import os
 import time
 
 import vlc
+from .config import CONFIG_DIR
+
+LOG_FILE: str = os.path.join(CONFIG_DIR, "error.log")
 
 
 class AudioEngine:
@@ -23,9 +26,10 @@ class AudioEngine:
 
     def __init__(self) -> None:
         self._saved_stderr = os.dup(2)
-        null: int = os.open(os.devnull, os.O_WRONLY)
-        os.dup2(null, 2)
-        os.close(null)
+        os.makedirs(CONFIG_DIR, exist_ok=True)
+        log_fd: int = os.open(LOG_FILE, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+        os.dup2(log_fd, 2)
+        os.close(log_fd)
 
         self.instance = vlc.Instance("--no-video", "--quiet")
         self.player = self.instance.media_player_new()

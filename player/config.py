@@ -7,7 +7,6 @@ from typing import Any
 
 CONFIG_DIR: str = os.path.expanduser("~/.config/tplay/data")
 CONFIG_FILE: str = os.path.join(CONFIG_DIR, "config.json")
-os.makedirs(CONFIG_DIR, exist_ok=True)
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "music_dir": os.path.expanduser("~/Music"),
@@ -59,6 +58,7 @@ def load() -> dict[str, Any]:
 
 def save(cfg: dict[str, Any]) -> None:
     try:
+        os.makedirs(CONFIG_DIR, exist_ok=True)
         with open(CONFIG_FILE, "w") as f:
             json.dump(cfg, f, indent=2)
     except OSError:
