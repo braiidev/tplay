@@ -385,9 +385,10 @@ def draw_explorer(app: PlayerApp, h: int, w: int) -> None:
     list_h = h - LIST_H - offset - (0 if h < 16 else 1)
     indices = app.explorer_filtered if app.explorer_filter_mode else list(range(len(app.entries)))
     total = len(indices)
+    mark_s = f" [{len(app.explorer_marked)}✓]" if app.explorer_marked else ""
     pos = f" ({app.cursor + 1}/{total})" if total > 0 else ""
     title_p = "Explorador: "
-    title_s = extra + pos
+    title_s = extra + pos + mark_s
     max_pw = w - 4 - len(title_p) - len(title_s)
     pd = app.current_dir
     if len(pd) > max_pw and max_pw > 4:
@@ -405,15 +406,16 @@ def draw_explorer(app: PlayerApp, h: int, w: int) -> None:
     for i, abs_idx in enumerate(visible):
         y = 2 + offset + i
         name, is_dir, full = app.entries[abs_idx]
+        mark = "✓ " if abs_idx in app.explorer_marked else "  "
         label = ext_label(name)
         if is_dir:
-            line = f"  [+]/ {name}"
+            line = f"  {mark}[+]/ {name}"
             attr = destacar
             dur_str = ""
         else:
             base = name.rsplit('.', 1)[0] if '.' in name else name
             icon = "◉" if _is_video_file(full) else "♪"
-            line = f"  {icon} {base}  [{label}]"
+            line = f"  {mark}{icon} {base}  [{label}]"
             attr = texto
             meta = app.meta_cache.get(full)
             dur = meta.get('length', 0) if meta else 0
@@ -776,3 +778,37 @@ def draw_dir_picker(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
 
     hints = "  Enter=seleccionar  h/l=subir/bajar  Esc=cancelar"
     safe_addstr(win, h - 3, 2, hints[:w - 4], nav, h, w)
+
+
+def draw_favorites(app: PlayerApp, h: int, w: int) -> None:
+    win = app.stdscr
+
+    texto = curses.color_pair(PAIR_TEXTO)
+
+    title = f"Favoritos ({len(app.favorites)})"
+    draw_box(win, h, w, title)
+
+    if not app.favorites:
+        safe_addstr(win, h // 2, 2, "  Sin favoritos — usa 'f' en el Explorador", texto, h, w)
+        return
+
+    list_h = h - 4
+    visible = app.favorites[app.favorites_scroll:app.favorites_scroll + list_h]
+
+    for i, entry in enumerate(visible):
+        y = 2 + i
+        idx = app.favorites_scroll + i
+        name = entry.get("name", os.path.basename(entry.get("path", "?")))
+        path = entry.get("path", "")
+        is_stream = "://" in path
+        icon = "📻" if is_stream else "♪"
+        line = f"  {icon} {name}"
+        max_w = w - 4
+        if len(line) > max_w:
+            line = line[:max_w - 1] + "…"
+
+        is_cursor = (idx == app.favorites_cursor)
+        if is_cursor:
+            safe_addstr(win, y, 2, line, texto | curses.A_REVERSE, h, w)
+        else:
+            safe_addstr(win, y, 2, line, texto, h, w)

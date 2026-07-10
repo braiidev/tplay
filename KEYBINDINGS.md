@@ -11,7 +11,7 @@
 tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? → Global → Vista
 ```
 
-- **Global** (`_handle_key_global`): solo Space, S, n/b, +/-, q, Esc, 0-5, ?/F1
+- **Global** (`_handle_key_global`): solo Space, S, n/b, +/-, q, Esc, 0-6, ?/F1
 - **Vista** (`handle_*`): todo lo demás
 - Si global matchea, la vista **no recibe** la tecla
 
@@ -91,7 +91,8 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 | Tecla | Acción |
 |-------|--------|
 | `h` / `←` / `Backspace` | Directorio padre |
-| `l` / `→` / `Enter` | Entrar directorio / Reproducir archivo |
+| `l` / `→` / `Enter` | Entrar directorio / Reproducir archivo / Cargar marcados |
+| `Tab` | Marcar/desmarcar archivo (multi-select) |
 | `j` / `k` / `↑↓` | Cursor arriba/abajo |
 | `~` | Ir a home |
 | `g` / `G` | Inicio / Fin |
@@ -107,6 +108,8 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 | `d` | Eliminar archivo (confirmación) |
 | `M` | Crear directorio |
 | `P` | Reproducar carpeta completa |
+| `f` | Añadir archivo a favoritos |
+| `F` | Abrir vista Favoritos |
 | `u` / `U` | Undo / Redo |
 
 ---
@@ -168,7 +171,23 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 
 ---
 
-## 8. Capa Config (vista 0)
+## 8. Capa Favoritos (vista 6)
+
+| Tecla | Acción |
+|-------|--------|
+| `j` / `k` / `↑↓` | Cursor arriba/abajo |
+| `g` / `G` | Inicio / Fin |
+| `PgDn` / `PgUp` | Página abajo/arriba |
+| `Enter` | Reproducir favorito |
+| `d` | Eliminar de favoritos |
+| `a` | Añadir a pila (final) |
+| `A` | Añadir a pila (tras playhead) |
+| `F` (desde Expl) | Abrir vista Favoritos |
+| `f` (desde Expl) | Añadir archivo a favoritos |
+
+---
+
+## 9. Capa Config (vista 0)
 
 | Tecla | Acción |
 |-------|--------|
@@ -202,17 +221,19 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 
 ## 9. Consistencia de teclas (cross-reference)
 
-| Tecla | Global | Listen | Stack | Explorer | Playlist | History | Radio | Config |
-|-------|--------|--------|-------|----------|----------|---------|-------|--------|
-| `d` | — | — | delete item | delete file | remove item | remove entry | delete radio | — |
-| `D` | — | — | — | — | delete playlist | — | — | — |
-| `E` | — | — | — | rename file | rename item | — | edit name → URL | — |
-| `s` | — | stop | save playlist | — | save playlist | — | save radios | — |
-| `S` | **STOP** | — | — | — | — | — | — | — |
-| `r` | — | shuffle | cycle mode | — | — | — | — | — |
-| `R` | — | repeat | cycle mode | — | rename PL | — | — | — |
-| `a` | — | — | — | add stack | — | add stack | add radio | — |
-| `A` | — | — | — | add after | — | add after | — | — |
+| Tecla | Global | Listen | Stack | Explorer | Playlist | History | Radio | Config | Favoritos |
+|-------|--------|--------|-------|----------|----------|---------|-------|--------|-----------|
+| `d` | — | — | delete item | delete file | remove item | remove entry | delete radio | — | remove fav |
+| `D` | — | — | — | — | delete playlist | — | — | — | — |
+| `E` | — | — | — | rename file | rename item | — | edit name → URL | — | — |
+| `s` | — | stop | save playlist | — | save playlist | — | save radios | — | — |
+| `S` | **STOP** | — | — | — | — | — | — | — | — |
+| `r` | — | shuffle | cycle mode | — | — | — | — | — | — |
+| `R` | — | repeat | cycle mode | — | rename PL | — | — | — | — |
+| `a` | — | — | — | add stack | — | add stack | add radio | — | add stack |
+| `A` | — | — | — | add after | — | add after | — | — | add after |
+| `f` | — | — | — | add fav | — | — | — | — | — |
+| `F` | — | — | — | open favs | — | — | — | — | — |
 | `g` | — | goto | top | top | top | — | top | — |
 | `G` | — | — | bottom | bottom | bottom | — | bottom | — |
 | `x` | — | — | clear stack | — | clear list | clear history | — | — |

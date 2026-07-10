@@ -26,6 +26,7 @@ from . import handlers
 from . import keybindings as kb
 from .state import load_state, save_state, load_history, save_history
 from .radios import load_radios
+from .favorites import load_favorites, save_favorites
 
 
 class PlayerApp:
@@ -39,6 +40,7 @@ class PlayerApp:
     V_PLAYLIST: int = 3
     V_HISTORY: int = 4
     V_RADIO: int = 5
+    V_FAVORITES: int = 6
 
     def __init__(self, stdscr: curses.window) -> None:
         self.stdscr: curses.window = stdscr
@@ -77,6 +79,7 @@ class PlayerApp:
         self.explorer_filtered: list[int] = []
         self.explorer_filter_mode: bool = False
         self.explorer_filter_cursor: int = 0
+        self.explorer_marked: set[int] = set()
 
         self.show_help: bool = False
         self.help_tab: int = 0
@@ -115,6 +118,10 @@ class PlayerApp:
         self.radios: list[dict[str, str]] = load_radios()
         self.radio_cursor: int = 0
         self.radio_scroll: int = 0
+
+        self.favorites: list[dict[str, str]] = load_favorites()
+        self.favorites_cursor: int = 0
+        self.favorites_scroll: int = 0
         self._radio_pending_name: str = ""
         self.radio_edit_idx: int | None = None
         self.radio_edit_field: str | None = None
@@ -162,6 +169,7 @@ class PlayerApp:
             self.V_HISTORY: handlers.handle_history,
             self.V_CONFIG: handlers.handle_config,
             self.V_RADIO: handlers.handle_radio,
+            self.V_FAVORITES: handlers.handle_favorites,
         }
         self._view_drawers = {
             self.V_LISTEN: views.draw_listen,
@@ -170,6 +178,7 @@ class PlayerApp:
             self.V_HISTORY: views.draw_history,
             self.V_CONFIG: views.draw_config,
             self.V_RADIO: views.draw_radio,
+            self.V_FAVORITES: views.draw_favorites,
         }
 
         curses.curs_set(0)
@@ -656,7 +665,7 @@ class PlayerApp:
         return False
 
     def _handle_key_view_switch(self, key: int) -> bool:
-        if ord("0") <= key <= ord("5"):
+        if ord("0") <= key <= ord("6"):
             self.current_view = key - ord("0")
             self.cursor = 0
             self.scroll = 0

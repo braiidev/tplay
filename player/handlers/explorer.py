@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from ..file_utils import list_dir as _list_dir
 from ..file_utils import is_playlist_file as _is_playlist_file
 from ..stack import StackItem
+from ..favorites import save_favorites
 from .shared import _prompt, _toast, _confirm, _clamp_scroll
 from .shared import _page_size, _play_file_direct, _rename_file
 from .shared import _open_tag_editor, _parse_m3u, _parse_pls
@@ -48,6 +49,14 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
         app.cursor = 0
     elif key == ord("G"):
         app.cursor = len(app.entries) - 1
+    elif key == ord("\t"):
+        idx = app.cursor
+        if idx in app.explorer_marked:
+            app.explorer_marked.discard(idx)
+        else:
+            app.explorer_marked.add(idx)
+        if app.cursor < len(app.entries) - 1:
+            app.cursor += 1
     elif key in (10, 13, curses.KEY_RIGHT):
         if app.entries:
             name, is_dir, full = app.entries[app.cursor]
@@ -56,6 +65,7 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
                 app.entries = _list_dir(full)
                 app.cursor = 0
                 app.scroll = 0
+                app.explorer_marked.clear()
             elif _is_playlist_file(full):
                 ext = os.path.splitext(full)[1].lower()
                 paths = _parse_pls(full) if ext == ".pls" else _parse_m3u(full)
@@ -66,6 +76,8 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
                     app.stack.items = items
                     app._play_current()
                     app.current_view = app.V_LISTEN
+            elif app.explorer_marked:
+                _play_marked(app)
             else:
                 _play_file_direct(app, full)
     elif key == ord("a"):
@@ -84,10 +96,24 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
         _start_delete(app)
     elif key == ord("M"):
         _start_mkdir(app)
+    elif key == ord("F"):
+        app.current_view = app.V_FAVORITES
+    elif key == ord("f"):
+        if app.entries:
+            name, is_dir, full = app.entries[app.cursor]
+            if not is_dir:
+                exists = any(f["path"] == full for f in app.favorites)
+                if exists:
+                    _toast(app, "Ya está en favoritos")
+                else:
+                    app.favorites.append({"path": full, "name": name})
+                    save_favorites(app.favorites)
+                    _toast(app, f"Añadido: {name}")
     elif key == curses.KEY_F5:
         app.entries = _list_dir(app.current_dir)
         app.cursor = 0
         app.scroll = 0
+        app.explorer_marked.clear()
     elif key == ord("P"):
         _play_folder(app)
     elif key in (curses.KEY_LEFT, 127, curses.KEY_BACKSPACE):
@@ -97,11 +123,13 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
             app.entries = _list_dir(parent)
             app.cursor = 0
             app.scroll = 0
+            app.explorer_marked.clear()
     elif key == ord("~"):
         app.current_dir = os.path.expanduser("~")
         app.entries = _list_dir(app.current_dir)
         app.cursor = 0
         app.scroll = 0
+        app.explorer_marked.clear()
     elif key == ord("u") and app.undo_stack:
         app._undo()
     elif key == ord("U"):
@@ -230,6 +258,23 @@ def _play_folder(app: PlayerApp) -> None:
     if not media:
         return
     app.stack.items = media
+    app._play_current()
+
+
+def _play_marked(app: PlayerApp) -> None:
+    if not app.explorer_marked or not app.entries:
+        return
+    items: list[StackItem] = []
+    for idx in sorted(app.explorer_marked):
+        if idx < len(app.entries):
+            name, is_dir, full = app.entries[idx]
+            if not is_dir:
+                items.append(StackItem(path=full, name=name))
+    if not items:
+        _toast(app, "No hay archivos marcados")
+        return
+    app.stack.items = items
+    app.explorer_marked.clear()
     app._play_current()
 
 

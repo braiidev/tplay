@@ -33,6 +33,7 @@ python3 -m player
 | `3`         | Playlist                    |
 | `4`         | Historial                   |
 | `5`         | Radios                      |
+| `6`         | Favoritos                   |
 | `0`         | Config                      |
 | `Space`     | Play / Pause                |
 | `s`         | Stop                        |

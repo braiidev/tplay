@@ -32,6 +32,7 @@ __all__ = [
     "_build_bindings_from_current", "_save_keybindings",
     "_get_current_key",
     "handle_radio",
+    "handle_favorites",
     "handle_dir_picker",
 ]
 
@@ -72,3 +73,4 @@ from .config_view import _build_bindings_from_current, _save_keybindings
 from .config_view import handle_dir_picker
 
 from .radio import handle_radio
+from .favorites import handle_favorites

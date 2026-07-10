@@ -45,7 +45,7 @@ player/
 - Para `mutagen.File` usar `# type: ignore[attr-defined]`
 - `# type: ignore` solo como último recurso
 
-## Estado actual (v1.5.24)
+## Estado actual (v1.5.26)
 
 ### Completado (session actual)
 - **B2** — undo unificado (file_undo integrado en snapshots)
@@ -70,9 +70,8 @@ player/
 - **U6** — toast: duración 3→40 ticks, dismiss con Enter/Space/Esc
 - **L1-L4**, **L2.7**, **E1-E5** — auditorías previas
 - **M1-M3** — draw_item_row unificada, dialog system unificado, mypy strict
-- **U6** — toast: duración 3→40 ticks, dismiss con Enter/Space/Esc
-- **L1-L4**, **L2.7**, **E1-E5** — auditorías previas
-- **M1-M3** — draw_item_row unificada, dialog system unificado, mypy strict
+- **F5** — Multi-select Explorer (Tab marca, Enter carga marcados, ✓ visual)
+- **F6** — Favoritos: vista 6 (nueva), f/F desde Explorer, d desde Favoritos, persistencia JSON
 
 ### Pendiente
 - ~~**L5** — covers/metadata errors~~ ❌ sin acción
@@ -82,6 +81,7 @@ player/
 - **F28** — Streaming/Radio (URL, M3U, radios guardadas) ← ✅ hecho (vista Radios con `5`, persistente, historial automático)
 
 ### Últimos tags de versión
+- v1.5.26 — feat: F5 multi-select Explorer + F6 Favoritos (vista 6, f/F, d, persistencia JSON)
 - v1.5.25 — feat: F2 speed control (w/W ±0.25x, 0.25x–4.0x, persistente en state.json)
 - v1.5.23 — fix: Stack d con confirmación, audio para al último item, eliminar helper [o] obsoleto
 - v1.5.22 — feat: ←/→ para mover cursor en Explorer filter, Playlist filter y Meta editor

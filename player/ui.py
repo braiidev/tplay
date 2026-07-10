@@ -47,7 +47,7 @@ def draw_box(win: curses.window, h: int, w: int, title: str) -> None:
 
 def draw_nav(win: curses.window, h: int, w: int) -> None:
     nav = curses.color_pair(PAIR_NAV)
-    tabs = " 0:Config │ 1:Listen │ 2:Expl │ 3:Playlist │ 4:Hist │ 5:Radio │ q:Salir "
+    tabs = " 0:Config │ 1:Listen │ 2:Expl │ 3:Playlist │ 4:Hist │ 5:Radio │ 6:Fav │ q:Salir "
     win.move(h - NAV_ROW, 0)
     win.clrtoeol()
     safe_addstr(win, h - NAV_ROW, max(0, (w - len(tabs)) // 2), tabs, nav, h, w)
@@ -278,7 +278,10 @@ HELP_TABS: list[HelpTab] = [
             ("  ARCHIVOS", PAIR_DESTACAR),
             ("", None),
             ("    Enter     Abrir dir / reproducir", PAIR_TEXTO),
+            ("    Tab       Marcar/desmarcar archivo", PAIR_TEXTO),
             ("    a / A     Añadir a pila (final/tras)", PAIR_TEXTO),
+            ("    f         Añadir a favoritos", PAIR_TEXTO),
+            ("    F         Abrir vista Favoritos", PAIR_TEXTO),
             ("    ~         Ir al inicio", PAIR_TEXTO),
             ("    g / G     Ir al inicio / fin", PAIR_TEXTO),
             ("    ← / →     Subir / entrar directorio", PAIR_TEXTO),
@@ -404,9 +407,26 @@ HELP_TABS: list[HelpTab] = [
             ("    X         Exportar M3U", PAIR_TEXTO),
         ]
     },
+    {
+        "name": "Favoritos",
+        "lines": [
+            ("", None),
+            ("  FAVORITOS", PAIR_DESTACAR),
+            ("", None),
+            ("    Enter     Reproducir", PAIR_TEXTO),
+            ("    d         Eliminar de favoritos", PAIR_TEXTO),
+            ("    a / A     Añadir a pila (final/tras)", PAIR_TEXTO),
+            ("    g / G     Inicio / Fin", PAIR_TEXTO),
+            ("", None),
+            ("  AGREGAR DESDE EXPLORADOR", PAIR_DESTACAR),
+            ("", None),
+            ("    f         Añadir archivo a favoritos", PAIR_TEXTO),
+            ("    F         Abrir vista Favoritos", PAIR_TEXTO),
+        ]
+    },
 ]
 
-VIEW_TO_HELP_TAB: dict[int, int] = {1: 1, 2: 2, 3: 3, 4: 4, 0: 5, 5: 6}
+VIEW_TO_HELP_TAB: dict[int, int] = {1: 1, 2: 2, 3: 3, 4: 4, 0: 5, 5: 6, 6: 7}
 
 
 def draw_help(win: curses.window, h: int, w: int, scroll: int = 0, tab: int = 0) -> None:
