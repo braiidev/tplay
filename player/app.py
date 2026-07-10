@@ -445,7 +445,7 @@ class PlayerApp:
                 else:
                     self._handle_key(key)
             self._draw()
-            time.sleep(0.05)
+            time.sleep(0.01 if self.dialog else 0.05)
 
     def _handle_key(self, key: int) -> None:
         if self._handle_key_help(key):
@@ -502,6 +502,7 @@ class PlayerApp:
             if cb and (chr(key).lower() in ("s", "y") or key in (10, 13)):
                 cb()
         elif d["type"] == "prompt":
+            cur: int = d.get("cursor_pos", len(d["buf"]))
             if key == 27:
                 self.dialog = None
                 curses.curs_set(0)
@@ -514,14 +515,27 @@ class PlayerApp:
                 if cb:
                     cb(self, buf)
             elif key in (127, curses.KEY_BACKSPACE):
-                d["buf"] = d["buf"][:-1]
-                self._clamp_prompt_scroll()
+                if cur > 0:
+                    d["buf"] = d["buf"][:cur - 1] + d["buf"][cur:]
+                    d["cursor_pos"] = cur - 1
+                    self._clamp_prompt_scroll()
             elif key == curses.KEY_LEFT:
-                d["scroll"] = max(0, d["scroll"] - 5)
+                if cur > 0:
+                    d["cursor_pos"] = cur - 1
+                    self._clamp_prompt_scroll()
             elif key == curses.KEY_RIGHT:
-                d["scroll"] = min(len(d["buf"]), d["scroll"] + 5)
+                if cur < len(d["buf"]):
+                    d["cursor_pos"] = cur + 1
+                    self._clamp_prompt_scroll()
+            elif key == curses.KEY_HOME:
+                d["cursor_pos"] = 0
+                self._clamp_prompt_scroll()
+            elif key == curses.KEY_END:
+                d["cursor_pos"] = len(d["buf"])
+                self._clamp_prompt_scroll()
             elif 32 <= key <= 126 and len(d["buf"]) < 60:
-                d["buf"] += chr(key)
+                d["buf"] = d["buf"][:cur] + chr(key) + d["buf"][cur:]
+                d["cursor_pos"] = cur + 1
                 self._clamp_prompt_scroll()
         elif d["type"] == "dest":
             if key in (27,):
@@ -563,11 +577,15 @@ class PlayerApp:
         box_w = w - 2 if compact else min(60, w - 10)
         inner_w = box_w - 2
         field_w = max(1, inner_w - len(d["label"]) - 6)
-        if len(d["buf"]) <= field_w:
+        buf_len = len(d["buf"])
+        cur = d.get("cursor_pos", buf_len)
+        if buf_len <= field_w:
             d["scroll"] = 0
-        else:
-            max_scroll = len(d["buf"]) - field_w
-            d["scroll"] = max(0, min(d["scroll"], max_scroll))
+        elif cur < d["scroll"]:
+            d["scroll"] = cur
+        elif cur >= d["scroll"] + field_w:
+            d["scroll"] = cur - field_w + 1
+        d["scroll"] = max(0, min(d["scroll"], max(0, buf_len - field_w)))
 
     def _handle_key_help(self, key: int) -> bool:
         if key in (ord("?"), curses.KEY_F1, getattr(curses, "KEY_HELP", -1)):
@@ -926,7 +944,8 @@ class PlayerApp:
                 elif d["type"] == "prompt":
                     ui.draw_dialog(self.stdscr, h, w, "Entrada", d["label"],
                                    compact=compact, prompt_buf=d["buf"],
-                                   prompt_scroll=d["scroll"])
+                                   prompt_scroll=d["scroll"],
+                                   prompt_cursor_pos=d.get("cursor_pos", len(d["buf"])))
                 elif d["type"] == "dest":
                     ui.draw_dialog(self.stdscr, h, w, "Destino",
                                    "s: Pila  |  p: Lista  |  Esc: Cancelar",

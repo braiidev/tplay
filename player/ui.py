@@ -89,6 +89,7 @@ def draw_status(win: curses.window, h: int, w: int, audio: Any, playing: bool, c
 def draw_dialog(win: curses.window, h: int, w: int, title: str, text: str,
                 is_confirm: bool = False, compact: bool = False,
                 prompt_buf: str = "", prompt_scroll: int = 0,
+                prompt_cursor_pos: int = -1,
                 buttons: str = "") -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     dest = curses.color_pair(PAIR_DESTACAR)
@@ -135,14 +136,16 @@ def draw_dialog(win: curses.window, h: int, w: int, title: str, text: str,
             rline(" " * pad_l + content)
         else:
             field_w = max(1, ih - len(text) - 6)
+            if prompt_cursor_pos < 0:
+                prompt_cursor_pos = len(prompt_buf)
             visible = prompt_buf[prompt_scroll:prompt_scroll + field_w]
             if len(prompt_buf) > prompt_scroll + field_w:
                 visible += "…"
             rline(f"  {text}: {visible}")
-            vlen = len(visible)
-            if visible.endswith("…"):
-                vlen -= 1
-            cx = ox + 1 + len(f"  {text}: ") + vlen
+            cur_in_visible = max(0, min(prompt_cursor_pos - prompt_scroll, len(visible)))
+            if visible.endswith("…") and cur_in_visible >= len(visible) - 1:
+                cur_in_visible = max(0, len(visible) - 1)
+            cx = ox + 1 + len(f"  {text}: ") + cur_in_visible
             win.move(oy, min(cx, w - 2))
             curses.curs_set(1)
 
