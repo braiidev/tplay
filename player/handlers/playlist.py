@@ -40,6 +40,20 @@ def handle_playlist(app: PlayerApp, key: int) -> None:
             app.playlist_cursor = min(app.playlist_cursor + 1, len(app.playlist) - 1)
     elif key == curses.KEY_UP:
         app.playlist_cursor = max(app.playlist_cursor - 1, 0)
+    elif key in (curses.KEY_NPAGE,):
+        if app.playlist:
+            h, _ = app.stdscr.getmaxyx()
+            page = h - app.LIST_H
+            app.playlist_cursor = min(app.playlist_cursor + page, len(app.playlist) - 1)
+    elif key in (curses.KEY_PPAGE,):
+        if app.playlist:
+            h, _ = app.stdscr.getmaxyx()
+            page = h - app.LIST_H
+            app.playlist_cursor = max(app.playlist_cursor - page, 0)
+    elif key == ord("g"):
+        app.playlist_cursor = 0
+    elif key == ord("G"):
+        app.playlist_cursor = len(app.playlist) - 1
     elif key in (ord("\n"), 10, 13):
         if app.playlist:
             _play_playlist_enter(app)

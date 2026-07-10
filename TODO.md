@@ -32,7 +32,7 @@
 
 | ID  | Descripción | Archivo | Estado |
 | --- | ----------- | ------- | ------ |
-| U1  | Sin PgDn/PgUp ni g/G en vista Playlist | handlers.py:238 | [ ] |
+| U1  | Sin PgDn/PgUp ni g/G en vista Playlist | handlers/playlist.py | ✅ |
 | U2  | Update check bloquea UI al inicio (git fetch sync, hasta 10s) | app.py:198-226 | [ ] |
 | U3  | Sin toast al toggle shuffle/repeat | app.py:615-622 | [ ] |
 | U4  | Confirm dialog usa "s" para sí (vs "y" estándar) | app.py:431 | [ ] |
@@ -77,3 +77,4 @@
 - **A4** — handlers.py partido en handlers/ package por vista (7 archivos)
 - **A5** — playlist property con validación de entries inválidas (log)
 - **A6** — deferred imports se mantienen diferidos
+- **U1** — PgDn, PgUp, g, G en vista Playlist
