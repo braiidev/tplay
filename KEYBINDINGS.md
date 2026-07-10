@@ -123,7 +123,7 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 | `Enter` | Reproducir playlist |
 | `d` | Eliminar item de la lista |
 | `x` | Limpiar toda la lista |
-| `e` | Renombrar item en la lista |
+| `E` | Renombrar item en la lista |
 | `R` | Renombrar playlist |
 | `c` | Crear nueva playlist |
 | `D` | Eliminar playlist |
@@ -173,10 +173,10 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 | Tecla | Acción |
 |-------|--------|
 | `j` / `k` / `↑↓` | Cursor arriba/abajo |
-| `h` / `[` | Pestaña anterior |
-| `l` / `]` / `H` / `L` | Pestaña siguiente |
-| `→` / `Enter` | Modificar valor (ciclar/incrementar/abrir) |
-| `←` | Modificar valor (decrementar) |
+| `[` / `]` | Pestaña anterior / siguiente |
+| `H` / `L` | Pestaña anterior / siguiente |
+| `→` / `Enter` | Activar / cambiar valor |
+| `←` / `h` / `l` | Cambiar valor |
 
 ### Sub-modo Keybindings
 
@@ -206,15 +206,14 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 |-------|--------|--------|-------|----------|----------|---------|-------|--------|
 | `d` | — | — | delete item | delete file | remove item | remove entry | delete radio | — |
 | `D` | — | — | — | — | delete playlist | — | — | — |
-| `e` | — | — | — | — | rename item | — | edit name | — |
-| `E` | — | — | — | rename file | rename playlist | — | edit URL | — |
-| `s` | — | — | save playlist | — | save playlist | — | save radios | — |
+| `E` | — | — | — | rename file | rename item | — | edit name → URL | — |
+| `s` | — | stop | save playlist | — | save playlist | — | save radios | — |
 | `S` | **STOP** | — | — | — | — | — | — | — |
 | `r` | — | shuffle | cycle mode | — | — | — | — | — |
 | `R` | — | repeat | cycle mode | — | rename PL | — | — | — |
 | `a` | — | — | — | add stack | — | add stack | add radio | — |
 | `A` | — | — | — | add after | — | add after | — | — |
-| `g` | — | goto | top | top | top | top | top | — |
+| `g` | — | goto | top | top | top | — | top | — |
 | `G` | — | — | bottom | bottom | bottom | — | bottom | — |
 | `x` | — | — | clear stack | — | clear list | clear history | — | — |
 | `X` | — | — | export M3U | — | export M3U | — | export M3U | — |
@@ -222,7 +221,7 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 | `U` | — | — | redo | redo | redo | — | — | — |
 | `I` | — | tag editor | — | tag editor | tag editor | tag editor | — | — |
 | `j`/`k` | — | vol -/+5 | cursor | cursor | cursor | cursor | cursor | cursor |
-| `h`/`l` | — | seek -/+5 | cursor | parent/enter | prev/next PL | — | — | tab prev/next |
+| `h`/`l` | — | seek -/+5 | — | parent/enter | prev/next PL | — | — | modify value |
 | `F5` | — | — | — | refresh | — | — | — | — |
 | `/` | — | — | — | filter | filter | — | — | — |
 
@@ -280,9 +279,9 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 | K2 | Mover `r/R/t/T/m` a `handle_listen()` | Pendiente |
 | K3 | Guard `Esc` en global para History | Pendiente |
 | K4 | Verificar `s` en Radio (global lo atrapa) | Pendiente |
-| K5 | e/E consistencia — unificar edit en todas las vistas | Pendiente |
-| K6 | Actualizar todos los HELP_TABS con teclas correctas | Pendiente |
-| K7 | Actualizar COMPACT_SPEC.md con keybindings finales | Pendiente |
+| K5 | e/E consistencia — unificar edit en todas las vistas | ✅ Hecho (v1.5.24) |
+| K6 | Actualizar todos los HELP_TABS con teclas correctas | ✅ Hecho (v1.5.24) |
+| K7 | Actualizar COMPACT_SPEC.md con keybindings finales | ✅ Hecho (v1.5.24) |
 
 ---
 
@@ -291,12 +290,12 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 | Vista | `e` | `E` |
 |-------|-----|-----|
 | Explorer | — | Renombrar archivo/dir |
-| Playlist | Renombrar item | Renombrar playlist |
-| Radio | Editar nombre | Editar URL |
+| Playlist | — | Renombrar item |
+| Radio | — | Editar nombre → URL (ciclo) |
 | History | — | — |
 | Stack View | — | — |
 
-**Observación:** `E` es consistentemente "editar/renombrar" en todas las vistas. `e` solo existe en Playlist (rename item) y Radio (edit name). Para máxima consistencia, `E` podría unificarse como la única tecla de edición, pero requeriría cambios en Playlist y Radio.
+**Observación:** `E` es consistentemente "editar/renombrar" en todas las vistas. `e` no existe en ninguna vista (eliminado en v1.5.24).
 
 ---
 

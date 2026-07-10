@@ -45,7 +45,7 @@ player/
 - Para `mutagen.File` usar `# type: ignore[attr-defined]`
 - `# type: ignore` solo como último recurso
 
-## Estado actual (v1.5.10)
+## Estado actual (v1.5.24)
 
 ### Completado (session actual)
 - **B2** — undo unificado (file_undo integrado en snapshots)
@@ -70,6 +70,9 @@ player/
 - **U6** — toast: duración 3→40 ticks, dismiss con Enter/Space/Esc
 - **L1-L4**, **L2.7**, **E1-E5** — auditorías previas
 - **M1-M3** — draw_item_row unificada, dialog system unificado, mypy strict
+- **U6** — toast: duración 3→40 ticks, dismiss con Enter/Space/Esc
+- **L1-L4**, **L2.7**, **E1-E5** — auditorías previas
+- **M1-M3** — draw_item_row unificada, dialog system unificado, mypy strict
 
 ### Pendiente
 - ~~**L5** — covers/metadata errors~~ ❌ sin acción
@@ -79,8 +82,10 @@ player/
 - **F28** — Streaming/Radio (URL, M3U, radios guardadas) ← ✅ hecho (vista Radios con `5`, persistente, historial automático)
 
 ### Últimos tags de versión
-- v1.5.21 — feat: filtros con cursor visual, hjk global→Listen, s/S consistente, radio e/E cyclic, dir picker, KEYBINDINGS.md
+- v1.5.24 — fix: auditoría UI — dead text, omisiones, colores, naming, HELP_TABS constantes
+- v1.5.23 — fix: Stack d con confirmación, audio para al último item, eliminar helper [o] obsoleto
 - v1.5.22 — feat: ←/→ para mover cursor en Explorer filter, Playlist filter y Meta editor
+- v1.5.21 — feat: filtros con cursor visual, hjk global→Listen, s/S consistente, radio e/E cyclic, dir picker, KEYBINDINGS.md
 - v1.5.12 — feat: F4 import M3U/PLS desde Explorer
 - v1.5.11 — feat: F4 import M3U/PLS (tecla O) — revertido
 - v1.5.10 — fix: C4 _restart_app ruta incorrecta tras A4 → app._repo_dir
