@@ -340,6 +340,7 @@ class PlayerApp:
             ]},
             {"name": "Apariencia", "items": [
                 ("theme", "Tema", "choice"),
+                ("ui_minimal", "Modo minimal", "bool"),
                 ("ui_navbar", "Barra de navegación", "bool"),
             ]},
             {"name": "Sistema", "items": [
@@ -876,7 +877,8 @@ class PlayerApp:
             h, w = self.stdscr.getmaxyx()
             self.stdscr.erase()
 
-            compact = h < 16 or (self.current_view == self.V_LISTEN and w < 61)
+            minimal = self.config.get("ui_minimal", False)
+            compact = minimal or h < 16 or (self.current_view == self.V_LISTEN and w < 61)
 
             if h < 8 or w < 40:
                 err = f"MIN 40x8, NOW({h}x{w})"

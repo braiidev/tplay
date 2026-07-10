@@ -17,6 +17,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "keybinding_mode": "default",
     "keybindings": {},
     "ui_navbar": True,
+    "ui_minimal": False,
 }
 
 COLORS: dict[str, int] = {
