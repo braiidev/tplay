@@ -29,7 +29,8 @@ def draw_item_row(win: curses.window, y: int, name: str, path: str, meta: dict[s
 
     if not exists:
         line = f"  {fallback_icon} {fallback_label}{suffix}"
-        safe_addstr(win, y, 2, line, attr, h, w)
+        display_attr = (cursor_attr | curses.A_REVERSE) if is_cursor else attr
+        safe_addstr(win, y, 2, line, display_attr, h, w)
         return
 
     if is_stream:
