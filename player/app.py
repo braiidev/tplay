@@ -1,9 +1,16 @@
+from __future__ import annotations
+
 import curses
 import os
 import shutil
 import subprocess
 import time
 import copy
+from typing import TYPE_CHECKING, Any, Callable
+
+if TYPE_CHECKING:
+    from player.audio import AudioEngine
+    from player.stack import Stack, StackItem
 
 from .audio import AudioEngine
 from .config import load as load_config, save as save_config, apply_theme
@@ -19,97 +26,107 @@ from .state import load_state, save_state, load_history, save_history
 
 
 class PlayerApp:
-    LIST_H = 4
-    FILTER_LIST_H = 5
+    LIST_H: int = 4
+    FILTER_LIST_H: int = 5
 
     # view IDs
-    V_CONFIG = 0
-    V_LISTEN = 1
-    V_EXPLORER = 2
-    V_PLAYLIST = 3
-    V_HISTORY = 4
+    V_CONFIG: int = 0
+    V_LISTEN: int = 1
+    V_EXPLORER: int = 2
+    V_PLAYLIST: int = 3
+    V_HISTORY: int = 4
 
-    def __init__(self, stdscr) -> None:
-        self.stdscr = stdscr
-        self.running = True
+    def __init__(self, stdscr: curses.window) -> None:
+        self.stdscr: curses.window = stdscr
+        self.running: bool = True
 
-        self.config = load_config()
-        self.current_view = self.V_LISTEN
-        self.current_dir = self.config.get("music_dir", os.path.expanduser("~/Music"))
-        self.cursor = 0
-        self.scroll = 0
-        self.entries = _list_dir(self.current_dir)
+        self.config: dict[str, Any] = load_config()
+        self.current_view: int = self.V_LISTEN
+        self.current_dir: str = self.config.get("music_dir", os.path.expanduser("~/Music"))
+        self.cursor: int = 0
+        self.scroll: int = 0
+        self.entries: list[tuple[str, bool, str]] = _list_dir(self.current_dir)
 
-        self.audio = AudioEngine()
+        self.audio: AudioEngine = AudioEngine()
         self.audio.set_volume(self.config.get("volume", 50))
 
         all_pl, active_name = load_all_playlists()
-        self.playlist_data = all_pl
-        self.active_name = active_name
-        self.playlist_cursor = 0
-        self.playlist_scroll = 0
+        self.playlist_data: dict[str, list[tuple[str, str]]] = all_pl
+        self.active_name: str = active_name
+        self.playlist_cursor: int = 0
+        self.playlist_scroll: int = 0
 
-        self.dialog: dict | None = None  # {"type": "confirm"|"prompt"|"dest", ...}
+        self.dialog: dict[str, Any] | None = None  # {"type": "confirm"|"prompt"|"dest", ...}
 
-        self.meta_cache = MetadataCache()
-        self.stack = Stack()
-        self.show_stack_view = False
-        self.stack_cursor = 0
-        self.stack_scroll = 0
+        self.meta_cache: MetadataCache = MetadataCache()
+        self.stack: Stack = Stack()
+        self.show_stack_view: bool = False
+        self.stack_cursor: int = 0
+        self.stack_scroll: int = 0
 
-        self.playlist_filter = ""
-        self.playlist_filtered = []
-        self.playlist_filter_mode = False
+        self.playlist_filter: str = ""
+        self.playlist_filtered: list[int] = []
+        self.playlist_filter_mode: bool = False
 
-        self.explorer_filter = ""
-        self.explorer_filtered = []
-        self.explorer_filter_mode = False
+        self.explorer_filter: str = ""
+        self.explorer_filtered: list[int] = []
+        self.explorer_filter_mode: bool = False
 
-        self.show_help = False
-        self.help_tab = 0
-        self.help_scroll = 0
+        self.show_help: bool = False
+        self.help_tab: int = 0
+        self.help_scroll: int = 0
 
-        self.goto_mode = False
-        self.goto_field = 0
-        self.goto_mins = 0
-        self.goto_secs = 0
+        self.goto_mode: bool = False
+        self.goto_field: int = 0
+        self.goto_mins: int = 0
+        self.goto_secs: int = 0
 
-        self.meta_edit_mode = False
-        self.meta_edit_file = ""
-        self.meta_edit_fields = []
-        self.meta_edit_changed = {}
-        self.meta_edit_cursor = 0
-        self.meta_edit_editing = False
-        self.meta_edit_buf = ""
-        self.meta_edit_labels = ['Título', 'Artista', 'Álbum', 'Género']
-        self.meta_edit_keys = ['title', 'artist', 'album', 'genre']
+        self.meta_edit_mode: bool = False
+        self.meta_edit_file: str = ""
+        self.meta_edit_fields: list[tuple[str, str, str]] = []
+        self.meta_edit_changed: dict[str, str] = {}
+        self.meta_edit_cursor: int = 0
+        self.meta_edit_editing: bool = False
+        self.meta_edit_buf: str = ""
+        self.meta_edit_labels: list[str] = ['Título', 'Artista', 'Álbum', 'Género']
+        self.meta_edit_keys: list[str] = ['title', 'artist', 'album', 'genre']
 
-        self.config_tabs = []
-        self.config_tab_idx = 0
-        self.config_cursor = 0
-        self.config_scroll = 0
-        self.update_available = False
-        self.update_check_done = False
-        self.update_behind = 0
+        self.config_tabs: list[dict[str, Any]] = []
+        self.config_tab_idx: int = 0
+        self.config_cursor: int = 0
+        self.config_scroll: int = 0
+        self.update_available: bool = False
+        self.update_check_done: bool = False
+        self.update_behind: int = 0
 
-        self.history: list[dict] = load_history()
-        self.history_cursor = 0
-        self.history_scroll = 0
-        self._history_last = None
+        self.history: list[dict[str, Any]] = load_history()
+        self.history_cursor: int = 0
+        self.history_scroll: int = 0
+        self._history_last: str | None = None
 
-        self.undo_stack = []
-        self.redo_stack = []
+        self.undo_stack: list[dict[str, Any]] = []
+        self.redo_stack: list[dict[str, Any]] = []
 
-        self.file_op_mode = None
-        self.file_op_source = None
-        self._file_undo = None
+        self.file_op_mode: str | None = None
+        self.file_op_source: str | None = None
+        self._file_undo: dict[str, Any] | None = None
 
-        self.kb_keybinding_view = False
+        self.kb_keybinding_view: bool = False
 
-        self.toast_msg = ""
-        self.toast_ticks = 0
+        self.toast_msg: str = ""
+        self.toast_ticks: int = 0
 
-        self.dialog: dict | None = None
+        self.keybinding_mode: str = "default"
+        self.key_lookup: dict[int, str] = {}
+        self.kb_cursor: int = 0
+        self.kb_capturing: bool = False
+        self.kb_capturing_action: str | None = None
+        self.kb_conflict_msg: str = ""
+        self.kb_conflict_other: str = ""
+
+        self._action_handlers: dict[str, Callable[[], None]] = {}
+        self._view_handlers: dict[int, Callable[[PlayerApp, int], None]] = {}
+        self._view_drawers: dict[int, Callable[[PlayerApp, int, int], None]] = {}
 
         self._setup_keybindings()
         self._build_config_tabs()
@@ -140,34 +157,36 @@ class PlayerApp:
         self._resume_session()
 
     @property
-    def playlist(self) -> list:
+    def playlist(self) -> list[tuple[str, str]]:
         return self.playlist_data.get(self.active_name, [])
 
     @property
     def paused(self) -> bool:
-        return self.audio.paused
+        return bool(self.audio.paused)
 
     @property
-    def current_file(self):
-        return self.audio.current_file
+    def current_file(self) -> str | None:
+        val: str | None = self.audio.current_file
+        return val
 
     @current_file.setter
-    def current_file(self, val):
+    def current_file(self, val: str | None) -> None:
         self.audio.current_file = val
 
     @property
     def volume(self) -> int:
-        return self.audio.volume
+        return int(self.audio.volume)
 
     @volume.setter
-    def volume(self, val: int):
+    def volume(self, val: int) -> None:
         self.audio.volume = val
 
     @property
-    def config_items(self) -> list:
+    def config_items(self) -> list[tuple[str, str, str]]:
         if not self.config_tabs:
             return []
-        return self.config_tabs[self.config_tab_idx]["items"]
+        items: list[tuple[str, str, str]] = self.config_tabs[self.config_tab_idx]["items"]
+        return items
 
     def _apply_theme(self) -> None:
         apply_theme(self.config)
@@ -228,7 +247,7 @@ class PlayerApp:
 
     def _setup_keybindings(self) -> None:
         self.keybinding_mode = self.config.get("keybinding_mode", "default")
-        raw = self.config.get("keybindings", {})
+        raw: dict[str, Any] = self.config.get("keybindings", {})
         if self.keybinding_mode == "custom" and raw:
             cleaned = kb.resolve_conflicts(raw)
             self.key_lookup = kb.build_lookup(cleaned)
@@ -242,21 +261,21 @@ class PlayerApp:
 
     def _build_action_handlers(self) -> None:
         self._action_handlers = {
-            "play_pause": lambda: (self.audio.toggle_play_pause(), None),
-            "stop": lambda: (self.audio.stop(), None),
-            "next": lambda: (self._play_next(), None),
-            "prev": lambda: (self._play_prev(), None),
-            "volume_up": lambda: (self.audio.set_volume(self.audio.volume + 5), None),
-            "volume_down": lambda: (self.audio.set_volume(self.audio.volume - 5), None),
-            "shuffle": lambda: (setattr(self.stack, 'shuffle', not self.stack.shuffle), None),
-            "repeat": lambda: (setattr(self.stack, 'repeat', not self.stack.repeat), None),
-            "help": lambda: (setattr(self, 'show_help', not self.show_help), None),
-            "sleep_timer": lambda: (self._toggle_sleep_timer(), None),
-            "mute": lambda: (self.audio.toggle_mute(), None),
+            "play_pause": lambda: self.audio.toggle_play_pause(),
+            "stop": lambda: self.audio.stop(),
+            "next": lambda: self._play_next(),
+            "prev": lambda: self._play_prev(),
+            "volume_up": lambda: self.audio.set_volume(self.audio.volume + 5),
+            "volume_down": lambda: self.audio.set_volume(self.audio.volume - 5),
+            "shuffle": lambda: setattr(self.stack, 'shuffle', not self.stack.shuffle),
+            "repeat": lambda: setattr(self.stack, 'repeat', not self.stack.repeat),
+            "help": lambda: setattr(self, 'show_help', not self.show_help),
+            "sleep_timer": lambda: self._toggle_sleep_timer(),
+            "mute": lambda: self.audio.toggle_mute(),
         }
 
     def _resume_session(self) -> None:
-        st = load_state()
+        st: dict[str, Any] = load_state()
         if st.get("playing") and st.get("file") and os.path.isfile(st["file"]):
             self.stack.items = [StackItem(path=st["file"], name=os.path.basename(st["file"]))]
             self.audio.play_file(st["file"])
@@ -402,7 +421,8 @@ class PlayerApp:
             handler(self, key)
 
     def _handle_dialog_key(self, key: int) -> None:
-        d = self.dialog
+        assert self.dialog is not None
+        d: dict[str, Any] = self.dialog
         if d["type"] == "confirm":
             cb = d["callback"]
             self.dialog = None
@@ -464,7 +484,7 @@ class PlayerApp:
             curses.flushinp()
 
     def _clamp_prompt_scroll(self) -> None:
-        d = self.dialog
+        d: dict[str, Any] | None = self.dialog
         if not d or d["type"] != "prompt":
             return
         h, w = self.stdscr.getmaxyx()
@@ -640,7 +660,7 @@ class PlayerApp:
             self.audio.sleep_timer_active = False
             self.audio.sleep_timer_expired = False
         else:
-            minutes = self.config.get("sleep_timer_minutes", 30)
+            minutes: int = self.config.get("sleep_timer_minutes", 30)
             self.audio.set_sleep_timer(minutes)
 
     def _setup_sleep_timer(self, buf: str) -> None:
@@ -656,9 +676,13 @@ class PlayerApp:
         self.audio.stop()
         self.stack.clear()
 
+    def toast(self, msg: str) -> None:
+        self.toast_msg = msg
+        self.toast_ticks = 3
+
     # ── Undo / Redo ──
 
-    def _snapshot_state(self) -> dict:
+    def _snapshot_state(self) -> dict[str, Any]:
         return {
             "playlist_data": copy.deepcopy(self.playlist_data),
             "active_name": self.active_name,
@@ -668,7 +692,7 @@ class PlayerApp:
             "stack_repeat": self.stack.repeat,
         }
 
-    def _restore_snapshot(self, snap: dict) -> None:
+    def _restore_snapshot(self, snap: dict[str, Any]) -> None:
         self.playlist_data = snap["playlist_data"]
         self.active_name = snap["active_name"]
         self.stack.load_items(snap["stack_items"])
@@ -755,7 +779,7 @@ class PlayerApp:
     def _save_meta_edits(self) -> None:
         import mutagen
         try:
-            audio = mutagen.File(self.meta_edit_file, easy=True)
+            audio = mutagen.File(self.meta_edit_file, easy=True)  # type: ignore[attr-defined]
             if audio is not None:
                 for f, v in self.meta_edit_changed.items():
                     audio[f] = v
@@ -781,7 +805,7 @@ class PlayerApp:
 
             needs_cursor = ((self.current_view == self.V_EXPLORER and self.explorer_filter_mode)
                             or (self.current_view == self.V_PLAYLIST and self.playlist_filter_mode)
-                            or (self.dialog and self.dialog["type"] == "prompt")
+                            or (self.dialog is not None and self.dialog["type"] == "prompt")
                             or self.meta_edit_editing)
             if needs_cursor:
                 curses.curs_set(1)
@@ -801,8 +825,8 @@ class PlayerApp:
                 self.toast_ticks = 0
             else:
                 self._draw_status(h, w)
-            if self.dialog:
-                d = self.dialog
+            if self.dialog is not None:
+                d: dict[str, Any] = self.dialog
                 if d["type"] == "confirm":
                     ui.draw_dialog(self.stdscr, h, w, "Confirmar", d["label"],
                                    is_confirm=True, compact=compact)

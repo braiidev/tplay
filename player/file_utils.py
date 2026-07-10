@@ -1,22 +1,26 @@
-import os
+from __future__ import annotations
 
-AUDIO_EXT = (".mp3", ".flac", ".wav", ".ogg")
-VIDEO_EXT = (".mp4", ".mkv", ".avi", ".mov")
-ALLOWED_EXT = AUDIO_EXT + VIDEO_EXT
-EXT_LABEL = {".mp3": "mp3", ".flac": "flac", ".wav": "wav", ".ogg": "ogg",
-             ".mp4": "vid", ".mkv": "vid", ".avi": "vid", ".mov": "vid"}
+import os
+from typing import Any
+
+AUDIO_EXT: tuple[str, ...] = (".mp3", ".flac", ".wav", ".ogg")
+VIDEO_EXT: tuple[str, ...] = (".mp4", ".mkv", ".avi", ".mov")
+ALLOWED_EXT: tuple[str, ...] = AUDIO_EXT + VIDEO_EXT
+EXT_LABEL: dict[str, str] = {".mp3": "mp3", ".flac": "flac", ".wav": "wav", ".ogg": "ogg",
+                             ".mp4": "vid", ".mkv": "vid", ".avi": "vid", ".mov": "vid"}
 
 
 def is_media(name: str) -> bool:
     return name.lower().endswith(ALLOWED_EXT)
 
 
-def list_dir(path: str) -> list:
+def list_dir(path: str) -> list[tuple[str, bool, str]]:
     try:
         items = os.listdir(path)
     except PermissionError:
         return []
-    dirs, files = [], []
+    dirs: list[tuple[str, bool, str]] = []
+    files: list[tuple[str, bool, str]] = []
     for name in items:
         full = os.path.join(path, name)
         if name.startswith("."):
@@ -55,7 +59,7 @@ def ext_label(name: str) -> str:
     return EXT_LABEL.get(ext.lower(), "??")
 
 
-_URL_SCHEMES = ("http://", "https://", "rtmp://", "mms://", "rtsp://", "ftp://")
+_URL_SCHEMES: tuple[str, ...] = ("http://", "https://", "rtmp://", "mms://", "rtsp://", "ftp://")
 
 
 def is_url(path: str) -> bool:

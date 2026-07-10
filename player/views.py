@@ -1,5 +1,11 @@
+from __future__ import annotations
+
 import os
 import curses
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from player.app import PlayerApp
 
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV
 from .file_utils import time_str, ext_label, is_url as _is_url, is_video_file as _is_video_file
@@ -8,12 +14,12 @@ from . import keybindings as kb
 from .handlers import _get_current_key
 
 
-def draw_item_row(win, y, name, path, meta, *,
-                  is_cursor=False, is_playing=False, is_stream=False,
-                  exists=True, suffix="", mode_tag="",
-                  left_margin=6, attr=None, cursor_attr=None,
-                  dur_attr=None, fallback_icon="♪",
-                  fallback_label="<Inexistente>", h=None, w=None):
+def draw_item_row(win: curses.window, y: int, name: str, path: str, meta: dict[str, Any] | None, *,
+                  is_cursor: bool = False, is_playing: bool = False, is_stream: bool = False,
+                  exists: bool = True, suffix: str = "", mode_tag: str = "",
+                  left_margin: int = 6, attr: int | None = None, cursor_attr: int | None = None,
+                  dur_attr: int | None = None, fallback_icon: str = "♪",
+                  fallback_label: str = "<Inexistente>", h: int = 0, w: int = 0) -> None:
     if attr is None:
         attr = curses.color_pair(PAIR_TEXTO)
     if cursor_attr is None:
@@ -57,7 +63,7 @@ def _center(s: str, w: int) -> str:
     return " " * left + s + " " * (w - len(s) - left)
 
 
-def draw_listen(app, h: int, w: int) -> None:
+def draw_listen(app: PlayerApp, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     dest = curses.color_pair(PAIR_DESTACAR)
     nav = curses.color_pair(PAIR_NAV)
@@ -126,13 +132,13 @@ def draw_listen(app, h: int, w: int) -> None:
         aa_s = artist_album[:tw - 1] + "…" if len(artist_album) > tw else artist_album
         safe_addstr(app.stdscr, mid, 2, f"    {aa_s}", texto, h, w)
 
-    length = app.audio.get_length()
-    pos = app.audio.get_time()
+    length_ms = int(app.audio.get_length())
+    pos_ms = int(app.audio.get_time())
 
-    if length > 0:
-        progress = min(pos / length, 1.0)
-        cur_s = time_str(pos // 1000)
-        dur_s = time_str(length // 1000)
+    if length_ms > 0:
+        progress = min(pos_ms / length_ms, 1.0)
+        cur_s = time_str(pos_ms // 1000)
+        dur_s = time_str(length_ms // 1000)
         bar_w = max(8, w - 18)
         filled = int(bar_w * progress)
         bar = "█" * filled + "░" * (bar_w - filled)
@@ -193,7 +199,7 @@ def draw_listen(app, h: int, w: int) -> None:
     safe_addstr(app.stdscr, h - 3, 2, extra[:w - 4], nav, h, w)
 
 
-def draw_mini_stack(app, win, h: int, w: int) -> None:
+def draw_mini_stack(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     dest = curses.color_pair(PAIR_DESTACAR)
 
@@ -227,7 +233,7 @@ def draw_mini_stack(app, win, h: int, w: int) -> None:
             safe_addstr(win, y, 1, line, attr, h, w)
 
 
-def draw_listen_compact(app, h: int, w: int) -> None:
+def draw_listen_compact(app: PlayerApp, h: int, w: int) -> None:
     if app.show_stack_view:
         draw_mini_stack(app, app.stdscr, h, w)
         return
@@ -275,12 +281,12 @@ def draw_listen_compact(app, h: int, w: int) -> None:
         a = aa[:max_w - 1] + "…" if len(aa) > max_w else aa
         safe_addstr(app.stdscr, 3, 2, a, texto, h, w)
 
-    length = app.audio.get_length()
-    pos = app.audio.get_time()
-    if length > 0:
-        progress = min(pos / length, 1.0)
-        cur_s = time_str(pos // 1000)
-        dur_s = time_str(length // 1000)
+    length_ms = int(app.audio.get_length())
+    pos_ms = int(app.audio.get_time())
+    if length_ms > 0:
+        progress = min(pos_ms / length_ms, 1.0)
+        cur_s = time_str(pos_ms // 1000)
+        dur_s = time_str(length_ms // 1000)
         bar_w = max(4, w - 16)
         filled = int(bar_w * progress)
         bar = "█" * filled + "░" * (bar_w - filled)
@@ -342,7 +348,7 @@ def draw_listen_compact(app, h: int, w: int) -> None:
         safe_addstr(app.stdscr, oy + 3, ex, "Enter", dest, h, w)
 
 
-def draw_explorer(app, h: int, w: int) -> None:
+def draw_explorer(app: PlayerApp, h: int, w: int) -> None:
     extra = " [Filtro]" if app.explorer_filter_mode else ""
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
@@ -408,7 +414,7 @@ def draw_explorer(app, h: int, w: int) -> None:
             safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, texto, h, w)
 
 
-def draw_playlist(app, h: int, w: int) -> None:
+def draw_playlist(app: PlayerApp, h: int, w: int) -> None:
     extra = " [Filtro]" if app.playlist_filter_mode else ""
     total_items = len(app.playlist)
     texto = curses.color_pair(PAIR_TEXTO)
@@ -447,7 +453,7 @@ def draw_playlist(app, h: int, w: int) -> None:
         name, path = app.playlist[abs_idx]
         exists = os.path.isfile(path)
         meta = app.meta_cache.get(path) if exists else None
-        is_playing = app.stack.current and app.stack.current.path == path and app.audio.playing
+        is_playing = bool(app.stack.current and app.stack.current.path == path and app.audio.playing)
         cur = app.playlist_cursor
         is_cursor = (cur < len(indices) and abs_idx == indices[cur])
         draw_item_row(app.stdscr, y, name, path, meta,
@@ -456,7 +462,7 @@ def draw_playlist(app, h: int, w: int) -> None:
                       attr=texto, dur_attr=texto, h=h, w=w)
 
 
-def draw_history(app, h: int, w: int) -> None:
+def draw_history(app: PlayerApp, h: int, w: int) -> None:
     total = len(app.history)
     pos = f" ({app.history_cursor + 1}/{total})" if total > 0 else ""
     draw_box(app.stdscr, h, w, f"Historial{pos}")
@@ -485,7 +491,7 @@ def draw_history(app, h: int, w: int) -> None:
                       fallback_label="Archivo Inexistente", h=h, w=w)
 
 
-def draw_config(app, h: int, w: int) -> None:
+def draw_config(app: PlayerApp, h: int, w: int) -> None:
     draw_box(app.stdscr, h, w, "Configuración")
     texto = curses.color_pair(PAIR_TEXTO)
     dest = curses.color_pair(PAIR_DESTACAR)
@@ -563,7 +569,7 @@ def draw_config(app, h: int, w: int) -> None:
             safe_addstr(app.stdscr, y, 2, line, texto, h, w)
 
 
-def draw_keybindings(app, h: int, w: int) -> None:
+def draw_keybindings(app: PlayerApp, h: int, w: int) -> None:
     draw_box(app.stdscr, h, w, "Keybindings")
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
@@ -615,7 +621,7 @@ def draw_keybindings(app, h: int, w: int) -> None:
         safe_addstr(app.stdscr, h - 3, 2, footer, texto, h, w)
 
 
-def draw_meta_editor(app, win, h: int, w: int) -> None:
+def draw_meta_editor(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
     compact = h < 16

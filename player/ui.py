@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import os
 import curses
+from typing import Any, TypedDict
 
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV
 
@@ -10,7 +13,7 @@ EXPLORER_MARGIN = 8
 PLAYLIST_MARGIN = 6
 
 
-def safe_addstr(win, y: int, x: int, text: str, attr=None, h: int = 0, w: int = 0) -> None:
+def safe_addstr(win: curses.window, y: int, x: int, text: str, attr: int | None = None, h: int = 0, w: int = 0) -> None:
     if y < 0 or y >= h or x < 0 or x >= w:
         return
     try:
@@ -22,7 +25,7 @@ def safe_addstr(win, y: int, x: int, text: str, attr=None, h: int = 0, w: int = 
         pass
 
 
-def draw_box(win, h: int, w: int, title: str) -> None:
+def draw_box(win: curses.window, h: int, w: int, title: str) -> None:
     marco = curses.color_pair(PAIR_MARCO)
     bot = max(0, h - 1) if h < 16 else max(0, h - 2)
     safe_addstr(win, 0, 0, "┌" + "─" * max(0, w - 2) + "┐", marco, h, w)
@@ -42,7 +45,7 @@ def draw_box(win, h: int, w: int, title: str) -> None:
         safe_addstr(win, bot, 0, "└" + "─" * max(0, w - 2) + "┘", marco, h, w)
 
 
-def draw_nav(win, h: int, w: int) -> None:
+def draw_nav(win: curses.window, h: int, w: int) -> None:
     nav = curses.color_pair(PAIR_NAV)
     tabs = " 0:Config │ 1:Listen │ 2:Expl │ 3:Playlist │ 4:Hist │ q:Salir "
     win.move(h - NAV_ROW, 0)
@@ -50,9 +53,9 @@ def draw_nav(win, h: int, w: int) -> None:
     safe_addstr(win, h - NAV_ROW, max(0, (w - len(tabs)) // 2), tabs, nav, h, w)
 
 
-def draw_status(win, h: int, w: int, audio, playing: bool, current_file, volume: int,
+def draw_status(win: curses.window, h: int, w: int, audio: Any, playing: bool, current_file: str | None, volume: int,
                 shuffle: bool, repeat: bool, active_name: str, current_view: int,
-                stack=None) -> None:
+                stack: Any = None) -> None:
     if current_view in (1, 5, 6):
         return
     status = curses.color_pair(PAIR_DESTACAR)
@@ -83,7 +86,7 @@ def draw_status(win, h: int, w: int, audio, playing: bool, current_file, volume:
 
 
 
-def draw_dialog(win, h: int, w: int, title: str, text: str,
+def draw_dialog(win: curses.window, h: int, w: int, title: str, text: str,
                 is_confirm: bool = False, compact: bool = False,
                 prompt_buf: str = "", prompt_scroll: int = 0,
                 buttons: str = "") -> None:
@@ -160,7 +163,15 @@ def draw_dialog(win, h: int, w: int, title: str, text: str,
         pass
 
 
-HELP_TABS = [
+HelpLine = tuple[str, int | None]
+
+
+class HelpTab(TypedDict):
+    name: str
+    lines: list[HelpLine]
+
+
+HELP_TABS: list[HelpTab] = [
     {
         "name": "General",
         "lines": [
@@ -328,10 +339,10 @@ HELP_TABS = [
     },
 ]
 
-VIEW_TO_HELP_TAB = {1: 1, 2: 2, 3: 3, 4: 4, 0: 5}
+VIEW_TO_HELP_TAB: dict[int, int] = {1: 1, 2: 2, 3: 3, 4: 4, 0: 5}
 
 
-def draw_help(win, h: int, w: int, scroll: int = 0, tab: int = 0) -> None:
+def draw_help(win: curses.window, h: int, w: int, scroll: int = 0, tab: int = 0) -> None:
     marco = curses.color_pair(PAIR_MARCO)
     texto = curses.color_pair(PAIR_TEXTO)
     dest = curses.color_pair(PAIR_DESTACAR)

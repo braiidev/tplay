@@ -1,18 +1,22 @@
+from __future__ import annotations
+
+from typing import Any
+
 import mutagen
 from collections import OrderedDict
 
 
 class MetadataCache:
-    def __init__(self, maxsize: int = 10000):
-        self._maxsize = maxsize
-        self._cache = OrderedDict()
+    def __init__(self, maxsize: int = 10000) -> None:
+        self._maxsize: int = maxsize
+        self._cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
 
-    def get(self, path: str) -> dict:
+    def get(self, path: str) -> dict[str, Any]:
         if path in self._cache:
             self._cache.move_to_end(path)
             return self._cache[path]
         try:
-            audio = mutagen.File(path, easy=True)
+            audio = mutagen.File(path, easy=True)  # type: ignore[attr-defined]
             if audio is None:
                 tags = {}
             else:

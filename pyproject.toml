@@ -1,0 +1,5 @@
+[tool.mypy]
+strict = true
+python_version = "3.12"
+exclude = [".venv", "build", "dist"]
+ignore_missing_imports = true

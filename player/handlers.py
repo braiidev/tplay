@@ -1,14 +1,21 @@
+from __future__ import annotations
+
 import curses
 import os
 import shutil
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from .config import THEME_NAMES, COLORS
 from .file_utils import list_dir as _list_dir, is_media as _is_media_file, is_url as _is_url
 from .stack import StackItem
 from . import keybindings as kb
 
+if TYPE_CHECKING:
+    from player.app import PlayerApp
 
-def handle_listen(app, key: int) -> None:
+
+def handle_listen(app: PlayerApp, key: int) -> None:
     SEEK_STEP = 5000
     if key in (ord("\t"),):
         h, w = app.stdscr.getmaxyx()
@@ -46,7 +53,7 @@ def handle_listen(app, key: int) -> None:
         _prompt(app, "URL de stream", _add_url_cb)
 
 
-def _add_url_cb(app, url: str) -> None:
+def _add_url_cb(app: PlayerApp, url: str) -> None:
     url = url.strip()
     if not url or not _is_url(url):
         return
@@ -57,7 +64,7 @@ def _add_url_cb(app, url: str) -> None:
         app._play_current()
 
 
-def handle_stack_view(app, key: int) -> None:
+def handle_stack_view(app: PlayerApp, key: int) -> None:
     if key in (ord("u"), ord("U")):
         if key == ord("u"):
             app._undo()
@@ -138,7 +145,7 @@ def handle_stack_view(app, key: int) -> None:
         app.stack_scroll = app.stack_cursor - list_h + 1
 
 
-def handle_explorer(app, key: int) -> None:
+def handle_explorer(app: PlayerApp, key: int) -> None:
     if app.file_op_mode:
         _handle_file_op_picker(app, key)
         return
@@ -228,7 +235,7 @@ def handle_explorer(app, key: int) -> None:
         app.scroll = app.cursor - list_h + 1
 
 
-def handle_playlist(app, key: int) -> None:
+def handle_playlist(app: PlayerApp, key: int) -> None:
     if app.playlist_filter_mode:
         _handle_playlist_filter(app, key)
         return
@@ -282,7 +289,7 @@ def handle_playlist(app, key: int) -> None:
             _toast(app, "Archivo inexistente")
             return
 
-        def _on_rename(app, old_path, new_path):
+        def _on_rename(app: PlayerApp, old_path: str, new_path: str) -> None:
             idx = app.playlist_cursor
             if 0 <= idx < len(app.playlist):
                 app.playlist[idx] = (os.path.basename(new_path), new_path)
@@ -341,7 +348,7 @@ def handle_playlist(app, key: int) -> None:
         app.playlist_scroll = app.playlist_cursor - list_h + 1
 
 
-def handle_history(app, key: int) -> None:
+def handle_history(app: PlayerApp, key: int) -> None:
     if key == 27:
         app.current_view = app.V_LISTEN
         curses.flushinp()
@@ -386,7 +393,7 @@ def handle_history(app, key: int) -> None:
         app.history_scroll = app.history_cursor - list_h + 1
 
 
-def handle_config(app, key: int) -> None:
+def handle_config(app: PlayerApp, key: int) -> None:
     total = len(app.config_items)
     if key == ord("["):
         app.config_tab_idx = (app.config_tab_idx - 1) % len(app.config_tabs)
@@ -436,7 +443,7 @@ def handle_config(app, key: int) -> None:
         app.config_scroll = app.config_cursor - list_h + 1
 
 
-def handle_keybindings(app, key: int) -> None:
+def handle_keybindings(app: PlayerApp, key: int) -> None:
     if key == 27:
         _save_keybindings(app)
         app.kb_keybinding_view = False
@@ -451,7 +458,8 @@ def handle_keybindings(app, key: int) -> None:
             return
         if 32 <= key <= 126:
             app.kb_capturing = False
-            _assign_key(app, app.kb_capturing_action, key)
+            if app.kb_capturing_action is not None:
+                _assign_key(app, app.kb_capturing_action, key)
             app.kb_capturing_action = None
             return
         return
@@ -476,7 +484,7 @@ def handle_keybindings(app, key: int) -> None:
 
 # ── Helpers ──
 
-def handle_goto(app, key: int) -> None:
+def handle_goto(app: PlayerApp, key: int) -> None:
     if key == 27:
         app.goto_mode = False
         curses.flushinp()
@@ -507,12 +515,12 @@ def handle_goto(app, key: int) -> None:
         return
 
 
-def _page_size(app) -> int:
+def _page_size(app: PlayerApp) -> int:
     h, _ = app.stdscr.getmaxyx()
-    return max(1, h - app.LIST_H)
+    return int(max(1, h - app.LIST_H))
 
 
-def _play_file_direct(app, path: str) -> None:
+def _play_file_direct(app: PlayerApp, path: str) -> None:
     if not os.path.isfile(path):
         return
     app.stack.items = [StackItem(path=path, name=os.path.basename(path))]
@@ -520,7 +528,7 @@ def _play_file_direct(app, path: str) -> None:
     app.current_view = app.V_LISTEN
 
 
-def _play_playlist_enter(app) -> None:
+def _play_playlist_enter(app: PlayerApp) -> None:
     pl = app.playlist
     if not pl:
         return
@@ -530,7 +538,7 @@ def _play_playlist_enter(app) -> None:
     app.current_view = app.V_LISTEN
 
 
-def _add_from_explorer(app, insert_mode: str = "append") -> None:
+def _add_from_explorer(app: PlayerApp, insert_mode: str = "append") -> None:
     if not app.entries:
         return
     _, is_dir, full = app.entries[app.cursor]
@@ -549,7 +557,7 @@ def _add_from_explorer(app, insert_mode: str = "append") -> None:
             app._play_current()
 
 
-def _add_from_history(app, insert_mode: str = "append") -> None:
+def _add_from_history(app: PlayerApp, insert_mode: str = "append") -> None:
     if not app.history:
         return
     entry = app.history[app.history_cursor]
@@ -565,20 +573,20 @@ def _add_from_history(app, insert_mode: str = "append") -> None:
         app._play_current()
 
 
-def _do_clear_stack(app) -> None:
+def _do_clear_stack(app: PlayerApp) -> None:
     app._push_snapshot()
     app.audio.stop()
     app.stack.clear()
 
 
-def _save_stack_as_playlist_cb(app, name: str) -> None:
+def _save_stack_as_playlist_cb(app: PlayerApp, name: str) -> None:
     if name and name not in app.playlist_data:
         app.playlist_data[name] = [(item.name, item.path) for item in app.stack.items]
         _save_playlist(app)
         _toast(app, f"Lista '{name}' creada desde pila")
 
 
-def _start_delete(app) -> None:
+def _start_delete(app: PlayerApp) -> None:
     if not app.entries:
         return
     name, is_dir, full = app.entries[app.cursor]
@@ -593,7 +601,7 @@ def _start_delete(app) -> None:
     _confirm(app, f"¿Eliminar '{name}'?", lambda: _do_delete(app, full))
 
 
-def _do_delete(app, path: str) -> None:
+def _do_delete(app: PlayerApp, path: str) -> None:
     try:
         app._push_snapshot()
         if os.path.isdir(path):
@@ -607,11 +615,11 @@ def _do_delete(app, path: str) -> None:
         _toast(app, f"Error al eliminar: {e}")
 
 
-def _start_mkdir(app) -> None:
+def _start_mkdir(app: PlayerApp) -> None:
     _prompt(app, "Nombre del nuevo directorio", _do_mkdir)
 
 
-def _do_mkdir(app, buf: str) -> None:
+def _do_mkdir(app: PlayerApp, buf: str) -> None:
     if not buf:
         return
     try:
@@ -622,7 +630,7 @@ def _do_mkdir(app, buf: str) -> None:
         _toast(app, f"Error al crear directorio: {e}")
 
 
-def _play_folder(app) -> None:
+def _play_folder(app: PlayerApp) -> None:
     if not app.entries:
         return
     _, is_dir, full = app.entries[app.cursor]
@@ -636,12 +644,12 @@ def _play_folder(app) -> None:
     app._play_current()
 
 
-def _rename_file(app, full: str, name: str,
-                 on_rename=None) -> None:
+def _rename_file(app: PlayerApp, full: str, name: str,
+                 on_rename: Callable[..., None] | None = None) -> None:
     """Renombrar archivo en disco. on_rename(app, old_path, new_path) si se necesita post-procesar."""
     _, ext = os.path.splitext(name)
 
-    def _do_rename(app, old_path, new_path):
+    def _do_rename(app: PlayerApp, old_path: str, new_path: str) -> None:
         try:
             app._push_snapshot()
             os.rename(old_path, new_path)
@@ -650,7 +658,7 @@ def _rename_file(app, full: str, name: str,
         except Exception as e:
             _toast(app, f"Error al renombrar: {e}")
 
-    def _cb(app, buf):
+    def _cb(app: PlayerApp, buf: str) -> None:
         if not buf or buf == name:
             return
         if not os.path.splitext(buf)[1]:
@@ -668,19 +676,19 @@ def _rename_file(app, full: str, name: str,
     _prompt(app, "Renombrar a", _cb, name)
 
 
-def _start_rename(app) -> None:
+def _start_rename(app: PlayerApp) -> None:
     if not app.entries:
         return
     name, _, full = app.entries[app.cursor]
 
-    def _on_rename(app, old_path, new_path):
+    def _on_rename(app: PlayerApp, old_path: str, new_path: str) -> None:
         app.entries = _list_dir(app.current_dir)
         _update_refs_after_rename(app, old_path, new_path)
 
     _rename_file(app, full, name, _on_rename)
 
 
-def _update_refs_after_rename(app, old_path: str, new_path: str) -> None:
+def _update_refs_after_rename(app: PlayerApp, old_path: str, new_path: str) -> None:
     """Actualizar playlist e history que apuntaban a old_path."""
     new_name = os.path.basename(new_path)
     for pl_name in app.playlist_data:
@@ -696,7 +704,7 @@ def _update_refs_after_rename(app, old_path: str, new_path: str) -> None:
             entry["name"] = new_name
 
 
-def _open_tag_editor(app, full: str) -> None:
+def _open_tag_editor(app: PlayerApp, full: str) -> None:
     if not _is_media_file(full):
         _toast(app, "No es un archivo multimedia")
         return
@@ -714,7 +722,7 @@ def _open_tag_editor(app, full: str) -> None:
     app.meta_edit_mode = True
 
 
-def _start_tag_edit(app) -> None:
+def _start_tag_edit(app: PlayerApp) -> None:
     if not app.entries:
         return
     _, is_dir, full = app.entries[app.cursor]
@@ -723,7 +731,7 @@ def _start_tag_edit(app) -> None:
     _open_tag_editor(app, full)
 
 
-def _do_playlist_remove(app, idx: int) -> None:
+def _do_playlist_remove(app: PlayerApp, idx: int) -> None:
     if idx < 0 or idx >= len(app.playlist):
         return
     app._push_snapshot()
@@ -731,26 +739,26 @@ def _do_playlist_remove(app, idx: int) -> None:
     _save_playlist(app)
 
 
-def _do_playlist_clear(app) -> None:
+def _do_playlist_clear(app: PlayerApp) -> None:
     app._push_snapshot()
     app.playlist.clear()
     _save_playlist(app)
 
 
-def _do_history_remove(app) -> None:
+def _do_history_remove(app: PlayerApp) -> None:
     if 0 <= app.history_cursor < len(app.history):
         app.history.pop(app.history_cursor)
         if app.history_cursor > 0:
             app.history_cursor -= 1
 
 
-def _do_history_clear(app) -> None:
+def _do_history_clear(app: PlayerApp) -> None:
     app.history.clear()
     app.history_cursor = 0
     app.history_scroll = 0
 
 
-def _handle_explorer_filter(app, key: int) -> None:
+def _handle_explorer_filter(app: PlayerApp, key: int) -> None:
     if key == 27:
         app.explorer_filter_mode = False
         app.explorer_filter = ""
@@ -791,7 +799,7 @@ def _handle_explorer_filter(app, key: int) -> None:
         _do_explorer_filter(app)
 
 
-def _do_explorer_filter(app) -> None:
+def _do_explorer_filter(app: PlayerApp) -> None:
     q = app.explorer_filter.lower().strip()
     if not q:
         app.explorer_filtered = list(range(len(app.entries)))
@@ -802,7 +810,7 @@ def _do_explorer_filter(app) -> None:
     app.scroll = 0
 
 
-def _handle_playlist_filter(app, key: int) -> None:
+def _handle_playlist_filter(app: PlayerApp, key: int) -> None:
     if key == 27:
         app.playlist_filter_mode = False
         app.playlist_filter = ""
@@ -844,7 +852,7 @@ def _handle_playlist_filter(app, key: int) -> None:
         return
 
 
-def _do_playlist_filter(app) -> None:
+def _do_playlist_filter(app: PlayerApp) -> None:
     q = app.playlist_filter.lower().strip()
     if not q:
         app.playlist_filtered = list(range(len(app.playlist)))
@@ -855,12 +863,12 @@ def _do_playlist_filter(app) -> None:
     app.playlist_scroll = 0
 
 
-def _save_playlist(app) -> None:
+def _save_playlist(app: PlayerApp) -> None:
     from .playlist import save_all
     save_all(app.playlist_data, app.active_name)
 
 
-def _switch_playlist(app, name: str) -> None:
+def _switch_playlist(app: PlayerApp, name: str) -> None:
     if name in app.playlist_data:
         app.active_name = name
         app.playlist_cursor = 0
@@ -872,14 +880,14 @@ def _switch_playlist(app, name: str) -> None:
         curses.curs_set(0)
 
 
-def _create_playlist_cb(app, name: str) -> None:
+def _create_playlist_cb(app: PlayerApp, name: str) -> None:
     if name and name not in app.playlist_data:
         app.playlist_data[name] = []
         _switch_playlist(app, name)
         _save_playlist(app)
 
 
-def _do_delete_playlist(app) -> None:
+def _do_delete_playlist(app: PlayerApp) -> None:
     if len(app.playlist_data) > 1:
         del app.playlist_data[app.active_name]
         new_name = next(n for n in app.playlist_data if n != app.active_name)
@@ -887,7 +895,7 @@ def _do_delete_playlist(app) -> None:
         _save_playlist(app)
 
 
-def _rename_playlist_cb(app, new_name: str) -> None:
+def _rename_playlist_cb(app: PlayerApp, new_name: str) -> None:
     if new_name and new_name != app.active_name and new_name not in app.playlist_data:
         app.playlist_data[new_name] = app.playlist_data.pop(app.active_name)
         app.active_name = new_name
@@ -896,7 +904,7 @@ def _rename_playlist_cb(app, new_name: str) -> None:
 
 # ── File Operations ──
 
-def _start_file_op(app, mode: str) -> None:
+def _start_file_op(app: PlayerApp, mode: str) -> None:
     if not app.entries:
         return
     _, is_dir, full = app.entries[app.cursor]
@@ -906,7 +914,7 @@ def _start_file_op(app, mode: str) -> None:
     app.file_op_source = full
 
 
-def _do_file_op(app, dest_dir: str) -> None:
+def _do_file_op(app: PlayerApp, dest_dir: str) -> None:
     src = app.file_op_source
     mode = app.file_op_mode
     app.file_op_mode = None
@@ -929,7 +937,7 @@ def _do_file_op(app, dest_dir: str) -> None:
     _toast(app, f"{label}: {os.path.basename(src)} listo")
 
 
-def _confirm_file_op(app, dest_dir: str) -> None:
+def _confirm_file_op(app: PlayerApp, dest_dir: str) -> None:
     src = app.file_op_source
     mode = app.file_op_mode
     if not src or not os.path.isdir(dest_dir):
@@ -940,7 +948,7 @@ def _confirm_file_op(app, dest_dir: str) -> None:
     _confirm(app, f"¿{label} '{name}' a '{dest_name}'?", lambda: _do_file_op(app, dest_dir))
 
 
-def _handle_file_op_picker(app, key: int) -> None:
+def _handle_file_op_picker(app: PlayerApp, key: int) -> None:
     if not app.entries:
         return
     if key == 27:
@@ -1005,7 +1013,7 @@ def _handle_file_op_picker(app, key: int) -> None:
 
 # ── Config helpers ──
 
-def _cycle_theme(app, direction: int) -> None:
+def _cycle_theme(app: PlayerApp, direction: int) -> None:
     try:
         idx = THEME_NAMES.index(app.config["theme"])
     except ValueError:
@@ -1019,7 +1027,7 @@ def _cycle_theme(app, direction: int) -> None:
     save_config(app.config)
 
 
-def _cycle_color(app, key_name: str, direction: int) -> None:
+def _cycle_color(app: PlayerApp, key_name: str, direction: int) -> None:
     colors = list(COLORS.keys())
     cc = app.config.setdefault("custom_colors", {})
     current = cc.get(key_name, "Blanco")
@@ -1033,7 +1041,7 @@ def _cycle_color(app, key_name: str, direction: int) -> None:
     save_config(app.config)
 
 
-def _config_int_inc(app, key_name: str) -> None:
+def _config_int_inc(app: PlayerApp, key_name: str) -> None:
     from .config import save as save_config
     if key_name == "volume":
         app.audio.set_volume(app.audio.volume + 5)
@@ -1043,7 +1051,7 @@ def _config_int_inc(app, key_name: str) -> None:
     save_config(app.config)
 
 
-def _config_int_dec(app, key_name: str) -> None:
+def _config_int_dec(app: PlayerApp, key_name: str) -> None:
     from .config import save as save_config
     if key_name == "volume":
         app.audio.set_volume(app.audio.volume - 5)
@@ -1055,7 +1063,7 @@ def _config_int_dec(app, key_name: str) -> None:
 
 # ── Keybinding helpers ──
 
-def _open_keybindings(app) -> None:
+def _open_keybindings(app: PlayerApp) -> None:
     app.kb_keybinding_view = True
     app.kb_cursor = 0
     app.kb_capturing = False
@@ -1064,7 +1072,7 @@ def _open_keybindings(app) -> None:
     app.kb_conflict_other = ""
 
 
-def _toggle_keybinding_mode(app) -> None:
+def _toggle_keybinding_mode(app: PlayerApp) -> None:
     if app.keybinding_mode == "custom":
         app.config["keybinding_mode"] = "default"
         app.config["keybindings"] = {}
@@ -1079,7 +1087,7 @@ def _toggle_keybinding_mode(app) -> None:
     _save_keybindings(app)
 
 
-def _assign_key(app, action: str, keycode: int) -> None:
+def _assign_key(app: PlayerApp, action: str, keycode: int) -> None:
     app.kb_conflict_msg = ""
     app.kb_conflict_other = ""
 
@@ -1102,17 +1110,17 @@ def _assign_key(app, action: str, keycode: int) -> None:
     _save_keybindings(app)
 
 
-def _get_current_key(app, action: str) -> int:
+def _get_current_key(app: PlayerApp, action: str) -> int:
     if app.keybinding_mode == "custom":
-        return app.config.get("keybindings", {}).get(action, kb.DEFAULT_BINDINGS[action])
-    return kb.DEFAULT_BINDINGS[action]
+        return int(app.config.get("keybindings", {}).get(action, kb.DEFAULT_BINDINGS[action]))
+    return int(kb.DEFAULT_BINDINGS[action])
 
 
-def _build_bindings_from_current(app) -> dict:
+def _build_bindings_from_current(app: PlayerApp) -> dict[str, int]:
     return {a: _get_current_key(app, a) for a in kb.BINDABLE_ACTIONS}
 
 
-def _save_keybindings(app) -> None:
+def _save_keybindings(app: PlayerApp) -> None:
     from .config import save as save_config
     app.config["keybinding_mode"] = app.keybinding_mode
     save_config(app.config)
@@ -1120,25 +1128,26 @@ def _save_keybindings(app) -> None:
 
 # ── Prompt helpers ──
 
-def _prompt(app, label: str, callback, initial: str = "") -> None:
+def _prompt(app: PlayerApp, label: str, callback: Callable[..., None],
+            initial: str = "") -> None:
     app.dialog = {"type": "prompt", "label": label, "buf": initial,
                   "callback": callback, "scroll": 0}
     curses.curs_set(1)
     curses.flushinp()
 
 
-def _toast(app, msg: str) -> None:
+def _toast(app: PlayerApp, msg: str) -> None:
     app.toast(msg)
 
 
-def _confirm(app, label: str, callback) -> None:
+def _confirm(app: PlayerApp, label: str, callback: Callable[..., None]) -> None:
     app.dialog = {"type": "confirm", "label": label, "callback": callback}
     curses.flushinp()
 
 
 # ── Update ──
 
-def _handle_update(app) -> None:
+def _handle_update(app: PlayerApp) -> None:
     app._check_updates()
     if app.update_available:
         n = app.update_behind
@@ -1148,7 +1157,7 @@ def _handle_update(app) -> None:
         _toast(app, "Sin actualizaciones disponibles")
 
 
-def _do_update(app) -> None:
+def _do_update(app: PlayerApp) -> None:
     ok, msg = app._apply_updates()
     if ok:
         app.update_available = False
@@ -1157,7 +1166,7 @@ def _do_update(app) -> None:
         _toast(app, msg)
 
 
-def _restart_app(app) -> None:
+def _restart_app(app: PlayerApp) -> None:
     import os, sys
     try:
         from .state import save_state

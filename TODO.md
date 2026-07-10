@@ -27,6 +27,6 @@
 
 | ID  | Mejora                                                                                           | Compl. | Estado |
 | --- | ------------------------------------------------------------------------------------------------ | ------ | ------ |
-| M1  | Refactor: reducir duplicación entre vistas, extraer lógica común de dibujado de items y metadata | -      | ▢      |
-| M2  | Refactor: unificar manejo de errores y toasts                                                    | -      | ▢      |
-| M3  | Refactor: tipado completo con mypy                                                               | -      | ▢      |
+| M1  | Refactor: reducir duplicación entre vistas, extraer lógica común de dibujado de items y metadata | -      | ✅     |
+| M2  | Refactor: unificar 9 vars de dialogo en un solo self.dialog dict                                 | -      | ✅     |
+| M3  | Refactor: tipado completo con mypy                                                               | -      | ✅     |

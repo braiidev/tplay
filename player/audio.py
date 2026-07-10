@@ -1,12 +1,29 @@
+from __future__ import annotations
+
 import os
 import time
+
 import vlc
 
 
 class AudioEngine:
-    def __init__(self):
+    _saved_stderr: int | None
+    instance: vlc.Instance
+    player: vlc.MediaPlayer
+    playing: bool
+    paused: bool
+    current_file: str | None
+    volume: int
+    sleep_timer_start: float
+    sleep_timer_duration: int
+    sleep_timer_active: bool
+    sleep_timer_expired: bool
+    muted: bool
+    _prev_volume: int
+
+    def __init__(self) -> None:
         self._saved_stderr = os.dup(2)
-        null = os.open(os.devnull, os.O_WRONLY)
+        null: int = os.open(os.devnull, os.O_WRONLY)
         os.dup2(null, 2)
         os.close(null)
 
@@ -104,13 +121,13 @@ class AudioEngine:
 
     def get_time(self) -> int:
         try:
-            return self.player.get_time()
+            return int(self.player.get_time())
         except Exception:
             return 0
 
     def get_length(self) -> int:
         try:
-            return self.player.get_length()
+            return int(self.player.get_length())
         except Exception:
             return 0
 

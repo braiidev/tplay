@@ -12,7 +12,7 @@ class StackItem:
 
 
 class Stack:
-    def __init__(self):
+    def __init__(self) -> None:
         self._items: list[StackItem] = []
         self.playhead: int = -1
         self.shuffle: bool = False
@@ -23,7 +23,7 @@ class Stack:
         return self._items
 
     @items.setter
-    def items(self, val: list[StackItem]):
+    def items(self, val: list[StackItem]) -> None:
         self._items = list(val)
         self.playhead = 0 if self._items else -1
 

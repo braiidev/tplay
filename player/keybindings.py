@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import curses
 
-DEFAULT_BINDINGS = {
+DEFAULT_BINDINGS: dict[str, int] = {
     "play_pause": ord(" "),
     "stop": ord("s"),
     "next": ord("n"),
@@ -14,9 +16,9 @@ DEFAULT_BINDINGS = {
     "mute": ord("m"),
 }
 
-BINDABLE_ACTIONS = list(DEFAULT_BINDINGS.keys())
+BINDABLE_ACTIONS: list[str] = list(DEFAULT_BINDINGS.keys())
 
-RESERVED_KEYS = {
+RESERVED_KEYS: set[int] = {
     ord("0"), ord("1"), ord("2"), ord("3"), ord("4"),
     ord("q"),
     27,  # Esc
@@ -38,9 +40,9 @@ RESERVED_KEYS = {
 # Printable keys (32-126) are handled by input modes
 
 
-def resolve_conflicts(bindings: dict) -> dict:
-    result = {}
-    seen_keys = set()
+def resolve_conflicts(bindings: dict[str, int]) -> dict[str, int]:
+    result: dict[str, int] = {}
+    seen_keys: set[int] = set()
     for action in BINDABLE_ACTIONS:
         keycode = bindings.get(action)
         if keycode is None or keycode in RESERVED_KEYS:
@@ -58,7 +60,7 @@ def resolve_conflicts(bindings: dict) -> dict:
     return result
 
 
-def build_lookup(bindings: dict) -> dict:
+def build_lookup(bindings: dict[str, int]) -> dict[int, str]:
     return {keycode: action for action, keycode in bindings.items()}
 
 
@@ -70,13 +72,13 @@ def key_name(keycode: int) -> str:
     if keycode == 27:
         return "Esc"
     if keycode == curses.KEY_UP:
-        return "↑"
+        return "\u2191"
     if keycode == curses.KEY_DOWN:
-        return "↓"
+        return "\u2193"
     if keycode == curses.KEY_LEFT:
-        return "←"
+        return "\u2190"
     if keycode == curses.KEY_RIGHT:
-        return "→"
+        return "\u2192"
     if keycode == curses.KEY_NPAGE:
         return "PgDn"
     if keycode == curses.KEY_PPAGE:

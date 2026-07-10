@@ -1,25 +1,28 @@
+from __future__ import annotations
+
 import os
 import json
+from typing import Any
 
-PLAYLIST_FILE = os.path.join(os.path.expanduser("~/.config/tplay/data"), "playlist.json")
+PLAYLIST_FILE: str = os.path.join(os.path.expanduser("~/.config/tplay/data"), "playlist.json")
 
 
-def load_all() -> tuple[dict, str]:
+def load_all() -> tuple[dict[str, list[tuple[str, str]]], str]:
     try:
         with open(PLAYLIST_FILE) as f:
             data = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError, OSError):
         return {"default": []}, "default"
 
-    pls = data.get("playlists", [])
-    active = data.get("active", "default")
-    result = {}
+    pls: list[Any] = data.get("playlists", [])
+    active: str = data.get("active", "default")
+    result: dict[str, list[tuple[str, str]]] = {}
     if not pls:
         return {"default": []}, "default"
     for pl in pls:
         name = pl.get("name", "default")
         songs = pl.get("songs", [])
-        valid = []
+        valid: list[tuple[str, str]] = []
         for s in songs:
             if isinstance(s, str) and os.path.exists(s):
                 valid.append((os.path.basename(s), s))
@@ -29,7 +32,7 @@ def load_all() -> tuple[dict, str]:
     return result, active
 
 
-def save_all(playlist_data: dict, active_name: str) -> None:
+def save_all(playlist_data: dict[str, list[tuple[str, str]]], active_name: str) -> None:
     pls = [{"name": name, "songs": [path for _, path in songs]}
            for name, songs in playlist_data.items()]
     data = {"active": active_name, "playlists": pls}

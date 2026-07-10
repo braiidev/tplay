@@ -1,15 +1,18 @@
+from __future__ import annotations
+
 import json
 import os
+from typing import Any, cast
 
 from .config import CONFIG_DIR
 
-STATE_FILE = os.path.join(CONFIG_DIR, "state.json")
+STATE_FILE: str = os.path.join(CONFIG_DIR, "state.json")
 
 
-def load_state() -> dict:
+def load_state() -> dict[str, Any]:
     try:
         with open(STATE_FILE) as f:
-            return json.load(f)
+            return cast(dict[str, Any], json.load(f))
     except (FileNotFoundError, json.JSONDecodeError, ValueError):
         return {"playing": False, "file": "", "position": 0}
 
@@ -23,10 +26,10 @@ def save_state(playing: bool, file: str = "", position: int = 0) -> None:
         pass
 
 
-HISTORY_FILE = os.path.join(CONFIG_DIR, "history.json")
+HISTORY_FILE: str = os.path.join(CONFIG_DIR, "history.json")
 
 
-def save_history(history: list) -> None:
+def save_history(history: list[Any]) -> None:
     try:
         os.makedirs(CONFIG_DIR, exist_ok=True)
         with open(HISTORY_FILE, "w") as f:
@@ -35,9 +38,9 @@ def save_history(history: list) -> None:
         pass
 
 
-def load_history() -> list:
+def load_history() -> list[Any]:
     try:
         with open(HISTORY_FILE) as f:
-            return json.load(f)
+            return cast(list[Any], json.load(f))
     except (FileNotFoundError, json.JSONDecodeError, ValueError):
         return []
