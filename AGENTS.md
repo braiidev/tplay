@@ -43,7 +43,7 @@ player/
 - Para `mutagen.File` usar `# type: ignore[attr-defined]`
 - `# type: ignore` solo como último recurso
 
-## Estado actual (v1.5.9)
+## Estado actual (v1.5.10)
 
 ### Completado (session actual)
 - **B2** — undo unificado (file_undo integrado en snapshots)
@@ -64,6 +64,7 @@ player/
 - **N3** — scroll-clamping → _clamp_scroll() helper en shared
 - **N4** — magic numbers (1,5,6) limpiado en ui.py
 - **N5** — compact shadow → meta_cpt en _draw()
+- **C4** — _restart_app ruta incorrecta tras split en handlers/ package → usa `app._repo_dir` en vez de `__file__`
 - **L1-L4**, **L2.7**, **E1-E5** — auditorías previas
 - **M1-M3** — draw_item_row unificada, dialog system unificado, mypy strict
 
@@ -75,6 +76,7 @@ player/
 - **F28** — Streaming/Radio (URL, M3U, radios guardadas)
 
 ### Últimos tags de versión
+- v1.5.10 — fix: C4 _restart_app ruta incorrecta tras A4 → app._repo_dir
 - v1.5.9 — cleanup N1-N5
 - v1.5.8 — feat: U2-U5 (update async, toast, s/y confirm, sleep timer reset)
 - v1.5.7 — feat: U1 PgDn/PgUp g/G en Playlist
