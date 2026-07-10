@@ -6,6 +6,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from ..file_utils import is_media as _is_media_file
+from ..file_utils import is_url as _is_url
 from ..stack import StackItem
 
 if TYPE_CHECKING:
@@ -99,9 +100,12 @@ def _parse_m3u(filepath: str) -> list[str]:
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-            p = line if os.path.isabs(line) else os.path.normpath(os.path.join(base, line))
-            if os.path.isfile(p):
-                paths.append(p)
+            if _is_url(line):
+                paths.append(line)
+            else:
+                p = line if os.path.isabs(line) else os.path.normpath(os.path.join(base, line))
+                if os.path.isfile(p):
+                    paths.append(p)
     return paths
 
 
@@ -115,9 +119,12 @@ def _parse_pls(filepath: str) -> list[str]:
                 _, _, val = line.partition("=")
                 val = val.strip()
                 if val:
-                    p = val if os.path.isabs(val) else os.path.normpath(os.path.join(base, val))
-                    if os.path.isfile(p):
-                        paths.append(p)
+                    if _is_url(val):
+                        paths.append(val)
+                    else:
+                        p = val if os.path.isabs(val) else os.path.normpath(os.path.join(base, val))
+                        if os.path.isfile(p):
+                            paths.append(p)
     return paths
 
 

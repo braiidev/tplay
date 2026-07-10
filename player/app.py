@@ -24,6 +24,7 @@ from . import ui
 from . import handlers
 from . import keybindings as kb
 from .state import load_state, save_state, load_history, save_history
+from .radios import load_radios
 
 
 class PlayerApp:
@@ -36,6 +37,7 @@ class PlayerApp:
     V_EXPLORER: int = 2
     V_PLAYLIST: int = 3
     V_HISTORY: int = 4
+    V_RADIO: int = 5
 
     def __init__(self, stdscr: curses.window) -> None:
         self.stdscr: curses.window = stdscr
@@ -106,6 +108,13 @@ class PlayerApp:
         self.history_scroll: int = 0
         self._history_last: str | None = None
 
+        self.radios: list[dict[str, str]] = load_radios()
+        self.radio_cursor: int = 0
+        self.radio_scroll: int = 0
+        self._radio_pending_name: str = ""
+        self.radio_edit_idx: int | None = None
+        self.radio_edit_field: str | None = None
+
         self.undo_stack: list[dict[str, Any]] = []
         self.redo_stack: list[dict[str, Any]] = []
 
@@ -140,6 +149,7 @@ class PlayerApp:
             self.V_PLAYLIST: handlers.handle_playlist,
             self.V_HISTORY: handlers.handle_history,
             self.V_CONFIG: handlers.handle_config,
+            self.V_RADIO: handlers.handle_radio,
         }
         self._view_drawers = {
             self.V_LISTEN: views.draw_listen,
@@ -147,6 +157,7 @@ class PlayerApp:
             self.V_PLAYLIST: views.draw_playlist,
             self.V_HISTORY: views.draw_history,
             self.V_CONFIG: views.draw_config,
+            self.V_RADIO: views.draw_radio,
         }
 
         curses.curs_set(0)
@@ -607,7 +618,7 @@ class PlayerApp:
         return False
 
     def _handle_key_view_switch(self, key: int) -> bool:
-        if ord("0") <= key <= ord("4"):
+        if ord("0") <= key <= ord("5"):
             self.current_view = key - ord("0")
             self.cursor = 0
             self.scroll = 0

@@ -47,7 +47,7 @@ def draw_box(win: curses.window, h: int, w: int, title: str) -> None:
 
 def draw_nav(win: curses.window, h: int, w: int) -> None:
     nav = curses.color_pair(PAIR_NAV)
-    tabs = " 0:Config │ 1:Listen │ 2:Expl │ 3:Playlist │ 4:Hist │ q:Salir "
+    tabs = " 0:Config │ 1:Listen │ 2:Expl │ 3:Playlist │ 4:Hist │ 5:Radio │ q:Salir "
     win.move(h - NAV_ROW, 0)
     win.clrtoeol()
     safe_addstr(win, h - NAV_ROW, max(0, (w - len(tabs)) // 2), tabs, nav, h, w)

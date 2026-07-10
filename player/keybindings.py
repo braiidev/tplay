@@ -19,7 +19,7 @@ DEFAULT_BINDINGS: dict[str, int] = {
 BINDABLE_ACTIONS: list[str] = list(DEFAULT_BINDINGS.keys())
 
 RESERVED_KEYS: set[int] = {
-    ord("0"), ord("1"), ord("2"), ord("3"), ord("4"),
+    ord("0"), ord("1"), ord("2"), ord("3"), ord("4"), ord("5"),
     ord("q"),
     27,  # Esc
     10, 13,  # Enter

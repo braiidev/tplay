@@ -63,7 +63,7 @@
 | F2  | Ecualizador gráfico (VLC API) | Alta | [ ] |
 | F4  | Exportar/Importar playlist a M3U/PLS | Media | ✅ |
 | F8  | Cover art (chafa/viu) | Baja | [ ] |
-| F28 | Streaming/Radio (URL, M3U, radios guardadas) | Media | △ |
+| F28 | Streaming/Radio (URL, M3U, radios guardadas) | Media | ✅ |
 
 ## ✅ Completado
 
@@ -93,3 +93,4 @@
 - **L5** — descartado: tags faltantes → "desconocido" (ok), covers no interesan
 - **U6** — toast más lento (40 ticks ≈ 2s) + dismiss con Enter/Space/Esc
 - **F4** — export/import M3U/PLS: `X` exporta stack a M3U; Explorer .m3u/.pls con `Enter` carga al Stack, `a`/`A` crea Playlist automática
+- **F28** — vista Radios (tecla 5) con lista persistente, `a` agregar, `Enter` reproducir, `e`/`E` editar, `X` exportar radios.m3u, historial automático

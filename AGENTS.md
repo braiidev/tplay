@@ -16,14 +16,16 @@ player/
 ├── handlers/          # Manejadores de teclas por vista (package)
 │   ├── __init__.py    # Re-exporta todo (60 símbolos)
 │   ├── shared.py      # _prompt, _toast, _confirm, _clamp_scroll, _play_file_direct, _rename, _open_tag_editor, update/restart
-│   ├── listen.py      # handle_listen, handle_stack_view, handle_goto, _add_url_cb
+│   ├── listen.py      # handle_listen, handle_stack_view, handle_goto
 │   ├── explorer.py    # handle_explorer, file ops (delete, mkdir, rename, copy/move), explorer filter
 │   ├── playlist.py    # handle_playlist, playlist filter, playlist CRUD (save/switch/create/delete/rename)
 │   ├── history.py     # handle_history, history ops (add/remove/clear)
-│   └── config_view.py # handle_config, keybinding editor (handle_keybindings), theme/color/int cycling
+│   ├── config_view.py # handle_config, keybinding editor (handle_keybindings), theme/color/int cycling
+│   └── radio.py       # handle_radio, add/edit/delete/export radios
 ├── keybindings.py     # Mapa de teclas, resolución de conflictos
 ├── metadata.py        # MetadataCache — cache LRU de mutagen
 ├── playlist.py        # Carga/guarda playlists JSON
+├── radios.py          # Carga/guarda radios JSON
 ├── stack.py           # Stack, StackItem — cola de reproducción
 ├── state.py           # Snapshot/restore para undo/redo + state.json (stack persistente)
 ├── ui.py              # safe_addstr, draw_box, draw_dialog, draw_nav, draw_status, draw_help
@@ -74,11 +76,12 @@ player/
 - **F2** — Ecualizador gráfico (VLC API)
 - **F4** — Exportar/Importar M3U/PLS ← ✅ hecho (M3U extendido, `X` export, `O` import)
 - **F8** — Cover art (chafa/viu) ← descartado por ahora
-- **F28** — Streaming/Radio (URL, M3U, radios guardadas)
+- **F28** — Streaming/Radio (URL, M3U, radios guardadas) ← ✅ hecho (vista Radios con `5`, persistente, historial automático)
 
 ### Últimos tags de versión
+- v1.5.12 — feat: F4 import M3U/PLS desde Explorer
+- v1.5.11 — feat: F4 import M3U/PLS (tecla O) — revertido
 - v1.5.10 — fix: C4 _restart_app ruta incorrecta tras A4 → app._repo_dir
-- v1.5.9 — cleanup N1-N5
 - v1.5.8 — feat: U2-U5 (update async, toast, s/y confirm, sleep timer reset)
 - v1.5.7 — feat: U1 PgDn/PgUp g/G en Playlist
 - v1.5.6 — refactor: A4 handlers.py → package + A5/A6
@@ -105,5 +108,6 @@ Se maneja desde `_handle_dialog_key()` en app.py y se dibuja unificado en `_draw
     ├── state.json      # Estado de sesión (stack, playhead, shuffle, repeat, posición)
     ├── history.json    # Historial de reproducción (últimos 100)
     ├── error.log       # Stderr de VLC/mutagen (append)
-    └── playlists/      # Playlists guardadas
+    ├── playlists/      # Playlists guardadas
+    └── radios.json     # Radios guardadas
 

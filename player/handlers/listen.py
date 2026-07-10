@@ -5,7 +5,6 @@ import os
 from typing import TYPE_CHECKING
 
 from ..file_utils import is_url as _is_url
-from ..stack import StackItem
 from .shared import _prompt, _toast, _confirm, _clamp_scroll
 from .shared import _do_clear_stack, _save_stack_as_playlist_cb, _prompt_export_m3u
 from .shared import _open_tag_editor
@@ -48,19 +47,6 @@ def handle_listen(app: PlayerApp, key: int) -> None:
             _open_tag_editor(app, cur_item.path)
         else:
             _toast(app, "No hay archivo para editar")
-    elif key == ord("o"):
-        _prompt(app, "URL de stream", _add_url_cb)
-
-
-def _add_url_cb(app: PlayerApp, url: str) -> None:
-    url = url.strip()
-    if not url or not _is_url(url):
-        return
-    name = url.split("//", 1)[-1].split("/")[0] if "//" in url else url
-    item = StackItem(path=url, name=name)
-    app.stack.append(item)
-    if app.stack.playhead == 0 and not app.audio.playing:
-        app._play_current()
 
 
 def handle_stack_view(app: PlayerApp, key: int) -> None:
@@ -85,9 +71,6 @@ def handle_stack_view(app: PlayerApp, key: int) -> None:
         return
     if key == ord("-"):
         app.audio.set_volume(app.audio.volume - 5)
-        return
-    if key == ord("o"):
-        _prompt(app, "URL de stream", _add_url_cb)
         return
     if not app.stack.items:
         return

@@ -671,3 +671,30 @@ def draw_meta_editor(app: PlayerApp, win: curses.window, h: int, w: int) -> None
         row = status_row + 1
         if not app.meta_edit_changed:
             safe_addstr(win, row, pad_x, "  Sin cambios", texto, h, w)
+
+
+def draw_radio(app: PlayerApp, h: int, w: int) -> None:
+    win = app.stdscr
+    texto = curses.color_pair(PAIR_TEXTO)
+    destacar = curses.color_pair(PAIR_DESTACAR)
+    draw_box(win, h, w, "Radios")
+    radios = app.radios
+    y0 = 3
+    list_h = h - app.LIST_H - 1
+    scroll = app.radio_scroll
+    cursor = app.radio_cursor
+    visible = radios[scroll:scroll + list_h] if radios else []
+    for i, r in enumerate(visible):
+        y = y0 + i
+        idx = scroll + i
+        is_cursor = idx == cursor
+        attr = destacar if is_cursor else texto
+        if is_cursor:
+            attr |= curses.A_REVERSE
+        line = f"  {r['name']}"
+        safe_addstr(win, y, 2, line[:w - 4], attr, h, w)
+        url_start = len(line) + 3
+        url_display = r['url'][:w - url_start - 2]
+        safe_addstr(win, y, url_start, url_display, attr, h, w)
+    if not radios:
+        safe_addstr(win, y0, 2, "  Sin radios guardadas", texto, h, w)
