@@ -1,32 +1,72 @@
 # TODO.md — Player TUI
 
-## Features pendientes
+## 🔴 CRASH (pérdida de datos / cierre forzado)
 
-| ID  | Feature                                                                 | Compl. | Estado |
-| --- | ----------------------------------------------------------------------- | ------ | ------ |
-| F2  | Ecualizador gráfico (VLC API)                                           | Alta   | ▢      |
-| F4  | Exportar playlist a M3U/PLS                                             | Baja   | ▢      |
-| F8  | Cover art (chafa/viu)                                                   | Media  | ▢      |
-| F11 | **Modo radio (URL/stream)**                                             | Media  | ✅     |
-| F12 | **Historial de reproducción**                                           | Baja   | ✅     |
-| F24 | **Gestión archivos explorador** (copiar, mover, renombrar, editar tags) | Media  | ✅     |
-| F27 | **Deshacer/Rehacer en playlist** (u/U)                                  | Media  | ✅     |
-| F28 | **Streaming/Radio** (URL, M3U, radios guardadas)                        | Media  | △      |
+| ID  | Descripción | Archivo | Estado |
+| --- | ----------- | ------- | ------ |
+| C1  | Renombrar con overwrite: callback lambda aridad incorrecta (`lambda a:` vs `lambda:`) → TypeError al confirmar | handlers.py:672 | [ ] |
+| C2  | `next()` sin default al borrar playlist activa → StopIteration si active_name no está en playlist_data | handlers.py:893 | [ ] |
+| C3  | `list.index()` sin try/except al cambiar de playlist con `[`/`]` → ValueError si active_name no está en names | handlers.py:332,338 | [ ] |
 
-## To Fix
+## 🟠 BUG (comportamiento incorrecto)
 
-| ID  | To Fix                                                                                                                                                                            | Compl.                                                                | Estado |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------ | --- |
-| E1  | En explorador al intentar agregar un track con <a                                                                                                                                 | A> pasa directamente al [Stack] sin posibilidad de añadir a playlists | -      | ✅  |
-| E2  | Inconsistencia de funcion entre <E> de Explorer (editar archivo) y <e> de Playlist, solo funciona <E> de explorer, <e> de playlist hay que cambiarlo a <E> para editar el archivo | -                                                                     | ✅     |
-| E3  | Si cambio un nombre - metadada en Explorer, solo Listen se "Entera" del cambio, Playlist e Historial siguen mostrando informacion erronea o inexistente                           | -                                                                     | ✅     |
-| E4  | En <E> de explorer si un archivo recibe el nombre de otro, este lo pisa sin ninguna confirmacion                                                                                  | -                                                                     | ✅     |
-| E5  | En Configuracion→Comprobar actualizacion, aunque existan commits a hacer pull, no funciona, muestra "Sin actualizaciones" cuando realmente existen varios commits por pullear     | -                                                                     | ✅     |
+| ID  | Descripción | Archivo | Estado |
+| --- | ----------- | ------- | ------ |
+| B1  | Copiar/mover archivos sobreescribe sin confirmar (renombrar sí pregunta) | handlers.py:929 | [ ] |
+| B2  | Dos sistemas de undo desconectados: file_op_undo vs snapshot_redo | app.py:709-737 | [ ] |
+| B3  | Al salir/entrar se pierde el [Stack] de reproducción (E6) | app.py | [ ] |
+| B4  | El [Stack] debería persistir entre sesiones o no (E7) | — | [ ] |
 
-## Mejoras
+## 🟡 ARCH (arquitectura / mantenibilidad)
 
-| ID  | Mejora                                                                                           | Compl. | Estado |
-| --- | ------------------------------------------------------------------------------------------------ | ------ | ------ |
-| M1  | Refactor: reducir duplicación entre vistas, extraer lógica común de dibujado de items y metadata | -      | ✅     |
-| M2  | Refactor: unificar 9 vars de dialogo en un solo self.dialog dict                                 | -      | ✅     |
-| M3  | Refactor: tipado completo con mypy                                                               | -      | ✅     |
+| ID  | Descripción | Archivo | Estado |
+| --- | ----------- | ------- | ------ |
+| A1  | stderr redirigido a /dev/null永久 — silencia errores de VLC, mutagen, etc. | audio.py:25-28 | [ ] |
+| A2  | Sin manejo de KEY_RESIZE → UI corrupta al redimensionar terminal | app.py | [ ] |
+| A3  | `os.makedirs` como side effect al importar config.py | config.py:10 | [ ] |
+| A4  | handlers.py monolítico (1183 líneas, 60+ funciones) | handlers.py | [ ] |
+| A5  | Playlist property retorna lista mutable interna | app.py:160 | [ ] |
+| A6  | Deferred imports (from .config import save) dentro de funciones | handlers.py:867+ | [ ] |
+
+## 🔵 UX (experiencia de usuario)
+
+| ID  | Descripción | Archivo | Estado |
+| --- | ----------- | ------- | ------ |
+| U1  | Sin PgDn/PgUp ni g/G en vista Playlist | handlers.py:238 | [ ] |
+| U2  | Update check bloquea UI al inicio (git fetch sync, hasta 10s) | app.py:198-226 | [ ] |
+| U3  | Sin toast al toggle shuffle/repeat | app.py:615-622 | [ ] |
+| U4  | Confirm dialog usa "s" para sí (vs "y" estándar) | app.py:431 | [ ] |
+| U5  | Sleep timer muestra "FIN" tras stop manual | audio.py:62 | [ ] |
+
+## ⚪ CLEANUP (deuda técnica menor)
+
+| ID  | Descripción | Archivo | Estado |
+| --- | ----------- | ------- | ------ |
+| N1  | `min(w-2, w-2)` redundante | app.py:492 | [ ] |
+| N2  | `ord("\n")`/`10`/`13` redundantes en múltiples sitios | varios | [ ] |
+| N3  | Scroll-clamping duplicado en 6 handlers | handlers.py:140+ | [ ] |
+| N4  | Magic numbers `(1, 5, 6)` para vistas inexistentes | ui.py:59 | [ ] |
+| N5  | `compact` shadoweado dentro de `_draw()` | app.py:858 | [ ] |
+
+## 🟣 L5 — Metadata / Covers (pendiente discusión)
+
+| ID  | Descripción | Estado |
+| --- | ----------- | ------ |
+| L5  | Covers/metadata errors — discutir enfoque | [ ] |
+
+## 🟢 FEATURES
+
+| ID  | Feature | Prioridad | Estado |
+| --- | ------- | --------- | ------ |
+| F2  | Ecualizador gráfico (VLC API) | Alta | [ ] |
+| F4  | Exportar playlist a M3U/PLS | Baja | [ ] |
+| F8  | Cover art (chafa/viu) | Media | [ ] |
+| F28 | Streaming/Radio (URL, M3U, radios guardadas) | Media | △ |
+
+## ✅ Completado
+
+- **E1-E5** — bugs de explorador/playlist/historial corregidos
+- **L1-L4** — crashes, bugs visuales, UX, sugerencias (AUDIT_SPEC.md)
+- **M1** — draw_item_row() unificada
+- **M2** — 9 vars de diálogo unificadas en self.dialog dict
+- **M3** — mypy strict, 0 errores en 13 archivos
