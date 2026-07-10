@@ -47,6 +47,10 @@ def handle_listen(app: PlayerApp, key: int) -> None:
             _open_tag_editor(app, cur_item.path)
         else:
             _toast(app, "No hay archivo para editar")
+    elif key in (ord("s"),):
+        app.audio.stop()
+        app.audio.sleep_timer_active = False
+        app.audio.sleep_timer_expired = False
     elif key in (ord("k"),):
         app.audio.set_volume(app.audio.volume + 5)
     elif key in (ord("j"),):

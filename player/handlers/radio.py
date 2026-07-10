@@ -39,23 +39,14 @@ def _edit_radio_cb(app: PlayerApp, buf: str) -> None:
         return
     app.radios[idx][field] = buf.strip()
     save_radios(app.radios)
+    if field == "name" and app.radio_edit_cycle:
+        app.radio_edit_field = "url"
+        _prompt(app, "Nueva URL", _edit_radio_cb, app.radios[idx]["url"])
+        return
     app.radio_edit_idx = None
     app.radio_edit_field = None
-    _toast(app, f"Radio actualizada")
-
-
-def _radio_edit_choice_cb(app: PlayerApp, buf: str) -> None:
-    buf = buf.strip().lower()
-    if buf not in ("n", "u") or not app.radios:
-        return
-    r = app.radios[app.radio_cursor]
-    app.radio_edit_idx = app.radio_cursor
-    if buf == "n":
-        app.radio_edit_field = "name"
-        _prompt(app, "Nuevo nombre", _edit_radio_cb, r["name"])
-    else:
-        app.radio_edit_field = "url"
-        _prompt(app, "Nueva URL", _edit_radio_cb, r["url"])
+    app.radio_edit_cycle = False
+    _toast(app, "Radio actualizada")
 
 
 def _do_play_radio(app: PlayerApp) -> None:
@@ -112,10 +103,14 @@ def handle_radio(app: PlayerApp, key: int) -> None:
         return
     if key == ord("d") and app.radios:
         name = app.radios[app.radio_cursor]["name"]
-        _confirm(app, f"¿Eliminar radio '{name}'?", _do_delete_radio)
+        _confirm(app, f"¿Eliminar radio '{name}'?", lambda: _do_delete_radio(app))
         return
     if key == ord("E") and app.radios:
-        _prompt(app, "Editar (n)ombre / (u)rl", _radio_edit_choice_cb)
+        r = app.radios[app.radio_cursor]
+        app.radio_edit_idx = app.radio_cursor
+        app.radio_edit_field = "name"
+        app.radio_edit_cycle = True
+        _prompt(app, "Nuevo nombre", _edit_radio_cb, r["name"])
         return
     if key == ord("s"):
         save_radios(app.radios)

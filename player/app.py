@@ -114,6 +114,7 @@ class PlayerApp:
         self._radio_pending_name: str = ""
         self.radio_edit_idx: int | None = None
         self.radio_edit_field: str | None = None
+        self.radio_edit_cycle: bool = False
 
         self.undo_stack: list[dict[str, Any]] = []
         self.redo_stack: list[dict[str, Any]] = []
@@ -662,8 +663,8 @@ class PlayerApp:
             self.audio.toggle_play_pause()
             curses.flushinp()
             return True
-        if key in (ord("s"), ord("S")):
-            if self.current_view not in (self.V_PLAYLIST, self.V_RADIO) and not self.show_stack_view:
+        if key == ord("S"):
+            if not self.show_stack_view:
                 self.audio.stop()
                 self.audio.sleep_timer_active = False
                 self.audio.sleep_timer_expired = False
