@@ -886,13 +886,9 @@ class PlayerApp:
                                curses.color_pair(2), h, w)
                 self.toast_ticks -= 1
             if self.awaiting_dest:
-                msg = " ¿Destino?  s:pila  |  p:lista  |  Esc:cancelar "
-                if len(msg) >= w:
-                    msg = " s:stack  p:playlist  Esc:cancelar "
-                if len(msg) < w:
-                    dy = h - 2 if h < 16 else h - 3
-                    ui.safe_addstr(self.stdscr, dy, (w - len(msg)) // 2, msg,
-                                   curses.A_REVERSE, h, w)
+                ui.draw_dialog(self.stdscr, h, w, "Destino",
+                               "s: Pila  |  p: Lista  |  Esc: Cancelar",
+                               compact=compact)
             if self.update_available and not self.confirm_mode and not self.prompt_mode and not self.show_help:
                 if not compact:
                     msg = " ! Actualización disponible "

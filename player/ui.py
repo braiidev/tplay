@@ -85,7 +85,8 @@ def draw_status(win, h: int, w: int, audio, playing: bool, current_file, volume:
 
 def draw_dialog(win, h: int, w: int, title: str, text: str,
                 is_confirm: bool = False, compact: bool = False,
-                prompt_buf: str = "", prompt_scroll: int = 0) -> None:
+                prompt_buf: str = "", prompt_scroll: int = 0,
+                buttons: str = "") -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     dest = curses.color_pair(PAIR_DESTACAR)
 
@@ -144,8 +145,8 @@ def draw_dialog(win, h: int, w: int, title: str, text: str,
 
         # Row 3: buttons or empty
         oy += 1
-        if is_confirm:
-            btns = "  [S]í    [N]o  "
+        if is_confirm or buttons:
+            btns = buttons if buttons else "  [S]í    [N]o  "
             pad_l = max(0, (ih - len(btns)) // 2)
             rline(" " * pad_l + btns)
         else:
