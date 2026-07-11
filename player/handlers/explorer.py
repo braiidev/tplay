@@ -250,6 +250,7 @@ def _play_folder(app: PlayerApp) -> None:
     media = [StackItem(path=p, name=n) for n, d, p in items if not d]
     if not media:
         return
+    app._push_snapshot()
     app.stack.items = media
     app._play_current()
 
@@ -266,6 +267,7 @@ def _play_marked(app: PlayerApp) -> None:
     if not items:
         _toast(app, "No hay archivos marcados")
         return
+    app._push_snapshot()
     app.stack.items = items
     app.explorer_marked.clear()
     app._play_current()

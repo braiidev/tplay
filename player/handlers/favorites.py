@@ -54,13 +54,12 @@ def handle_favorites(app: PlayerApp, key: int) -> None:
     elif key == ord("a"):
         entry = app.favorites[app.favorites_cursor]
         path = entry["path"]
-        app.stack.items.append(StackItem(path=path, name=entry.get("name", os.path.basename(path))))
+        app.stack.append(StackItem(path=path, name=entry.get("name", os.path.basename(path))))
         _toast(app, "Añadido a la pila")
     elif key == ord("A"):
         entry = app.favorites[app.favorites_cursor]
         path = entry["path"]
-        idx = max(app.stack.playhead, 0)
-        app.stack.items.insert(idx + 1, StackItem(path=path, name=entry.get("name", os.path.basename(path))))
+        app.stack.insert_after_current(StackItem(path=path, name=entry.get("name", os.path.basename(path))))
         _toast(app, "Añadido tras actual")
     elif key == ord("f"):
         entry = app.favorites[app.favorites_cursor]

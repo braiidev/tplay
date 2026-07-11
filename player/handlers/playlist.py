@@ -210,7 +210,8 @@ def _play_playlist_enter(app: PlayerApp) -> None:
         return
     items = [StackItem(path=p, name=n) for n, p in pl]
     app.stack.items = items
-    app.audio.play_file(pl[0][1])
+    app.stack.playhead = app.playlist_cursor
+    app.audio.play_file(pl[app.playlist_cursor][1])
     app.current_view = app.V_LISTEN
 
 

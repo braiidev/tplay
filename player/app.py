@@ -430,9 +430,15 @@ class PlayerApp:
         self._play_next()
 
     def _add_history(self, path: str, name: str | None = None) -> None:
+        existing: dict[str, Any] | None = None
+        for h in self.history:
+            if h.get("path") == path:
+                existing = h
+                break
+        count = (existing.get("count", 0) + 1) if existing else 1
         self.history = [h for h in self.history if h.get("path") != path]
         entry_name = name if name else os.path.basename(path)
-        self.history.insert(0, {"name": entry_name, "path": path, "count": 1})
+        self.history.insert(0, {"name": entry_name, "path": path, "count": count})
         if len(self.history) > 100:
             self.history.pop()
 
@@ -955,7 +961,10 @@ class PlayerApp:
                     drawer(self, h, w)
 
             if compact:
-                self.toast_ticks = 0
+                if self.toast_ticks > 0:
+                    ui.safe_addstr(self.stdscr, 1, 2, self.toast_msg[:w - 4],
+                                   curses.color_pair(PAIR_TEXTO), h, w)
+                    self.toast_ticks -= 1
             else:
                 self._draw_status(h, w)
             if self.dialog is not None:
