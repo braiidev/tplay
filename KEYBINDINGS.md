@@ -222,36 +222,49 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 
 ---
 
-## 9. Consistencia de teclas (cross-reference)
+## 10. Capa Help (?/F1 overlay)
 
-| Tecla   | Global   | Listen     | Stack         | Explorer     | Playlist        | History       | Radio           | Config       | Favoritos  |
-| ------- | -------- | ---------- | ------------- | ------------ | --------------- | ------------- | --------------- | ------------ | ---------- |
-| `d`     | —        | —          | delete item   | delete file  | remove item     | remove entry  | delete radio    | —            | remove fav |
-| `D`     | —        | —          | —             | —            | delete playlist | —             | —               | —            | —          |
-| `E`     | —        | —          | —             | rename file  | rename item     | —             | edit name → URL | —            | —          |
-| `s`     | —        | stop       | save playlist | —            | save playlist   | —             | save radios     | —            | —          |
-| `S`     | **STOP** | —          | —             | —            | —               | —             | —               | —            | —          |
-| `r`     | —        | shuffle    | cycle mode    | —            | —               | —             | —               | —            | —          |
-| `R`     | —        | repeat     | cycle mode    | —            | rename PL       | —             | —               | —            | —          |
-| `a`     | —        | —          | —             | add stack    | —               | add stack     | add radio       | —            | add stack  |
-| `A`     | —        | —          | —             | add after    | —               | add after     | —               | —            | add after  |
-| `f`     | —        | toggle fav | toggle fav    | toggle fav   | toggle fav      | toggle fav    | toggle fav      | —            | toggle fav |
-| `F`     | —        | —          | —             | open favs    | —               | —             | —               | —            | —          |
-| `g`     | —        | goto       | top           | top          | top             | —             | top             | —            |
-| `G`     | —        | —          | bottom        | bottom       | bottom          | —             | bottom          | —            |
-| `x`     | —        | —          | clear stack   | —            | clear list      | clear history | —               | —            |
-| `X`     | —        | —          | export M3U    | —            | export M3U      | —             | export M3U      | —            |
-| `u`     | —        | —          | undo          | undo         | undo            | —             | —               | —            |
-| `U`     | —        | —          | redo          | redo         | redo            | —             | —               | —            |
-| `I`     | —        | tag editor | —             | tag editor   | tag editor      | tag editor    | —               | —            |
-| `j`/`k` | —        | vol -/+5   | cursor        | cursor       | cursor          | cursor        | cursor          | cursor       |
-| `h`/`l` | —        | seek -/+5  | —             | parent/enter | prev/next PL    | —             | —               | modify value |
-| `F5`    | —        | —          | —             | refresh      | —               | —             | —               | —            |
-| `/`     | —        | —          | —             | filter       | filter          | —             | —               | —            |
+| Tecla            | Acción                        |
+| ---------------- | ----------------------------- |
+| `[` / `]`        | Pestaña anterior / siguiente  |
+| `h` / `l`        | Pestaña anterior / siguiente  |
+| `j` / `k`        | Scroll abajo / arriba         |
+| `g` / `G`        | Inicio / Fin                  |
+| `Esc` / `?`/`F1` | Cerrar Help                  |
 
 ---
 
-## 10. Fix aplicado (auditoría)
+## 11. Consistencia de teclas (cross-reference)
+
+| Tecla   | Global   | Listen     | Stack         | Explorer     | Playlist      | History       | Radio           | Config       | Favoritos  |
+| ------- | -------- | ---------- | ------------- | ------------ | ------------- | ------------- | --------------- | ------------ | ---------- |
+| `d`     | —        | —          | delete item   | delete file  | remove item   | remove entry  | delete radio    | —            | remove fav |
+| `D`     | —        | —          | —             | —            | delete playlist | —           | —               | —            | —          |
+| `E`     | —        | —          | —             | rename file  | rename item   | —             | edit name → URL | —            | —          |
+| `s`     | —        | stop       | save playlist | —            | save playlist | —             | save radios     | —            | —          |
+| `S`     | **STOP** | —          | —             | —            | —             | —             | —               | —            | —          |
+| `r`     | —        | shuffle    | cycle mode    | —            | —             | —             | —               | —            | —          |
+| `R`     | —        | repeat     | cycle mode    | —            | rename PL     | —             | —               | —            | —          |
+| `a`     | —        | —          | —             | add stack    | —             | add stack     | add radio       | —            | add stack  |
+| `A`     | —        | —          | —             | add after    | —             | add after     | —               | —            | add after  |
+| `f`     | —        | toggle fav | toggle fav    | toggle fav   | toggle fav    | toggle fav    | toggle fav      | —            | toggle fav |
+| `F`     | —        | —          | —             | open favs    | —             | —             | —               | —            | —          |
+| `g`     | —        | goto       | top           | top          | top           | —             | top             | —            |
+| `G`     | —        | —          | bottom        | bottom       | bottom        | —             | bottom          | —            |
+| `x`     | —        | —          | clear stack   | —            | clear list    | clear history | —               | —            |
+| `X`     | —        | —          | export M3U    | —            | export M3U    | —             | export M3U      | —            |
+| `u`     | —        | —          | undo          | undo         | undo          | —             | —               | —            |
+| `U`     | —        | —          | redo          | redo         | redo          | —             | —               | —            |
+| `I`     | —        | tag editor | —             | tag editor   | tag editor    | tag editor    | —               | —            |
+| `j`/`k` | —        | vol -/+5   | cursor        | cursor       | cursor        | cursor        | cursor          | cursor       |
+| `h`/`l` | —        | seek -/+5  | —             | parent/enter | —             | —             | —               | modify value |
+| `[]`    | —        | —          | —             | —             | change PL     | —             | —               | change tab   |
+| `F5`    | —        | —          | —             | refresh      | —             | —             | —               | —            |
+| `/`     | —        | —          | —             | filter       | filter        | —             | —               | —            |
+
+---
+
+## 12. Fix aplicado (auditoría)
 
 ### Problema: `R` como refresh en Explorer
 
@@ -314,7 +327,7 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 
 ---
 
-## 11. e/E — Análisis de consistencia
+## 13. e/E — Análisis de consistencia
 
 | Vista      | `e` | `E`                         |
 | ---------- | --- | --------------------------- |
@@ -328,4 +341,4 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 
 ---
 
-_v1.0 — Auditoría keybindings tplay_
+_v1.1 — Auditoría keybindings tplay (v1.5.45 — `[]` tab nav universal, Help carousel, meta_edit h/l)_

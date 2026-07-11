@@ -47,43 +47,87 @@ player/
 - Para `mutagen.File` usar `# type: ignore[attr-defined]`
 - `# type: ignore` solo como último recurso
 
-## Estado actual (v1.5.27)
+## Estado actual (v1.5.45)
 
 ### Completado (session actual)
-- **B2** — undo unificado (file_undo integrado en snapshots)
-- **B3/B4** — stack persistente entre sesiones (state.json: stack_items, playhead, shuffle, repeat, volumen)
-- **A2** — KEY_RESIZE handling (resizeterm + clear + refresh)
-- **A1** — stderr redirigido a `~/.config/tplay/data/error.log` (append)
-- **A3** — os.makedirs lazy, solo en save()
-- **A4** — handlers.py partido en handlers/ package (8 archivos por vista)
-- **A5** — playlist property valida entries inválidas (log a stderr)
-- **A6** — deferred imports mantenidos (sin riesgo circular)
-- **U1** — PgDn, PgUp, g, G en vista Playlist
-- **U2** — update check async (threading.Thread), UI sin bloqueo
+- **B1** — History `count` siempre es 1 → preserva/incrementa
+- **B2** — Playlist Enter usa `playlist_cursor`
+- **B3** — Favorites usa `stack.append`/`insert_after_current`
+- **B4** — `_play_folder`/`_play_marked` llaman `_push_snapshot()`
+- **B5** — `_safe_tag()` helper en metadata.py
+- **B6** — `playlist` property simplificada (sin validación per-access)
+- **B7** — Confirm dialog: keys `s/S/y/Y` instant + Enter con pausa 150ms
+- **B8** — ~~`_apply_updates` hard reset~~ REVERTIDO (end users no tienen local changes)
+- **B9** — Config scroll clamp = `h-5 if h<16 else h-6` consistente
+- **B10** — Explorer back-nav en directorios vacíos (before `if not entries`)
+- **B11** — Status bar row descontada en todos los handlers
+- **A1** — stderr redirigido a error.log
+- **A2** — KEY_RESIZE handling
+- **A3** — os.makedirs lazy
+- **A4** — handlers.py → package (8 archivos)
+- **A5** — playlist property valida entries inválidas
+- **A6** — deferred imports sin riesgo circular
+- **U1** — PgDn/PgUp/g/G en Playlist
+- **U2** — update check async
 - **U3** — toast en shuffle/repeat toggle
 - **U4** — confirm acepta 's' y 'y'
-- **U5** — sleep timer resetea al hacer stop manual
-- **N1** — min(w-2, w-2) → w-2
-- **N2** — ord("\n")/10/13 unificado a (10, 13)
-- **N3** — scroll-clamping → _clamp_scroll() helper en shared
-- **N4** — magic numbers (1,5,6) limpiado en ui.py
-- **N5** — compact shadow → meta_cpt en _draw()
-- **C4** — _restart_app ruta incorrecta tras split en handlers/ package → usa `app._repo_dir` en vez de `__file__`
-- **U6** — toast: duración 3→40 ticks, dismiss con Enter/Space/Esc
+- **U5** — sleep timer resetea al stop manual
+- **U6** — toast 40 ticks, dismiss con Enter/Space/Esc
+- **U7** — undo/redo archivos toast con razón de error
+- **U8** — metadata save toast + permanencia en editor
+- **P1** — `os.scandir()` reemplaza `os.listdir`+stat
+- **P2** — scroll clamping redundante eliminado
+- **P3** — playlist.py importa CONFIG_DIR de config
+- **E1** — Radio emoji → `[R]`
+- **E2** — Controles Listen responsive (cw dinámico)
+- **E3** — Time separator `-` → `/`
+- **N1-N5** — limpieza numbers, magic, compact shadow
+- **C4** — _restart_app ruta con `app._repo_dir`
 - **L1-L4**, **L2.7**, **E1-E5** — auditorías previas
-- **M1-M3** — draw_item_row unificada, dialog system unificado, mypy strict
-- **F5** — Multi-select Explorer (Tab marca, Enter carga marcados, ✓ visual)
-- **F6** — Favoritos: vista 6 (nueva), f/F desde Explorer, d desde Favoritos, persistencia JSON
-- **F7** — f toggle global: `f` add/remove favoritos en todas las vistas (Listen, Stack, Explorer, Playlist, History, Radio, Favoritos)
+- **M1-M3** — draw_item_row unificada, dialog system, mypy strict
+- **F5** — Multi-select Explorer
+- **F6** — Favoritos vista 6, f/F, d, persistencia JSON
+- **F7** — f toggle global en todas las vistas
+
+### Nuevos (última sesión v1.5.38-v1.5.45)
+- **S5** — 5to par de colores OVERLAY (config.py, themes, apply_theme)
+- **S6** — Redistribución UI: status/dialog→OVERLAY, filter→OVERLAY, config active tab→OVERLAY
+- **S7** — Help section headers → NAV (antes ACCENT)
+- **S8** — Radio REVERSE gap corregido (fill entre name y URL)
+- **S9** — Pila hints → NAV (antes TEXTO)
+- **S10** — Keybindings [Esc] Volver → NAV
+- **S11** — Playlist carousel: `◀ [name] ▶` cyclic, sin arrows si 1 sola
+- **S12** — Config carousel: `[prev | current | next]` cyclic
+- **S13** — Help carousel: `[prev | current | next]` cyclic + footer hints
+- **S14** — `[]` navegan pestañas en todas las vistas (Playlist, Config, Help)
+- **S15** — Playlist: `h/l` ya no cambian playlist (solo `[]`)
+- **S16** — Help: `[]` agregado para tabs (antes solo `h/l`)
+- **S17** — Help scroll clamp corregido: `total - list_h` (antes `total - 1`)
+- **S18** — Full-row cursor highlight: fill con REVERSE entre text y duration
+- **S19** — Help tab bar dentro del marco (reemplaza borde superior `┌─┐` → `│ tab │`)
+- **S20** — Meta edit editing: `h/l` insertan chars en vez de mover cursor
 
 ### Pendiente
 - ~~**L5** — covers/metadata errors~~ ❌ sin acción
 - **F2** — Ecualizador gráfico (VLC API)
-- **F4** — Exportar/Importar M3U/PLS ← ✅ hecho (M3U extendido, `X` export, `O` import)
-- **F8** — Cover art (chafa/viu) ← descartado por ahora
-- **F28** — Streaming/Radio (URL, M3U, radios guardadas) ← ✅ hecho (vista Radios con `5`, persistente, historial automático)
+- **F4** — Exportar/Importar M3U/PLS ← ✅ hecho
+- **F8** — Cover art (chafa/viu) ← descartado
+- **F28** — Streaming/Radio ← ✅ hecho
 
 ### Últimos tags de versión
+- v1.5.45 — fix: meta_edit editing — h/l insertan chars en vez de mover cursor
+- v1.5.44 — feat: full-row cursor highlight + Help tab bar inside marco
+- v1.5.43 — fix: Playlist carousel simplificado ◀[name]▶ + Help scroll clamp corregido
+- v1.5.42 — fix: [] navegan pestañas en todas las vistas — playlist ya no usa h/l para tabs
+- v1.5.41 — feat: Playlist + Config carousel tabs — cyclic, ◀[name]▶ / [prev|current|next]
+- v1.5.40 — feat: Help carousel tabs + hints NAV consistentes en todas las vistas
+- v1.5.39 — fix: Radio REVERSE gap, Pila hints con NAV color
+- v1.5.38 — feat: 5to par de colores OVERLAY — redistribución UI + COLOR_SPEC.md
+- v1.5.37 — refactor: estandarización de rows — margenes, metadata, duración, Radio [R]
+- v1.5.36 — style: E1-E3 — [R] icon para streams, controles Listen responsive, time separator '/'
+- v1.5.35 — refactor: P1-P3 — os.scandir(), scroll clamping redundante, playlist CONFIG_DIR import
+- v1.5.34 — fix: U2-U3 — undo/redo archivos toast + metadata save toast y permanencia en editor
+- v1.5.33 — fix: B10-B11 — explorer back-nav en directorios vacíos + status bar row descontada en handlers
 - v1.5.27 — feat: f toggle favoritos global (Listen, Stack, Explorer, Playlist, History, Radio, Favoritos)
 - v1.5.26 — feat: F5 multi-select Explorer + F6 Favoritos (vista 6, f/F, d, persistencia JSON)
 - v1.5.25 — feat: F2 speed control (w/W ±0.25x, 0.25x–4.0x, persistente en state.json)
@@ -91,7 +135,6 @@ player/
 - v1.5.22 — feat: ←/→ para mover cursor en Explorer filter, Playlist filter y Meta editor
 - v1.5.21 — feat: filtros con cursor visual, hjk global→Listen, s/S consistente, radio e/E cyclic, dir picker, KEYBINDINGS.md
 - v1.5.12 — feat: F4 import M3U/PLS desde Explorer
-- v1.5.11 — feat: F4 import M3U/PLS (tecla O) — revertido
 - v1.5.10 — fix: C4 _restart_app ruta incorrecta tras A4 → app._repo_dir
 - v1.5.8 — feat: U2-U5 (update async, toast, s/y confirm, sleep timer reset)
 - v1.5.7 — feat: U1 PgDn/PgUp g/G en Playlist
