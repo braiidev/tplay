@@ -695,10 +695,10 @@ class PlayerApp:
                 h, _ = self.stdscr.getmaxyx()
                 list_h = max(2, h - 4) if h >= 12 else max(2, h - 2)
                 self.help_scroll = max(self.help_scroll - list_h, 0)
-            elif key in (curses.KEY_RIGHT, ord("l")):
+            elif key in (curses.KEY_RIGHT, ord("l"), ord("]")):
                 self.help_tab = (self.help_tab + 1) % len(ui.HELP_TABS)
                 self.help_scroll = 0
-            elif key in (curses.KEY_LEFT, ord("h")):
+            elif key in (curses.KEY_LEFT, ord("h"), ord("[")):
                 self.help_tab = (self.help_tab - 1) % len(ui.HELP_TABS)
                 self.help_scroll = 0
             else:

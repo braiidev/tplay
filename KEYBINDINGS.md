@@ -122,8 +122,7 @@ tecla → Help overlay? → Dir picker? → Modo específico? → Switch vista? 
 
 | Tecla            | Acción                        |
 | ---------------- | ----------------------------- |
-| `h` / `[`        | Playlist anterior             |
-| `l` / `]`        | Playlist siguiente            |
+| `[` / `]`        | Playlist anterior / siguiente |
 | `j` / `k` / `↑↓` | Cursor arriba/abajo           |
 | `g` / `G`        | Inicio / Fin                  |
 | `PgDn` / `PgUp`  | Página abajo/arriba           |

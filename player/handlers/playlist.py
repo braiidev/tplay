@@ -116,13 +116,13 @@ def handle_playlist(app: PlayerApp, key: int) -> None:
             pl[i], pl[i + 1] = pl[i + 1], pl[i]
             app.playlist_cursor += 1
             _save_playlist(app)
-    elif key in (curses.KEY_LEFT, ord("[")):
+    elif key == ord("["):
         names = list(app.playlist_data.keys())
         if len(names) > 1 and app.active_name in app.playlist_data:
             app._push_snapshot()
             idx = names.index(app.active_name)
             _switch_playlist(app, names[(idx - 1) % len(names)])
-    elif key in (curses.KEY_RIGHT, ord("]")):
+    elif key == ord("]"):
         names = list(app.playlist_data.keys())
         if len(names) > 1 and app.active_name in app.playlist_data:
             app._push_snapshot()

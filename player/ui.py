@@ -268,7 +268,7 @@ HELP_TABS: list[HelpTab] = [
             ("  EN AYUDA", PAIR_NAV),
             ("", None),
             ("    j / k     Desplazar vertical", PAIR_TEXTO),
-            ("    h / l     Cambiar pestaña", PAIR_TEXTO),
+            ("    h / l / [ / ]  Cambiar pestaña", PAIR_TEXTO),
             ("    Esc / ?   Cerrar ayuda", PAIR_TEXTO),
         ]
     },
