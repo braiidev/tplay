@@ -7,7 +7,7 @@ from typing import Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from player.app import PlayerApp
 
-from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV
+from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV, PAIR_OVERLAY
 from .file_utils import time_str, ext_label, is_url as _is_url, is_video_file as _is_video_file
 from .ui import safe_addstr, draw_box, _build_hints, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN
 from . import keybindings as kb
@@ -380,6 +380,7 @@ def draw_explorer(app: PlayerApp, h: int, w: int) -> None:
     extra = " [Filtro]" if app.explorer_filter_mode else ""
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
+    overlay = curses.color_pair(PAIR_OVERLAY)
 
     offset = 0
     if app.file_op_mode:
@@ -393,13 +394,13 @@ def draw_explorer(app: PlayerApp, h: int, w: int) -> None:
         prefix = "> "
         body = prefix + app.explorer_filter
         try:
-            app.stdscr.addstr(y, 2, body[:w - 4], destacar)
+            app.stdscr.addstr(y, 2, body[:w - 4], overlay)
         except curses.error:
             pass
         cx = 2 + len(prefix) + app.explorer_filter_cursor
         if cx < w - 1:
             try:
-                app.stdscr.chgat(y, cx, 1, destacar | curses.A_REVERSE)
+                app.stdscr.chgat(y, cx, 1, overlay | curses.A_REVERSE)
             except curses.error:
                 pass
         offset += 1
@@ -464,6 +465,7 @@ def draw_playlist(app: PlayerApp, h: int, w: int) -> None:
     total_items = len(app.playlist)
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
+    overlay = curses.color_pair(PAIR_OVERLAY)
 
     list_h = h - LIST_H - (1 if app.playlist_filter_mode else 0) - (0 if h < 16 else 1)
     if total_items > list_h and total_items > 0:
@@ -478,13 +480,13 @@ def draw_playlist(app: PlayerApp, h: int, w: int) -> None:
         prefix = "> "
         body = prefix + app.playlist_filter
         try:
-            app.stdscr.addstr(2, 2, body[:w - 4], destacar)
+            app.stdscr.addstr(2, 2, body[:w - 4], overlay)
         except curses.error:
             pass
         cx = 2 + len(prefix) + app.playlist_filter_cursor
         if cx < w - 1:
             try:
-                app.stdscr.chgat(2, cx, 1, destacar | curses.A_REVERSE)
+                app.stdscr.chgat(2, cx, 1, overlay | curses.A_REVERSE)
             except curses.error:
                 pass
 
@@ -554,6 +556,7 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
     nav = curses.color_pair(PAIR_NAV)
+    overlay = curses.color_pair(PAIR_OVERLAY)
 
     labels = {
         "music_dir": f"Directorio música: {app.config.get('music_dir', '~/Music')}",
@@ -579,12 +582,12 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
         if ti == app.config_tab_idx:
             safe_addstr(app.stdscr, 1, x, "[", nav, h, w)
             x += 1
-            safe_addstr(app.stdscr, 1, x, display_name, destacar, h, w)
+            safe_addstr(app.stdscr, 1, x, display_name, overlay, h, w)
             x += len(display_name)
             safe_addstr(app.stdscr, 1, x, "]", nav, h, w)
             x += 1
         else:
-            safe_addstr(app.stdscr, 1, x, display_name, texto, h, w)
+            safe_addstr(app.stdscr, 1, x, display_name, nav, h, w)
             x += len(display_name)
     safe_addstr(app.stdscr, 1, x, " ▶", nav, h, w)
 
@@ -635,13 +638,14 @@ def draw_keybindings(app: PlayerApp, h: int, w: int) -> None:
     draw_box(app.stdscr, h, w, "Keybindings")
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
+    overlay = curses.color_pair(PAIR_OVERLAY)
 
     compact = h < 16
     is_custom = app.keybinding_mode == "custom"
     mode = "PERSONALIZADO" if is_custom else "POR DEFECTO"
 
     if compact:
-        safe_addstr(app.stdscr, 2, 2, f"Modo:{mode}  ←→cambiar  Esc:volver", destacar, h, w)
+        safe_addstr(app.stdscr, 2, 2, f"Modo:{mode}  ←→cambiar  Esc:volver", overlay, h, w)
         if not is_custom:
             safe_addstr(app.stdscr, 3, 2, "Pasá a Personalizado para editar", texto, h, w)
             return
@@ -649,7 +653,7 @@ def draw_keybindings(app: PlayerApp, h: int, w: int) -> None:
         list_h = max(1, h - 5)
         y0 = 4
     else:
-        safe_addstr(app.stdscr, 2, 2, f"  Modo: {mode}  ← → cambiar", destacar, h, w)
+        safe_addstr(app.stdscr, 2, 2, f"  Modo: {mode}  ← → cambiar", overlay, h, w)
         if not is_custom:
             safe_addstr(app.stdscr, 4, 2, "  Cambiá a modo Personalizado para editar las teclas", texto, h, w)
             safe_addstr(app.stdscr, h - 3, 2, "  [Esc] Volver", texto, h, w)
@@ -680,7 +684,7 @@ def draw_keybindings(app: PlayerApp, h: int, w: int) -> None:
         footer = "  [Esc] Volver"
         if app.kb_conflict_msg:
             footer = f"  {app.kb_conflict_msg}  |  [Esc] Volver"
-        safe_addstr(app.stdscr, h - 3, 2, footer, texto, h, w)
+        safe_addstr(app.stdscr, h - 3, 2, footer, overlay, h, w)
 
 
 def draw_meta_editor(app: PlayerApp, win: curses.window, h: int, w: int) -> None:

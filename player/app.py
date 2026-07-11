@@ -419,6 +419,7 @@ class PlayerApp:
                 ("texto", "Texto", "color"),
                 ("destacar", "Destacar", "color"),
                 ("nav", "Nav", "color"),
+                ("overlay", "Overlay", "color"),
             ]
         self.config_tab_idx = min(self.config_tab_idx, len(self.config_tabs) - 1)
         self.config_cursor = 0

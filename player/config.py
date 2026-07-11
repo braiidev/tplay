@@ -12,7 +12,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "music_dir": os.path.expanduser("~/Music"),
     "volume": 50,
     "theme": "clasico",
-    "custom_colors": {"marco": "Cian", "texto": "Blanco", "destacar": "Amarillo", "nav": "Cian"},
+    "custom_colors": {"marco": "Cian", "texto": "Blanco", "destacar": "Amarillo", "nav": "Verde", "overlay": "Magenta"},
     "sleep_timer_minutes": 30,
     "keybinding_mode": "default",
     "keybindings": {},
@@ -29,16 +29,16 @@ COLORS: dict[str, int] = {
 
 THEMES: dict[str, dict[str, int]] = {
     "clasico": {"marco": curses.COLOR_CYAN, "texto": curses.COLOR_WHITE,
-                "destacar": curses.COLOR_YELLOW, "nav": curses.COLOR_CYAN},
+                "destacar": curses.COLOR_YELLOW, "nav": curses.COLOR_GREEN, "overlay": curses.COLOR_MAGENTA},
     "mono": {"marco": curses.COLOR_WHITE, "texto": curses.COLOR_WHITE,
-             "destacar": curses.COLOR_WHITE, "nav": curses.COLOR_WHITE},
+             "destacar": curses.COLOR_WHITE, "nav": curses.COLOR_WHITE, "overlay": curses.COLOR_WHITE},
     "calido": {"marco": curses.COLOR_YELLOW, "texto": curses.COLOR_WHITE,
-               "destacar": curses.COLOR_RED, "nav": curses.COLOR_RED},
+               "destacar": curses.COLOR_RED, "nav": curses.COLOR_RED, "overlay": curses.COLOR_YELLOW},
     "contraste": {"marco": curses.COLOR_MAGENTA, "texto": curses.COLOR_WHITE,
-                       "destacar": curses.COLOR_GREEN, "nav": curses.COLOR_MAGENTA},
+                  "destacar": curses.COLOR_GREEN, "nav": curses.COLOR_MAGENTA, "overlay": curses.COLOR_GREEN},
     "flatline": {"marco": curses.COLOR_CYAN, "texto": curses.COLOR_WHITE,
-                 "destacar": curses.COLOR_RED, "nav": curses.COLOR_CYAN},
-    "custom": {"marco": 0, "texto": 0, "destacar": 0, "nav": 0},
+                 "destacar": curses.COLOR_RED, "nav": curses.COLOR_CYAN, "overlay": curses.COLOR_RED},
+    "custom": {"marco": 0, "texto": 0, "destacar": 0, "nav": 0, "overlay": 0},
 }
 THEME_NAMES: list[str] = list(THEMES.keys())
 
@@ -46,6 +46,7 @@ PAIR_MARCO: int = 1
 PAIR_TEXTO: int = 2
 PAIR_DESTACAR: int = 3
 PAIR_NAV: int = 4
+PAIR_OVERLAY: int = 5
 
 
 def load() -> dict[str, Any]:
@@ -81,3 +82,4 @@ def apply_theme(config: dict[str, Any]) -> None:
     curses.init_pair(PAIR_TEXTO, t["texto"], -1)
     curses.init_pair(PAIR_DESTACAR, t["destacar"], -1)
     curses.init_pair(PAIR_NAV, t["nav"], -1)
+    curses.init_pair(PAIR_OVERLAY, t["overlay"], -1)
