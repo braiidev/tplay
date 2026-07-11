@@ -902,8 +902,8 @@ class PlayerApp:
             elif fu["type"] == "copy" and os.path.isfile(fu["dest"]):
                 os.remove(fu["dest"])
             self.entries = _list_dir(self.current_dir)
-        except Exception:
-            pass
+        except Exception as e:
+            self.toast(f"No se pudo deshacer: {e}")
 
     def _apply_file_redo(self, fu: dict[str, Any]) -> None:
         import shutil
@@ -914,8 +914,8 @@ class PlayerApp:
             elif fu["type"] == "copy":
                 shutil.copy2(fu["src"], fu["dest"])
             self.entries = _list_dir(self.current_dir)
-        except Exception:
-            pass
+        except Exception as e:
+            self.toast(f"No se pudo rehacer: {e}")
 
     # ── Meta Editor ──
 
@@ -955,8 +955,8 @@ class PlayerApp:
             self.meta_edit_mode = False
             self.meta_edit_changed = {}
         elif key == ord("s"):
-            self._save_meta_edits()
-            self.meta_edit_mode = False
+            if self._save_meta_edits():
+                self.meta_edit_mode = False
         elif key in (ord("j"), curses.KEY_DOWN):
             self.meta_edit_cursor = min(
                 self.meta_edit_cursor + 1, len(self.meta_edit_fields) - 1
@@ -972,7 +972,7 @@ class PlayerApp:
             )
             self.meta_edit_cursor_pos = len(self.meta_edit_buf)
 
-    def _save_meta_edits(self) -> None:
+    def _save_meta_edits(self) -> bool:
         import mutagen
 
         try:
@@ -982,8 +982,10 @@ class PlayerApp:
                     audio[f] = v
                 audio.save()
             self.meta_cache.clear()
-        except Exception:
-            pass
+            return True
+        except Exception as e:
+            self.toast(f"Error al guardar metadata: {e}")
+            return False
 
     # ── Drawing ──
 
