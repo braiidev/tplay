@@ -639,6 +639,7 @@ def draw_keybindings(app: PlayerApp, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
     overlay = curses.color_pair(PAIR_OVERLAY)
+    nav = curses.color_pair(PAIR_NAV)
 
     compact = h < 16
     is_custom = app.keybinding_mode == "custom"
@@ -656,7 +657,7 @@ def draw_keybindings(app: PlayerApp, h: int, w: int) -> None:
         safe_addstr(app.stdscr, 2, 2, f"  Modo: {mode}  ← → cambiar", overlay, h, w)
         if not is_custom:
             safe_addstr(app.stdscr, 4, 2, "  Cambiá a modo Personalizado para editar las teclas", texto, h, w)
-            safe_addstr(app.stdscr, h - 3, 2, "  [Esc] Volver", texto, h, w)
+            safe_addstr(app.stdscr, h - 3, 2, "  [Esc] Volver", nav, h, w)
             return
         safe_addstr(app.stdscr, 3, 2, "  Enter para cambiar una tecla, Esc para volver", texto, h, w)
         list_h = h - 8

@@ -501,6 +501,7 @@ def draw_help(win: curses.window, h: int, w: int, scroll: int = 0, tab: int = 0)
     texto = curses.color_pair(PAIR_TEXTO)
     dest = curses.color_pair(PAIR_DESTACAR)
     nav = curses.color_pair(PAIR_NAV)
+    overlay = curses.color_pair(PAIR_OVERLAY)
 
     box_w = min(56, w - 4)
     ox = max(1, (w - box_w) // 2)
@@ -551,25 +552,37 @@ def draw_help(win: curses.window, h: int, w: int, scroll: int = 0, tab: int = 0)
             if scroll + list_h < total:
                 safe_addstr(win, h - 2, ox + box_w - 2, "▼", nav, h, w)
         else:
-            # Tab bar at row 1
+            # Tab bar carousel at row 1: [prev | current | next]
             tab_names = [t["name"] for t in HELP_TABS]
-            x = ox + 1
-            ti = 0
-            while ti < len(tab_names) and x < ox + box_w - 2:
-                name = tab_names[ti]
-                remaining = ox + box_w - 2 - x
-                attr = dest | curses.A_REVERSE if ti == tab else texto
-                if len(name) > remaining:
-                    name = name[:max(1, remaining - 1)] + "…"
+            n = len(tab_names)
+            prev_idx = (tab - 1) % n
+            next_idx = (tab + 1) % n
+            prev_name = tab_names[prev_idx]
+            curr_name = tab_names[tab]
+            next_name = tab_names[next_idx]
+            inner_w = box_w - 2
+            sep = " │ "
+            carousel_parts = [
+                (prev_name, nav),
+                (curr_name, overlay | curses.A_REVERSE),
+                (next_name, nav),
+            ]
+            parts_w = sum(len(name) for name, _ in carousel_parts) + len(sep) * 2
+            start_x = ox + 1 + max(0, (inner_w - parts_w) // 2)
+            x = start_x
+            for i, (name, attr) in enumerate(carousel_parts):
+                if i > 0:
+                    safe_addstr(win, 1, x, sep, nav, h, w)
+                    x += len(sep)
                 safe_addstr(win, 1, x, name, attr, h, w)
                 x += len(name)
-                ti += 1
-                if ti < len(tab_names) and x + 1 < ox + box_w - 2:
-                    safe_addstr(win, 1, x, "│", nav, h, w)
-                    x += 1
-
-            if x < ox + box_w - 1:
-                safe_addstr(win, 1, x, "─" * (ox + box_w - 1 - x), marco, h, w)
+            # Fill left and right with ─
+            left_fill = start_x - (ox + 1)
+            if left_fill > 0:
+                safe_addstr(win, 1, ox + 1, "─" * left_fill, marco, h, w)
+            right_start = ox + 1 + inner_w
+            if x < right_start:
+                safe_addstr(win, 1, x, "─" * (right_start - x), marco, h, w)
 
             # Vertical bars
             for y in range(2, h - 1):
@@ -588,6 +601,9 @@ def draw_help(win: curses.window, h: int, w: int, scroll: int = 0, tab: int = 0)
                 safe_addstr(win, 1, ox + box_w - 2, "▲", nav, h, w)
             if scroll + list_h < total:
                 safe_addstr(win, h - 2, ox + box_w - 2, "▼", nav, h, w)
+            # Footer hints
+            hint = "  h/l: pestañas  j/k: scroll"
+            safe_addstr(win, h - 2, ox + 2, hint[:inner_w - 2], nav, h, w)
 
         # Bottom border
         safe_addstr(win, h - 1, ox, "└" + "─" * (box_w - 2) + "┘", marco, h, w)
