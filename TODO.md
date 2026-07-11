@@ -17,8 +17,8 @@
 ## UX
 
 - [x] **U1** — Toast deshabilitado en compacto (`app.py:957-958`) — Sin feedback visual en terminales chicas
-- [ ] **U2** — Undo/redo archivos falla silenciosamente (`app.py:824-848`) — `except: pass` sin toast
-- [ ] **U3** — Metadata save falla silenciosamente (`app.py:898-908`) — Sin feedback al usuario
+- [x] **U2** — Undo/redo archivos falla silenciosamente (`app.py:824-848`) — Toast con razón del error
+- [x] **U3** — Metadata save falla silenciosamente (`app.py:898-908`) — Toast + permanece en editor
 - [ ] **U4** — Sesión solo se guarda al salir (`app.py:726-734`) — Crash = pérdida total
 - [ ] **U5** — `_apply_updates` reset hard silencioso (`app.py:296-298`) — Sin confirmación ni aviso
 

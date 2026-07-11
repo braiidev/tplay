@@ -4,7 +4,9 @@ import os
 import json
 from typing import Any
 
-PLAYLIST_FILE: str = os.path.join(os.path.expanduser("~/.config/tplay/data"), "playlist.json")
+from .config import CONFIG_DIR
+
+PLAYLIST_FILE: str = os.path.join(CONFIG_DIR, "playlist.json")
 
 
 def load_all() -> tuple[dict[str, list[tuple[str, str]]], str]:

@@ -996,19 +996,12 @@ class PlayerApp:
 
             self.scroll = max(0, self.scroll)
             self.cursor = max(0, self.cursor)
-            self.playlist_scroll = max(0, self.playlist_scroll)
             self.playlist_cursor = max(0, self.playlist_cursor)
-            self.history_scroll = max(0, self.history_scroll)
             self.history_cursor = max(0, self.history_cursor)
             self.stack_cursor = max(0, self.stack_cursor)
-            self.stack_scroll = max(0, self.stack_scroll)
             self.radio_cursor = max(0, self.radio_cursor)
-            self.radio_scroll = max(0, self.radio_scroll)
             self.config_cursor = max(0, self.config_cursor)
-            self.config_scroll = max(0, self.config_scroll)
-            self.help_scroll = max(0, self.help_scroll)
             self.dir_picker_cursor = max(0, self.dir_picker_cursor)
-            self.dir_picker_scroll = max(0, self.dir_picker_scroll)
 
             minimal = self.config.get("ui_minimal", False)
             compact = (
