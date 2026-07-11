@@ -49,7 +49,9 @@ class PlayerApp:
 
         self.config: dict[str, Any] = load_config()
         self.current_view: int = self.V_LISTEN
-        self.current_dir: str = self.config.get("music_dir", os.path.expanduser("~/Music"))
+        self.current_dir: str = self.config.get(
+            "music_dir", os.path.expanduser("~/Music")
+        )
         self.cursor: int = 0
         self.scroll: int = 0
         self.entries: list[tuple[str, bool, str]] = _list_dir(self.current_dir)
@@ -63,7 +65,9 @@ class PlayerApp:
         self.playlist_cursor: int = 0
         self.playlist_scroll: int = 0
 
-        self.dialog: dict[str, Any] | None = None  # {"type": "confirm"|"prompt"|"dest", ...}
+        self.dialog: dict[str, Any] | None = (
+            None  # {"type": "confirm"|"prompt"|"dest", ...}
+        )
 
         self.meta_cache: MetadataCache = MetadataCache()
         self.stack: Stack = Stack()
@@ -99,8 +103,8 @@ class PlayerApp:
         self.meta_edit_editing: bool = False
         self.meta_edit_buf: str = ""
         self.meta_edit_cursor_pos: int = 0
-        self.meta_edit_labels: list[str] = ['Título', 'Artista', 'Álbum', 'Género']
-        self.meta_edit_keys: list[str] = ['title', 'artist', 'album', 'genre']
+        self.meta_edit_labels: list[str] = ["Título", "Artista", "Álbum", "Género"]
+        self.meta_edit_keys: list[str] = ["title", "artist", "album", "genre"]
 
         self.config_tabs: list[dict[str, Any]] = []
         self.config_tab_idx: int = 0
@@ -220,7 +224,9 @@ class PlayerApp:
     def config_items(self) -> list[tuple[str, str, str]]:
         if not self.config_tabs:
             return []
-        items: list[tuple[str, str, str]] = self.config_tabs[self.config_tab_idx]["items"]
+        items: list[tuple[str, str, str]] = self.config_tabs[self.config_tab_idx][
+            "items"
+        ]
         return items
 
     def _apply_theme(self) -> None:
@@ -237,8 +243,10 @@ class PlayerApp:
                 pos = max(0, self.audio.get_time())
             except Exception:
                 pos = 0
-        stack_items = [{"path": item.path, "name": item.name, "mode": item.mode}
-                       for item in self.stack.items]
+        stack_items = [
+            {"path": item.path, "name": item.name, "mode": item.mode}
+            for item in self.stack.items
+        ]
         save_state(
             playing=self.audio.playing,
             file=os.path.abspath(self.current_file) if self.current_file else "",
@@ -264,11 +272,18 @@ class PlayerApp:
 
     def _check_updates(self) -> None:
         try:
-            subprocess.run(["git", "fetch", "origin"], cwd=self._repo_dir,
-                           capture_output=True, timeout=10)
+            subprocess.run(
+                ["git", "fetch", "origin"],
+                cwd=self._repo_dir,
+                capture_output=True,
+                timeout=10,
+            )
             result = subprocess.run(
                 ["git", "rev-list", "--count", "HEAD..origin/main"],
-                cwd=self._repo_dir, capture_output=True, text=True, timeout=10,
+                cwd=self._repo_dir,
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
             behind = int(result.stdout.strip() or 0)
             self.update_behind = behind
@@ -288,17 +303,12 @@ class PlayerApp:
             if result.returncode == 0:
                 self.update_available = False
                 return True, "Actualizado correctamente"
-            status = subprocess.run(
-                ["git", "status", "--porcelain"], cwd=repo,
-                capture_output=True, text=True, timeout=5)
-            if status.stdout.strip():
-                return False, "Hay cambios locales — hacé commit o stash primero"
             result2 = subprocess.run(
                 ["git", "reset", "--hard", "origin/main"],
                 cwd=repo, capture_output=True, text=True, timeout=10)
             if result2.returncode == 0:
                 self.update_available = False
-                return True, "Actualizado correctamente (historial corregido)"
+                return True, "Actualizado correctamente"
             return False, result.stderr.strip() or "Error al actualizar"
         except Exception as e:
             return False, str(e)
@@ -325,9 +335,9 @@ class PlayerApp:
             "prev": lambda: self._play_prev(),
             "volume_up": lambda: self.audio.set_volume(self.audio.volume + 5),
             "volume_down": lambda: self.audio.set_volume(self.audio.volume - 5),
-            "shuffle": lambda: setattr(self.stack, 'shuffle', not self.stack.shuffle),
-            "repeat": lambda: setattr(self.stack, 'repeat', not self.stack.repeat),
-            "help": lambda: setattr(self, 'show_help', not self.show_help),
+            "shuffle": lambda: setattr(self.stack, "shuffle", not self.stack.shuffle),
+            "repeat": lambda: setattr(self.stack, "repeat", not self.stack.repeat),
+            "help": lambda: setattr(self, "show_help", not self.show_help),
             "sleep_timer": lambda: self._toggle_sleep_timer(),
             "mute": lambda: self.audio.toggle_mute(),
         }
@@ -336,9 +346,15 @@ class PlayerApp:
         st: dict[str, Any] = load_state()
         items = st.get("stack_items", [])
         if items:
-            self.stack.items = [StackItem(path=i["path"], name=i.get("name", os.path.basename(i["path"])),
-                                          mode=i.get("mode", "normal"))
-                                for i in items if isinstance(i, dict) and os.path.isfile(i.get("path", ""))]
+            self.stack.items = [
+                StackItem(
+                    path=i["path"],
+                    name=i.get("name", os.path.basename(i["path"])),
+                    mode=i.get("mode", "normal"),
+                )
+                for i in items
+                if isinstance(i, dict) and os.path.isfile(i.get("path", ""))
+            ]
             ph = st.get("playhead", -1)
             if 0 <= ph < len(self.stack.items):
                 self.stack.playhead = ph
@@ -350,7 +366,11 @@ class PlayerApp:
         rate = st.get("rate", 1.0)
         if rate != 1.0:
             self.audio.set_rate(rate)
-        if st.get("playing") and self.stack.current and os.path.isfile(self.stack.current.path):
+        if (
+            st.get("playing")
+            and self.stack.current
+            and os.path.isfile(self.stack.current.path)
+        ):
             self.audio.play_file(self.stack.current.path)
             pos = st.get("position", 0)
             if pos > 0:
@@ -359,20 +379,29 @@ class PlayerApp:
 
     def _build_config_tabs(self) -> None:
         self.config_tabs = [
-            {"name": "General", "items": [
-                ("music_dir", "Directorio de música", "path"),
-                ("volume", "Volumen", "int"),
-                ("sleep_timer_minutes", "Sleep timer (min)", "int"),
-            ]},
-            {"name": "Apariencia", "items": [
-                ("theme", "Tema", "choice"),
-                ("ui_minimal", "Modo minimal", "bool"),
-                ("ui_navbar", "Barra de navegación", "bool"),
-            ]},
-            {"name": "Sistema", "items": [
-                ("keybindings", "Keybindings", "action"),
-                ("update", "Actualizar tplay", "action"),
-            ]},
+            {
+                "name": "General",
+                "items": [
+                    ("music_dir", "Directorio de música", "path"),
+                    ("volume", "Volumen", "int"),
+                    ("sleep_timer_minutes", "Sleep timer (min)", "int"),
+                ],
+            },
+            {
+                "name": "Apariencia",
+                "items": [
+                    ("theme", "Tema", "choice"),
+                    ("ui_minimal", "Modo minimal", "bool"),
+                    ("ui_navbar", "Barra de navegación", "bool"),
+                ],
+            },
+            {
+                "name": "Sistema",
+                "items": [
+                    ("keybindings", "Keybindings", "action"),
+                    ("update", "Actualizar tplay", "action"),
+                ],
+            },
         ]
         if self.config.get("theme") == "custom":
             self.config_tabs[1]["items"] += [
@@ -455,13 +484,18 @@ class PlayerApp:
                 if self.update_available:
                     n = self.update_behind
                     s = "s" if n != 1 else ""
-                    self.toast(f"Actualización disponible ({n} commit{s})")
+                    self.toast("Nueva versión disponible")
             key = self.stdscr.getch()
             if key == curses.KEY_RESIZE:
                 self.stdscr.clear()
                 continue
             if key != -1:
-                if self.toast_ticks > 0 and key in (10, 13, 32, 27) and not self.dialog and not self.show_help:
+                if (
+                    self.toast_ticks > 0
+                    and key in (10, 13, 32, 27)
+                    and not self.dialog
+                    and not self.show_help
+                ):
                     self.toast_ticks = 0
                 elif self.dialog:
                     self._handle_dialog_key(key)
@@ -489,12 +523,16 @@ class PlayerApp:
         # Config tab navigation with H/L (Shift) — before hjkl aliasing
         if self.current_view == self.V_CONFIG and not self.kb_keybinding_view:
             if key == ord("H"):
-                self.config_tab_idx = (self.config_tab_idx - 1) % max(1, len(self.config_tabs))
+                self.config_tab_idx = (self.config_tab_idx - 1) % max(
+                    1, len(self.config_tabs)
+                )
                 self.config_cursor = 0
                 self.config_scroll = 0
                 return
             elif key == ord("L"):
-                self.config_tab_idx = (self.config_tab_idx + 1) % max(1, len(self.config_tabs))
+                self.config_tab_idx = (self.config_tab_idx + 1) % max(
+                    1, len(self.config_tabs)
+                )
                 self.config_cursor = 0
                 self.config_scroll = 0
                 return
@@ -524,16 +562,19 @@ class PlayerApp:
             self.dialog = None
             curses.curs_set(0)
             curses.flushinp()
-            instant = key in (ord("s"), ord("S"), ord("y"), ord("Y"))
-            enter = key in (10, 13)
-            if cb and (instant or enter):
-                if enter:
-                    h, w = self.stdscr.getmaxyx()
-                    ui.draw_dialog(self.stdscr, h, w, "Confirmar",
-                                   "  ✓  ", is_confirm=True,
-                                   compact=h < 16)
-                    self.stdscr.refresh()
-                    time.sleep(0.15)
+            confirm = key in (ord("s"), ord("S"), ord("y"), ord("Y"), 10, 13)
+            if cb and (confirm):
+                h, w = self.stdscr.getmaxyx()
+                ui.draw_dialog(
+                    self.stdscr,
+                    h,
+                    w,
+                    "Confirmar",
+                    "  ✓  ",
+                    is_confirm=True,
+                    compact=h < 16,
+                )
+                self.stdscr.refresh()
                 cb()
         elif d["type"] == "prompt":
             cur: int = d.get("cursor_pos", len(d["buf"]))
@@ -550,7 +591,7 @@ class PlayerApp:
                     cb(self, buf)
             elif key in (127, curses.KEY_BACKSPACE):
                 if cur > 0:
-                    d["buf"] = d["buf"][:cur - 1] + d["buf"][cur:]
+                    d["buf"] = d["buf"][: cur - 1] + d["buf"][cur:]
                     d["cursor_pos"] = cur - 1
                     self._clamp_prompt_scroll()
             elif key == curses.KEY_LEFT:
@@ -577,8 +618,7 @@ class PlayerApp:
                 curses.flushinp()
                 return
             if key == ord("s"):
-                item = StackItem(path=d["path"],
-                                 name=os.path.basename(d["path"]))
+                item = StackItem(path=d["path"], name=os.path.basename(d["path"]))
                 if d["mode"] == "append":
                     self.stack.append(item)
                 elif d["mode"] == "after_current":
@@ -752,7 +792,12 @@ class PlayerApp:
             if self.file_op_mode:
                 return False  # Let view handler (_handle_file_op_picker) handle it
             if self.current_view == self.V_HISTORY and not any(
-                (self.show_stack_view, self.goto_mode, self.kb_keybinding_view, self.dir_picker_mode)
+                (
+                    self.show_stack_view,
+                    self.goto_mode,
+                    self.kb_keybinding_view,
+                    self.dir_picker_mode,
+                )
             ):
                 return False  # Let history handler set view to Listen
             self.show_stack_view = False
@@ -840,6 +885,7 @@ class PlayerApp:
         if not self._file_undo:
             return
         import shutil
+
         fu = self._file_undo
         self._file_undo = None
         try:
@@ -853,6 +899,7 @@ class PlayerApp:
 
     def _apply_file_redo(self, fu: dict[str, Any]) -> None:
         import shutil
+
         try:
             if fu["type"] == "move":
                 shutil.move(fu["src"], fu["dest"])
@@ -886,10 +933,14 @@ class PlayerApp:
                     self.meta_edit_cursor_pos = cur + 1
             elif key in (127, curses.KEY_BACKSPACE):
                 if cur > 0:
-                    self.meta_edit_buf = self.meta_edit_buf[:cur - 1] + self.meta_edit_buf[cur:]
+                    self.meta_edit_buf = (
+                        self.meta_edit_buf[: cur - 1] + self.meta_edit_buf[cur:]
+                    )
                     self.meta_edit_cursor_pos = cur - 1
             elif 32 <= key <= 126 and len(self.meta_edit_buf) < 60:
-                self.meta_edit_buf = self.meta_edit_buf[:cur] + chr(key) + self.meta_edit_buf[cur:]
+                self.meta_edit_buf = (
+                    self.meta_edit_buf[:cur] + chr(key) + self.meta_edit_buf[cur:]
+                )
                 self.meta_edit_cursor_pos = cur + 1
             return
         if key in (ord("q"), 27):
@@ -899,19 +950,23 @@ class PlayerApp:
             self._save_meta_edits()
             self.meta_edit_mode = False
         elif key in (ord("j"), curses.KEY_DOWN):
-            self.meta_edit_cursor = min(self.meta_edit_cursor + 1,
-                                        len(self.meta_edit_fields) - 1)
+            self.meta_edit_cursor = min(
+                self.meta_edit_cursor + 1, len(self.meta_edit_fields) - 1
+            )
         elif key in (ord("k"), curses.KEY_UP):
             self.meta_edit_cursor = max(self.meta_edit_cursor - 1, 0)
         elif key in (10, 13):
             self.meta_edit_editing = True
             fname = self.meta_edit_keys[self.meta_edit_cursor]
-            self.meta_edit_buf = (self.meta_edit_changed.get(fname)
-                                  or self.meta_edit_fields[self.meta_edit_cursor][2])
+            self.meta_edit_buf = (
+                self.meta_edit_changed.get(fname)
+                or self.meta_edit_fields[self.meta_edit_cursor][2]
+            )
             self.meta_edit_cursor_pos = len(self.meta_edit_buf)
 
     def _save_meta_edits(self) -> None:
         import mutagen
+
         try:
             audio = mutagen.File(self.meta_edit_file, easy=True)  # type: ignore[attr-defined]
             if audio is not None:
@@ -946,7 +1001,9 @@ class PlayerApp:
             self.dir_picker_scroll = max(0, self.dir_picker_scroll)
 
             minimal = self.config.get("ui_minimal", False)
-            compact = minimal or h < 16 or (self.current_view == self.V_LISTEN and w < 61)
+            compact = (
+                minimal or h < 16 or (self.current_view == self.V_LISTEN and w < 61)
+            )
 
             if h < 8 or w < 40:
                 err = f"MIN 40x8, NOW({h}x{w})"
@@ -971,40 +1028,87 @@ class PlayerApp:
 
             if compact:
                 if self.toast_ticks > 0:
-                    ui.safe_addstr(self.stdscr, 1, 2, self.toast_msg[:w - 4],
-                                   curses.color_pair(PAIR_TEXTO), h, w)
+                    ui.safe_addstr(
+                        self.stdscr,
+                        1,
+                        2,
+                        self.toast_msg[: w - 4],
+                        curses.color_pair(PAIR_TEXTO),
+                        h,
+                        w,
+                    )
                     self.toast_ticks -= 1
             else:
                 self._draw_status(h, w)
             if self.dialog is not None:
                 d: dict[str, Any] = self.dialog
                 if d["type"] == "confirm":
-                    ui.draw_dialog(self.stdscr, h, w, "Confirmar", d["label"],
-                                   is_confirm=True, compact=compact)
+                    ui.draw_dialog(
+                        self.stdscr,
+                        h,
+                        w,
+                        "Confirmar",
+                        d["label"],
+                        is_confirm=True,
+                        compact=compact,
+                    )
                 elif d["type"] == "prompt":
-                    ui.draw_dialog(self.stdscr, h, w, "Entrada", d["label"],
-                                   compact=compact, prompt_buf=d["buf"],
-                                   prompt_scroll=d["scroll"],
-                                   prompt_cursor_pos=d.get("cursor_pos", len(d["buf"])))
+                    ui.draw_dialog(
+                        self.stdscr,
+                        h,
+                        w,
+                        "Entrada",
+                        d["label"],
+                        compact=compact,
+                        prompt_buf=d["buf"],
+                        prompt_scroll=d["scroll"],
+                        prompt_cursor_pos=d.get("cursor_pos", len(d["buf"])),
+                    )
                 elif d["type"] == "dest":
-                    dest_text = _build_hints([
-                        ("s", "Pila"), ("p", "Lista"), ("Esc", "Cancelar"),
-                    ], w) or "s: Pila  |  p: Lista  |  Esc: Cancelar"
-                    ui.draw_dialog(self.stdscr, h, w, "Destino",
-                                   dest_text,
-                                   compact=compact)
-            elif not self.meta_edit_mode and not compact and self.config.get("ui_navbar", True):
+                    dest_text = (
+                        _build_hints(
+                            [
+                                ("s", "Pila"),
+                                ("p", "Lista"),
+                                ("Esc", "Cancelar"),
+                            ],
+                            w,
+                        )
+                        or "s: Pila  |  p: Lista  |  Esc: Cancelar"
+                    )
+                    ui.draw_dialog(
+                        self.stdscr, h, w, "Destino", dest_text, compact=compact
+                    )
+            elif (
+                not self.meta_edit_mode
+                and not compact
+                and self.config.get("ui_navbar", True)
+            ):
                 ui.draw_nav(self.stdscr, h, w)
             if self.toast_ticks > 0:
-                ui.safe_addstr(self.stdscr, h - 3, 2, self.toast_msg,
-                               curses.color_pair(PAIR_TEXTO), h, w)
+                ui.safe_addstr(
+                    self.stdscr,
+                    h - 3,
+                    2,
+                    self.toast_msg,
+                    curses.color_pair(PAIR_TEXTO),
+                    h,
+                    w,
+                )
                 self.toast_ticks -= 1
             if self.update_available and not self.dialog and not self.show_help:
                 if not compact:
                     msg = " ! Actualización disponible "
                     if w > len(msg) + 2:
-                        ui.safe_addstr(self.stdscr, 0, w - len(msg) - 1, msg,
-                                       curses.color_pair(PAIR_DESTACAR), h, w)
+                        ui.safe_addstr(
+                            self.stdscr,
+                            0,
+                            w - len(msg) - 1,
+                            msg,
+                            curses.color_pair(PAIR_DESTACAR),
+                            h,
+                            w,
+                        )
             if self.show_help:
                 ui.draw_help(self.stdscr, h, w, self.help_scroll, self.help_tab)
 
@@ -1013,8 +1117,17 @@ class PlayerApp:
             pass
 
     def _draw_status(self, h: int, w: int) -> None:
-        ui.draw_status(self.stdscr, h, w, self.audio, self.audio.playing,
-                       self.audio.current_file, self.audio.volume,
-                       self.stack.shuffle, self.stack.repeat,
-                       self.active_name, self.current_view,
-                       self.stack)
+        ui.draw_status(
+            self.stdscr,
+            h,
+            w,
+            self.audio,
+            self.audio.playing,
+            self.audio.current_file,
+            self.audio.volume,
+            self.stack.shuffle,
+            self.stack.repeat,
+            self.active_name,
+            self.current_view,
+            self.stack,
+        )

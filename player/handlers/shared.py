@@ -229,9 +229,7 @@ def _open_tag_editor(app: PlayerApp, full: str) -> None:
 def _handle_update(app: PlayerApp) -> None:
     app._check_updates()
     if app.update_available:
-        n = app.update_behind
-        s = "s" if n != 1 else ""
-        _confirm(app, f"Actualización disp. ({n} commit{s}) ¿Descargar?", lambda: _do_update(app))
+        _confirm(app, "¿Instalar nueva versión?", lambda: _do_update(app))
     else:
         _toast(app, "Sin actualizaciones disponibles")
 

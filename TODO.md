@@ -9,7 +9,7 @@
 - [x] **B5** — `metadata.py` IndexError silenciado (`metadata.py:23-28`) — Tag malformado destruye toda la entrada de cache
 - [x] **B6** — `playlist` property valida y loguea en cada acceso (`app.py:194-201`) — Multi-acceso por frame, genera salida en error.log
 - [x] **B7** — `_handle_dialog_key` confirm: `chr(key)` para teclas no-imprimibles (`app.py:521`) — Confuso, mejor verificar explícitamente
-- [x] **B8** — `_apply_updates` no verifica cambios locales antes de pull (`app.py:286-304`)
+- [ ] **B8** — ~~`_apply_updates` no verifica cambios locales antes de pull~~ — REVERTIDO: usuario final no toca código, reset hard es correcto
 - [x] **B9** — Config view scroll clamp inconsistente (`handlers/config_view.py:67` vs `views.py:582`)
 
 ## UX
