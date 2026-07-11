@@ -940,10 +940,10 @@ class PlayerApp:
                 elif fname in self.meta_edit_changed:
                     del self.meta_edit_changed[fname]
                 self.meta_edit_editing = False
-            elif key in (curses.KEY_LEFT, ord("h")):
+            elif key == curses.KEY_LEFT:
                 if cur > 0:
                     self.meta_edit_cursor_pos = cur - 1
-            elif key in (curses.KEY_RIGHT, ord("l")):
+            elif key == curses.KEY_RIGHT:
                 if cur < len(self.meta_edit_buf):
                     self.meta_edit_cursor_pos = cur + 1
             elif key in (127, curses.KEY_BACKSPACE):
