@@ -682,18 +682,24 @@ class PlayerApp:
                 self.show_help = False
                 self.help_scroll = 0
             elif key in (curses.KEY_DOWN, ord("j")):
+                h, _ = self.stdscr.getmaxyx()
+                list_h = max(2, h - 4) if h >= 12 else max(2, h - 2)
                 total = len(ui.HELP_TABS[self.help_tab]["lines"])
-                self.help_scroll = min(self.help_scroll + 1, total - 1)
+                max_scroll = max(0, total - list_h)
+                self.help_scroll = min(self.help_scroll + 1, max_scroll)
             elif key in (curses.KEY_UP, ord("k")):
                 self.help_scroll = max(self.help_scroll - 1, 0)
             elif key in (curses.KEY_NPAGE, ord(" ")):
                 h, _ = self.stdscr.getmaxyx()
                 list_h = max(2, h - 4) if h >= 12 else max(2, h - 2)
                 total = len(ui.HELP_TABS[self.help_tab]["lines"])
-                self.help_scroll = min(self.help_scroll + list_h, total - 1)
+                max_scroll = max(0, total - list_h)
+                self.help_scroll = min(self.help_scroll + list_h, max_scroll)
             elif key in (curses.KEY_PPAGE, ord("b")):
                 h, _ = self.stdscr.getmaxyx()
                 list_h = max(2, h - 4) if h >= 12 else max(2, h - 2)
+                total = len(ui.HELP_TABS[self.help_tab]["lines"])
+                max_scroll = max(0, total - list_h)
                 self.help_scroll = max(self.help_scroll - list_h, 0)
             elif key in (curses.KEY_RIGHT, ord("l"), ord("]")):
                 self.help_tab = (self.help_tab + 1) % len(ui.HELP_TABS)

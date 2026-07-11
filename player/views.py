@@ -481,31 +481,18 @@ def draw_playlist(app: PlayerApp, h: int, w: int) -> None:
     draw_box(app.stdscr, h, w, "")
     names = list(app.playlist_data.keys())
     n = len(names)
-    current_idx = names.index(app.active_name) if app.active_name in names else 0
-    carousel = f"Playlist "
     if n > 1:
-        prev_name = names[(current_idx - 1) % n]
-        next_name = names[(current_idx + 1) % n]
-        carousel += f"◀ {prev_name} │ "
-        curr_part = f"[{app.active_name}]"
-        carousel_end = f" │ {next_name} ▶"
-        total_w = len(carousel) + len(curr_part) + len(carousel_end) + len(pos) + len(extra)
-        max_cw = w - 4
-        # Center the carousel
-        cx = max(2, (w - total_w) // 2)
-        safe_addstr(app.stdscr, 0, cx, carousel, marco, h, w)
-        cx += len(carousel)
-        safe_addstr(app.stdscr, 0, cx, curr_part, overlay | curses.A_REVERSE, h, w)
-        cx += len(curr_part)
-        safe_addstr(app.stdscr, 0, cx, carousel_end, marco, h, w)
-        cx += len(carousel_end)
-        suffix = f"{pos}{extra}"
-        safe_addstr(app.stdscr, 0, cx, suffix, marco, h, w)
+        title = f"Playlist ◀ [{app.active_name}] ▶{pos}{extra}"
     else:
         title = f"Playlist [{app.active_name}]{pos}{extra}"
-        title_str = f" {title} "
-        tx = max(2, (w - len(title_str)) // 2)
-        safe_addstr(app.stdscr, 0, tx, title_str, marco, h, w)
+    title_str = f" {title} "
+    tx = max(2, (w - len(title_str)) // 2)
+    max_tw = max(0, w - tx - 1)
+    if len(title_str) > max_tw and max_tw >= 2:
+        title_str = title_str[:max_tw - 1] + "…"
+    elif len(title_str) > max_tw:
+        title_str = title_str[:max_tw]
+    safe_addstr(app.stdscr, 0, tx, title_str, marco, h, w)
 
     if app.playlist_filter_mode:
         prefix = "> "
