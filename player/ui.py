@@ -513,7 +513,7 @@ def draw_help(win: curses.window, h: int, w: int, scroll: int = 0, tab: int = 0)
     if compact:
         list_h = max(2, h - 2)  # rows 1 to h-2 (no tab bar)
     else:
-        list_h = max(2, h - 4)  # rows 2 to h-3 (tab bar at 1, footer at h-2)
+        list_h = max(2, h - 3)  # rows 1 to h-3 (tab bar at row 0, footer at h-2)
 
     max_scroll = max(0, total - list_h)
     scroll = max(0, min(scroll, max_scroll))
@@ -552,7 +552,7 @@ def draw_help(win: curses.window, h: int, w: int, scroll: int = 0, tab: int = 0)
             if scroll + list_h < total:
                 safe_addstr(win, h - 2, ox + box_w - 2, "▼", nav, h, w)
         else:
-            # Tab bar carousel at row 1: [prev | current | next]
+            # Tab bar carousel at row 0 (replaces top border)
             tab_names = [t["name"] for t in HELP_TABS]
             n = len(tab_names)
             prev_idx = (tab - 1) % n
@@ -569,29 +569,33 @@ def draw_help(win: curses.window, h: int, w: int, scroll: int = 0, tab: int = 0)
             ]
             parts_w = sum(len(name) for name, _ in carousel_parts) + len(sep) * 2
             start_x = ox + 1 + max(0, (inner_w - parts_w) // 2)
+            # Draw left vertical bar + fill
+            left_fill = start_x - (ox + 1)
+            safe_addstr(win, 0, ox, "│", marco, h, w)
+            if left_fill > 0:
+                safe_addstr(win, 0, ox + 1, "─" * left_fill, marco, h, w)
+            # Draw carousel
             x = start_x
             for i, (name, attr) in enumerate(carousel_parts):
                 if i > 0:
-                    safe_addstr(win, 1, x, sep, nav, h, w)
+                    safe_addstr(win, 0, x, sep, nav, h, w)
                     x += len(sep)
-                safe_addstr(win, 1, x, name, attr, h, w)
+                safe_addstr(win, 0, x, name, attr, h, w)
                 x += len(name)
-            # Fill left and right with ─
-            left_fill = start_x - (ox + 1)
-            if left_fill > 0:
-                safe_addstr(win, 1, ox + 1, "─" * left_fill, marco, h, w)
+            # Fill right + right vertical bar
             right_start = ox + 1 + inner_w
             if x < right_start:
-                safe_addstr(win, 1, x, "─" * (right_start - x), marco, h, w)
+                safe_addstr(win, 0, x, "─" * (right_start - x), marco, h, w)
+            safe_addstr(win, 0, ox + box_w - 1, "│", marco, h, w)
 
-            # Vertical bars
-            for y in range(2, h - 1):
+            # Vertical bars (content starts at row 1)
+            for y in range(1, h - 1):
                 safe_addstr(win, y, ox, "│", marco, h, w)
                 safe_addstr(win, y, ox + box_w - 1, "│", marco, h, w)
 
-            # Content
+            # Content (row 1 to h-2)
             for i, (text, attr) in enumerate(visible):
-                y = 2 + i
+                y = 1 + i
                 if attr is not None:
                     clipped = text[:max_tw] if len(text) <= max_tw else text[:max_tw - 1] + "…"
                     safe_addstr(win, y, ox + 2, clipped, curses.color_pair(attr), h, w)

@@ -53,7 +53,18 @@ def draw_item_row(win: curses.window, y: int, name: str, path: str, meta: dict[s
     display_attr = (cursor_attr | curses.A_REVERSE) if is_cursor else attr
     safe_addstr(win, y, 2, line, display_attr, h, w)
     if dur_str:
-        safe_addstr(win, y, w - len(dur_str) - 2, dur_str, dur_attr, h, w)
+        dur_x = w - len(dur_str) - 2
+        safe_addstr(win, y, dur_x, dur_str, dur_attr, h, w)
+        if is_cursor:
+            fill_start = 2 + len(line)
+            fill_len = dur_x - fill_start
+            if fill_len > 0:
+                safe_addstr(win, y, fill_start, " " * fill_len, display_attr, h, w)
+    elif is_cursor:
+        fill_start = 2 + len(line)
+        fill_len = w - 2 - fill_start
+        if fill_len > 0:
+            safe_addstr(win, y, fill_start, " " * fill_len, display_attr, h, w)
 
 
 def _center(s: str, w: int) -> str:
@@ -457,7 +468,18 @@ def draw_explorer(app: PlayerApp, h: int, w: int) -> None:
         else:
             safe_addstr(app.stdscr, y, 2, line, attr, h, w)
         if dur_str:
-            safe_addstr(app.stdscr, y, w - len(dur_str) - 2, dur_str, texto, h, w)
+            dur_x = w - len(dur_str) - 2
+            safe_addstr(app.stdscr, y, dur_x, dur_str, texto, h, w)
+            if is_cursor:
+                fill_start = 2 + len(line)
+                fill_len = dur_x - fill_start
+                if fill_len > 0:
+                    safe_addstr(app.stdscr, y, fill_start, " " * fill_len, attr | curses.A_REVERSE, h, w)
+        elif is_cursor:
+            fill_start = 2 + len(line)
+            fill_len = w - 2 - fill_start
+            if fill_len > 0:
+                safe_addstr(app.stdscr, y, fill_start, " " * fill_len, attr | curses.A_REVERSE, h, w)
 
 
 def draw_playlist(app: PlayerApp, h: int, w: int) -> None:
@@ -900,4 +922,15 @@ def draw_favorites(app: PlayerApp, h: int, w: int) -> None:
         else:
             safe_addstr(win, y, 2, line, texto, h, w)
         if dur_str:
-            safe_addstr(win, y, w - len(dur_str) - 2, dur_str, texto, h, w)
+            dur_x = w - len(dur_str) - 2
+            safe_addstr(win, y, dur_x, dur_str, texto, h, w)
+            if is_cursor:
+                fill_start = 2 + len(line)
+                fill_len = dur_x - fill_start
+                if fill_len > 0:
+                    safe_addstr(win, y, fill_start, " " * fill_len, texto | curses.A_REVERSE, h, w)
+        elif is_cursor:
+            fill_start = 2 + len(line)
+            fill_len = w - 2 - fill_start
+            if fill_len > 0:
+                safe_addstr(win, y, fill_start, " " * fill_len, texto | curses.A_REVERSE, h, w)
