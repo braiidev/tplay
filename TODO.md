@@ -11,6 +11,8 @@
 - [x] **B7** — `_handle_dialog_key` confirm: `chr(key)` para teclas no-imprimibles (`app.py:521`) — Confuso, mejor verificar explícitamente
 - [ ] **B8** — ~~`_apply_updates` no verifica cambios locales antes de pull~~ — REVERTIDO: usuario final no toca código, reset hard es correcto
 - [x] **B9** — Config view scroll clamp inconsistente (`handlers/config_view.py:67` vs `views.py:582`)
+- [x] **B10** — Explorer vacío no permite navegar atrás (`handlers/explorer.py:26`) — `if not app.entries: return` bloquea h/←/Backspace/~/F5
+- [x] **B11** — Status bar row no descontada en handlers — `list_h` usa `h - 4` sin Account para status bar en `h-3`
 
 ## UX
 

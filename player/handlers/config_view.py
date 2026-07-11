@@ -293,5 +293,5 @@ def handle_dir_picker(app: PlayerApp, key: int) -> None:
         app.dir_picker_cursor = max(0, total - 1)
 
     h, _ = app.stdscr.getmaxyx()
-    list_h = max(1, h - 4)
+    list_h = max(1, h - 5 if h >= 16 else h - 4)
     app.dir_picker_scroll = _clamp_scroll(app.dir_picker_cursor, app.dir_picker_scroll, list_h)

@@ -792,7 +792,7 @@ def draw_dir_picker(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
         ("Enter", "seleccionar"), ("h/l", "subir/bajar"), ("Esc", "cancelar"),
     ], w)
     if hints:
-        safe_addstr(win, h - 3, 2, hints, nav, h, w)
+        safe_addstr(win, h - 4, 2, hints, nav, h, w)
 
 
 def draw_favorites(app: PlayerApp, h: int, w: int) -> None:
@@ -807,7 +807,7 @@ def draw_favorites(app: PlayerApp, h: int, w: int) -> None:
         safe_addstr(win, h // 2, 2, "  Sin favoritos — usa 'f' en el Explorador", texto, h, w)
         return
 
-    list_h = h - 4
+    list_h = h - 5 if h >= 16 else h - 4
     visible = app.favorites[app.favorites_scroll:app.favorites_scroll + list_h]
 
     for i, entry in enumerate(visible):

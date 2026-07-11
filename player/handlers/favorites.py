@@ -66,5 +66,5 @@ def handle_favorites(app: PlayerApp, key: int) -> None:
         _toggle_favorite(app, entry["path"], entry.get("name", ""))
 
     h, _ = app.stdscr.getmaxyx()
-    list_h = h - 4
+    list_h = h - 5 if h >= 16 else h - 4
     app.favorites_scroll = _clamp_scroll(app.favorites_cursor, app.favorites_scroll, list_h)

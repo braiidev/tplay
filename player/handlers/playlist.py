@@ -138,7 +138,7 @@ def handle_playlist(app: PlayerApp, key: int) -> None:
             _toggle_favorite(app, path, name)
 
     h, _ = app.stdscr.getmaxyx()
-    app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.LIST_H)
+    app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.LIST_H - (0 if h < 16 else 1))
 
 
 def _handle_playlist_filter(app: PlayerApp, key: int) -> None:
@@ -164,12 +164,12 @@ def _handle_playlist_filter(app: PlayerApp, key: int) -> None:
         if app.playlist_filtered:
             app.playlist_cursor = min(app.playlist_cursor + 1, len(app.playlist_filtered) - 1)
         h, _ = app.stdscr.getmaxyx()
-        app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.FILTER_LIST_H)
+        app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.FILTER_LIST_H - (0 if h < 16 else 1))
         return
     if key == curses.KEY_UP:
         app.playlist_cursor = max(app.playlist_cursor - 1, 0)
         h, _ = app.stdscr.getmaxyx()
-        app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.FILTER_LIST_H)
+        app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.FILTER_LIST_H - (0 if h < 16 else 1))
         return
     cur = app.playlist_filter_cursor
     if key in (curses.KEY_LEFT, ord("h")):

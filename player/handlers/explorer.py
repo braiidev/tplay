@@ -23,6 +23,37 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
     if app.explorer_filter_mode:
         _handle_explorer_filter(app, key)
         return
+
+    # Navigation keys that work even with empty entries
+    if key in (curses.KEY_LEFT, 127, curses.KEY_BACKSPACE):
+        parent = os.path.dirname(app.current_dir)
+        if parent and parent != app.current_dir:
+            app.current_dir = parent
+            app.entries = _list_dir(parent)
+            app.cursor = 0
+            app.scroll = 0
+            app.explorer_marked.clear()
+        return
+    if key == ord("~"):
+        app.current_dir = os.path.expanduser("~")
+        app.entries = _list_dir(app.current_dir)
+        app.cursor = 0
+        app.scroll = 0
+        app.explorer_marked.clear()
+        return
+    if key == curses.KEY_F5:
+        app.entries = _list_dir(app.current_dir)
+        app.cursor = 0
+        app.scroll = 0
+        app.explorer_marked.clear()
+        return
+    if key == ord("u") and app.undo_stack:
+        app._undo()
+        return
+    if key == ord("U"):
+        app._redo()
+        return
+
     if not app.entries:
         return
 
@@ -36,8 +67,7 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
         return
 
     if key == curses.KEY_DOWN:
-        if app.entries:
-            app.cursor = min(app.cursor + 1, len(app.entries) - 1)
+        app.cursor = min(app.cursor + 1, len(app.entries) - 1)
     elif key == curses.KEY_UP:
         app.cursor = max(app.cursor - 1, 0)
     elif key == curses.KEY_NPAGE:
@@ -57,28 +87,27 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
         if app.cursor < len(app.entries) - 1:
             app.cursor += 1
     elif key in (10, 13, curses.KEY_RIGHT):
-        if app.entries:
-            name, is_dir, full = app.entries[app.cursor]
-            if is_dir:
-                app.current_dir = full
-                app.entries = _list_dir(full)
-                app.cursor = 0
-                app.scroll = 0
-                app.explorer_marked.clear()
-            elif _is_playlist_file(full):
-                ext = os.path.splitext(full)[1].lower()
-                paths = _parse_pls(full) if ext == ".pls" else _parse_m3u(full)
-                if not paths:
-                    _toast(app, "Playlist vacía o inválida")
-                else:
-                    items = [StackItem(path=p, name=os.path.basename(p)) for p in paths]
-                    app.stack.items = items
-                    app._play_current()
-                    app.current_view = app.V_LISTEN
-            elif app.explorer_marked:
-                _play_marked(app)
+        name, is_dir, full = app.entries[app.cursor]
+        if is_dir:
+            app.current_dir = full
+            app.entries = _list_dir(full)
+            app.cursor = 0
+            app.scroll = 0
+            app.explorer_marked.clear()
+        elif _is_playlist_file(full):
+            ext = os.path.splitext(full)[1].lower()
+            paths = _parse_pls(full) if ext == ".pls" else _parse_m3u(full)
+            if not paths:
+                _toast(app, "Playlist vacía o inválida")
             else:
-                _play_file_direct(app, full)
+                items = [StackItem(path=p, name=os.path.basename(p)) for p in paths]
+                app.stack.items = items
+                app._play_current()
+                app.current_view = app.V_LISTEN
+        elif app.explorer_marked:
+            _play_marked(app)
+        else:
+            _play_file_direct(app, full)
     elif key == ord("a"):
         _add_from_explorer(app, insert_mode="append")
     elif key == ord("A"):
@@ -98,38 +127,14 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
     elif key == ord("F"):
         app.current_view = app.V_FAVORITES
     elif key == ord("f"):
-        if app.entries:
-            name, is_dir, full = app.entries[app.cursor]
-            if not is_dir:
-                _toggle_favorite(app, full, name)
-    elif key == curses.KEY_F5:
-        app.entries = _list_dir(app.current_dir)
-        app.cursor = 0
-        app.scroll = 0
-        app.explorer_marked.clear()
+        name, is_dir, full = app.entries[app.cursor]
+        if not is_dir:
+            _toggle_favorite(app, full, name)
     elif key == ord("P"):
         _play_folder(app)
-    elif key in (curses.KEY_LEFT, 127, curses.KEY_BACKSPACE):
-        parent = os.path.dirname(app.current_dir)
-        if parent and parent != app.current_dir:
-            app.current_dir = parent
-            app.entries = _list_dir(parent)
-            app.cursor = 0
-            app.scroll = 0
-            app.explorer_marked.clear()
-    elif key == ord("~"):
-        app.current_dir = os.path.expanduser("~")
-        app.entries = _list_dir(app.current_dir)
-        app.cursor = 0
-        app.scroll = 0
-        app.explorer_marked.clear()
-    elif key == ord("u") and app.undo_stack:
-        app._undo()
-    elif key == ord("U"):
-        app._redo()
 
     h, _ = app.stdscr.getmaxyx()
-    app.scroll = _clamp_scroll(app.cursor, app.scroll, h - app.LIST_H)
+    app.scroll = _clamp_scroll(app.cursor, app.scroll, h - app.LIST_H - (0 if h < 16 else 1))
 
 
 def _handle_explorer_filter(app: PlayerApp, key: int) -> None:
@@ -436,7 +441,7 @@ def _handle_file_op_picker(app: PlayerApp, key: int) -> None:
         return
 
     h, _ = app.stdscr.getmaxyx()
-    list_h = h - app.LIST_H - (1 if app.file_op_mode else 0)
+    list_h = h - app.LIST_H - (1 if app.file_op_mode else 0) - (0 if h < 16 else 1)
     if app.cursor < app.scroll:
         app.scroll = app.cursor
     elif app.cursor >= app.scroll + list_h:

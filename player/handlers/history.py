@@ -57,7 +57,7 @@ def handle_history(app: PlayerApp, key: int) -> None:
     elif key == curses.KEY_UP:
         app.history_cursor = max(app.history_cursor - 1, 0)
     h, _ = app.stdscr.getmaxyx()
-    app.history_scroll = _clamp_scroll(app.history_cursor, app.history_scroll, h - app.LIST_H)
+    app.history_scroll = _clamp_scroll(app.history_cursor, app.history_scroll, h - app.LIST_H - (0 if h < 16 else 1))
 
 
 def _add_from_history(app: PlayerApp, insert_mode: str = "append") -> None:
