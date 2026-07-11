@@ -104,9 +104,9 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
                 ("X", "export"), ("u/U", "deshacer"),
             ], w)
             if hints1:
-                safe_addstr(app.stdscr, h - 4, 2, hints1, texto, h, w)
+                safe_addstr(app.stdscr, h - 4, 2, hints1, nav, h, w)
             if hints2:
-                safe_addstr(app.stdscr, h - 3, 2, hints2, texto, h, w)
+                safe_addstr(app.stdscr, h - 3, 2, hints2, nav, h, w)
         return
 
     draw_box(app.stdscr, h, w, "Listen")
@@ -773,10 +773,19 @@ def draw_radio(app: PlayerApp, h: int, w: int) -> None:
         if len(line) > max_w:
             line = line[:max_w - 1] + "…"
         safe_addstr(win, y, 2, line, attr, h, w)
-        url_start = len(line) + 3
+        gap_start = 2 + len(line)
+        url_start = gap_start + 2
+        gap_len = url_start - gap_start
+        if gap_len > 0 and is_cursor:
+            safe_addstr(win, y, gap_start, " " * gap_len, attr, h, w)
         url_display = r['url'][:w - url_start - dur_w - 2]
         safe_addstr(win, y, url_start, url_display, attr, h, w)
-        safe_addstr(win, y, w - len(dur_str) - 2, dur_str, texto, h, w)
+        dur_x = w - len(dur_str) - 2
+        if is_cursor and url_start + len(url_display) < dur_x:
+            fill = dur_x - (url_start + len(url_display))
+            if fill > 0:
+                safe_addstr(win, y, url_start + len(url_display), " " * fill, attr, h, w)
+        safe_addstr(win, y, dur_x, dur_str, texto, h, w)
     if not radios:
         safe_addstr(win, y0, 2, "  Sin radios guardadas", texto, h, w)
 
