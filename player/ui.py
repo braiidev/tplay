@@ -126,7 +126,7 @@ def draw_status(win: curses.window, h: int, w: int, audio: Any, playing: bool, c
         dur_s = f"{dur // 60000:02d}:{(dur // 1000) % 60:02d}" if dur > 0 else "--:--"
         max_name = max(5, w // 3)
         name_s = (name[:max_name - 1] + "…") if len(name) > max_name else name
-        txt = f" {estado} {name_s}  [{cur_s}-{dur_s}] [Vol: {volume}%]"
+        txt = f" {estado} {name_s}  [{cur_s} / {dur_s}] [Vol: {volume}%]"
         if shuffle:
             txt += " [S]"
         if repeat:

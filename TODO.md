@@ -24,9 +24,9 @@
 
 ## Rendimiento / Estructura
 
-- [ ] **P1** — `os.listdir` + stat innecesario (`file_utils.py:19-36`) — `os.scandir()` más rápido
-- [ ] **P2** — Scroll clamping 13x por frame en `_draw()` (`app.py:917-931`) — Redundante
-- [ ] **P3** — `playlist.py` hardcodea CONFIG_DIR (`playlist.py:7`) — Debería importar de config
+- [x] **P1** — `os.listdir` + stat innecesario (`file_utils.py:19-36`) — Reemplazado por `os.scandir()`
+- [x] **P2** — Scroll clamping redundante 13x por frame en `_draw()` (`app.py:917-931`) — Eliminado, handlers ya clampean
+- [x] **P3** — `playlist.py` hardcodea CONFIG_DIR (`playlist.py:7`) — Importado de config
 
 ## Estética
 

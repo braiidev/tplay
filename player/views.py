@@ -173,7 +173,17 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
         safe_addstr(app.stdscr, goto_y + 1, 2, "  ← → campo  ↑ ↓ valor  Enter saltar", texto, h, w)
 
     # ── Bottom grid: controls ──
-    cw = [5, 7, 5, 4, 9, 11]
+    avail = w - 4
+    min_cw = [3, 5, 3, 2, 7, 6]
+    separators = 3 * (len(min_cw) - 1)
+    min_total = sum(min_cw) + separators
+    if avail >= min_total:
+        pad = avail - min_total
+        cw = list(min_cw)
+        cw[4] += pad // 2
+        cw[5] += pad - pad // 2
+    else:
+        cw = min_cw
 
     prev_i = _center("◀◀", cw[0])
     play_i = _center("▶||", cw[1])
@@ -816,7 +826,7 @@ def draw_favorites(app: PlayerApp, h: int, w: int) -> None:
         name = entry.get("name", os.path.basename(entry.get("path", "?")))
         path = entry.get("path", "")
         is_stream = "://" in path
-        icon = "📻" if is_stream else "♪"
+        icon = "[R]" if is_stream else "♪"
         line = f"  {icon} {name}"
         max_w = w - 4
         if len(line) > max_w:
