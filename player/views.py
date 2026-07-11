@@ -466,6 +466,8 @@ def draw_playlist(app: PlayerApp, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
     overlay = curses.color_pair(PAIR_OVERLAY)
+    nav = curses.color_pair(PAIR_NAV)
+    marco = curses.color_pair(PAIR_MARCO)
 
     list_h = h - LIST_H - (1 if app.playlist_filter_mode else 0) - (0 if h < 16 else 1)
     if total_items > list_h and total_items > 0:
@@ -474,7 +476,36 @@ def draw_playlist(app: PlayerApp, h: int, w: int) -> None:
         pos = f" ({total_items})"
     else:
         pos = ""
-    draw_box(app.stdscr, h, w, f"Playlist [{app.active_name}]{pos}{extra}")
+
+    # Draw box with carousel title
+    draw_box(app.stdscr, h, w, "")
+    names = list(app.playlist_data.keys())
+    n = len(names)
+    current_idx = names.index(app.active_name) if app.active_name in names else 0
+    carousel = f"Playlist "
+    if n > 1:
+        prev_name = names[(current_idx - 1) % n]
+        next_name = names[(current_idx + 1) % n]
+        carousel += f"◀ {prev_name} │ "
+        curr_part = f"[{app.active_name}]"
+        carousel_end = f" │ {next_name} ▶"
+        total_w = len(carousel) + len(curr_part) + len(carousel_end) + len(pos) + len(extra)
+        max_cw = w - 4
+        # Center the carousel
+        cx = max(2, (w - total_w) // 2)
+        safe_addstr(app.stdscr, 0, cx, carousel, marco, h, w)
+        cx += len(carousel)
+        safe_addstr(app.stdscr, 0, cx, curr_part, overlay | curses.A_REVERSE, h, w)
+        cx += len(curr_part)
+        safe_addstr(app.stdscr, 0, cx, carousel_end, marco, h, w)
+        cx += len(carousel_end)
+        suffix = f"{pos}{extra}"
+        safe_addstr(app.stdscr, 0, cx, suffix, marco, h, w)
+    else:
+        title = f"Playlist [{app.active_name}]{pos}{extra}"
+        title_str = f" {title} "
+        tx = max(2, (w - len(title_str)) // 2)
+        safe_addstr(app.stdscr, 0, tx, title_str, marco, h, w)
 
     if app.playlist_filter_mode:
         prefix = "> "
@@ -552,11 +583,12 @@ def draw_history(app: PlayerApp, h: int, w: int) -> None:
 
 
 def draw_config(app: PlayerApp, h: int, w: int) -> None:
-    draw_box(app.stdscr, h, w, "Configuración")
+    draw_box(app.stdscr, h, w, "")
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
     nav = curses.color_pair(PAIR_NAV)
     overlay = curses.color_pair(PAIR_OVERLAY)
+    marco = curses.color_pair(PAIR_MARCO)
 
     labels = {
         "music_dir": f"Directorio música: {app.config.get('music_dir', '~/Music')}",
@@ -566,30 +598,37 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
     }
     cc = app.config.get("custom_colors", {})
 
-    # --- Tab bar at line 1 ---
+    # --- Tab bar carousel at line 1 ---
     tab_names = [t["name"] for t in app.config_tabs]
-    x = 2
-    safe_addstr(app.stdscr, 1, x, "◀ ", nav, h, w)
-    x += 2
-    for ti, name in enumerate(tab_names):
-        if ti > 0:
-            safe_addstr(app.stdscr, 1, x, " │ ", nav, h, w)
-            x += 3
-        max_name_w = (w - 6) // max(len(tab_names), 1) - 3
-        display_name = name
-        if len(display_name) > max_name_w > 0:
-            display_name = display_name[:max_name_w - 1] + "…"
-        if ti == app.config_tab_idx:
-            safe_addstr(app.stdscr, 1, x, "[", nav, h, w)
-            x += 1
-            safe_addstr(app.stdscr, 1, x, display_name, overlay, h, w)
-            x += len(display_name)
-            safe_addstr(app.stdscr, 1, x, "]", nav, h, w)
-            x += 1
-        else:
-            safe_addstr(app.stdscr, 1, x, display_name, nav, h, w)
-            x += len(display_name)
-    safe_addstr(app.stdscr, 1, x, " ▶", nav, h, w)
+    n = len(tab_names)
+    prev_idx = (app.config_tab_idx - 1) % n
+    next_idx = (app.config_tab_idx + 1) % n
+    prev_name = tab_names[prev_idx]
+    curr_name = tab_names[app.config_tab_idx]
+    next_name = tab_names[next_idx]
+    inner_w = w - 4
+    sep = " │ "
+    carousel_parts = [
+        (prev_name, nav),
+        (curr_name, overlay | curses.A_REVERSE),
+        (next_name, nav),
+    ]
+    parts_w = sum(len(name) for name, _ in carousel_parts) + len(sep) * 2
+    start_x = 2 + max(0, (inner_w - parts_w) // 2)
+    x = start_x
+    for i, (name, attr) in enumerate(carousel_parts):
+        if i > 0:
+            safe_addstr(app.stdscr, 1, x, sep, nav, h, w)
+            x += len(sep)
+        safe_addstr(app.stdscr, 1, x, name, attr, h, w)
+        x += len(name)
+    # Fill left and right with ─
+    left_fill = start_x - 2
+    if left_fill > 0:
+        safe_addstr(app.stdscr, 1, 2, "─" * left_fill, marco, h, w)
+    right_start = 2 + inner_w
+    if x < right_start:
+        safe_addstr(app.stdscr, 1, x, "─" * (right_start - x), marco, h, w)
 
     # --- Items with scroll ---
     items = app.config_items
