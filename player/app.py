@@ -22,6 +22,7 @@ from .file_utils import list_dir as _list_dir
 from .stack import Stack, StackItem
 from . import views
 from . import ui
+from .ui import _build_hints
 from . import handlers
 from . import keybindings as kb
 from .state import load_state, save_state, load_history, save_history
@@ -968,8 +969,11 @@ class PlayerApp:
                                    prompt_scroll=d["scroll"],
                                    prompt_cursor_pos=d.get("cursor_pos", len(d["buf"])))
                 elif d["type"] == "dest":
+                    dest_text = _build_hints([
+                        ("s", "Pila"), ("p", "Lista"), ("Esc", "Cancelar"),
+                    ], w) or "s: Pila  |  p: Lista  |  Esc: Cancelar"
                     ui.draw_dialog(self.stdscr, h, w, "Destino",
-                                   "s: Pila  |  p: Lista  |  Esc: Cancelar",
+                                   dest_text,
                                    compact=compact)
             elif not self.meta_edit_mode and not compact and self.config.get("ui_navbar", True):
                 ui.draw_nav(self.stdscr, h, w)

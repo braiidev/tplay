@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV
 from .file_utils import time_str, ext_label, is_url as _is_url, is_video_file as _is_video_file
-from .ui import safe_addstr, draw_box, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN
+from .ui import safe_addstr, draw_box, _build_hints, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN
 from . import keybindings as kb
 from .handlers import _get_current_key
 
@@ -95,10 +95,18 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
                               is_playing=is_playing, is_stream=is_stream,
                               mode_tag=mode_tag, left_margin=8, attr=attr,
                               h=h, w=w)
-            safe_addstr(app.stdscr, h - 4, 2,
-                        "  [Enter]►  [Tab] Volver  [d]el  [x]clear  [J/K]orden  [s]guardar", texto, h, w)
-            safe_addstr(app.stdscr, h - 3, 2,
-                        "  [r/R]modo  [g/G]Inicio/Fin  [X]export  [u/U]deshacer", texto, h, w)
+            hints1 = _build_hints([
+                ("Enter", "►"), ("Tab", "Volver"), ("d", "el"),
+                ("x", "clear"), ("J/K", "orden"), ("s", "guardar"),
+            ], w)
+            hints2 = _build_hints([
+                ("r/R", "modo"), ("g/G", "Inicio/Fin"),
+                ("X", "export"), ("u/U", "deshacer"),
+            ], w)
+            if hints1:
+                safe_addstr(app.stdscr, h - 4, 2, hints1, texto, h, w)
+            if hints2:
+                safe_addstr(app.stdscr, h - 3, 2, hints2, texto, h, w)
         return
 
     draw_box(app.stdscr, h, w, "Listen")
@@ -195,11 +203,15 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
     line1 = " " + "   ".join(icons)
     line2 = " " + "   ".join(keys)
 
-    extra = "  [Tab] Pila │ [g] Ir a │ [t/T] Tmp │ [h/l] Buscar │ [r]Azar [R]Rep [m]Sil"
+    extra = _build_hints([
+        ("Tab", "Pila"), ("g", "Ir a"), ("t/T", "Tmp"),
+        ("h/l", "Buscar"), ("r", "Azar"), ("R", "Rep"), ("m", "Sil"),
+    ], w)
 
     safe_addstr(app.stdscr, h - 5, 2, line1[:w - 4], destacar, h, w)
     safe_addstr(app.stdscr, h - 4, 2, line2[:w - 4], texto, h, w)
-    safe_addstr(app.stdscr, h - 3, 2, extra[:w - 4], nav, h, w)
+    if extra:
+        safe_addstr(app.stdscr, h - 3, 2, extra, nav, h, w)
 
 
 def draw_mini_stack(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
@@ -776,8 +788,11 @@ def draw_dir_picker(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
             else:
                 safe_addstr(win, y, 2, line, destacar, h, w)
 
-    hints = "  Enter=seleccionar  h/l=subir/bajar  Esc=cancelar"
-    safe_addstr(win, h - 3, 2, hints[:w - 4], nav, h, w)
+    hints = _build_hints([
+        ("Enter", "seleccionar"), ("h/l", "subir/bajar"), ("Esc", "cancelar"),
+    ], w)
+    if hints:
+        safe_addstr(win, h - 3, 2, hints, nav, h, w)
 
 
 def draw_favorites(app: PlayerApp, h: int, w: int) -> None:

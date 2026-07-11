@@ -12,6 +12,62 @@ NAV_ROW = 1
 EXPLORER_MARGIN = 8
 PLAYLIST_MARGIN = 6
 
+HINT_FULL_W: int = 70
+HINT_MID_W: int = 45
+HINT_MIN_W: int = 25
+NAV_FULL_W: int = 65
+NAV_MID_W: int = 45
+NAV_MIN_W: int = 25
+
+
+def _build_hints(segments: list[tuple[str, str]], w: int, prefix: str = "  ") -> str:
+    sep = "│"
+    avail = w - 4
+    if avail < 5:
+        return ""
+
+    # Tier 1: full — [key] label
+    if w >= HINT_FULL_W:
+        full = sep.join(f" [{k}] {v}" for k, v in segments)
+        if len(prefix) + len(full) <= avail:
+            return prefix + full
+
+    # Tier 2: mid — [key]label
+    if w >= HINT_MID_W:
+        mid = sep.join(f" [{k}]{v}" for k, v in segments)
+        if len(prefix) + len(mid) <= avail:
+            return prefix + mid
+
+    # Tier 3: min — key only
+    if w >= HINT_MIN_W:
+        keys_only = sep.join(k for k, _ in segments)
+        if len(prefix) + len(keys_only) <= avail:
+            return prefix + keys_only
+
+    # Fallback: drop segments from right until it fits
+    for n in range(len(segments), 0, -1):
+        keys_part = sep.join(k for k, _ in segments[:n])
+        candidate = prefix + keys_part
+        if len(candidate) <= avail:
+            if n < len(segments):
+                candidate += "…"
+            return candidate
+
+    return ""
+
+
+def _build_nav(w: int) -> str:
+    full = " 0:Config │ 1:Listen │ 2:Expl │ 3:Playlist │ 4:Hist │ 5:Radio │ 6:Fav │ q:Salir "
+    mid = " 0:Cfg│1:Lis│2:Exp│3:PL│4:His│5:Rad│6:Fav│q:Salir"
+    mn = " 0│1│2│3│4│5│6│q"
+    if w >= NAV_FULL_W:
+        return full
+    if w >= NAV_MID_W:
+        return mid
+    if w >= NAV_MIN_W:
+        return mn
+    return ""
+
 
 def safe_addstr(win: curses.window, y: int, x: int, text: str, attr: int | None = None, h: int = 0, w: int = 0) -> None:
     if y < 0 or y >= h or x < 0 or x >= w:
@@ -47,7 +103,9 @@ def draw_box(win: curses.window, h: int, w: int, title: str) -> None:
 
 def draw_nav(win: curses.window, h: int, w: int) -> None:
     nav = curses.color_pair(PAIR_NAV)
-    tabs = " 0:Config │ 1:Listen │ 2:Expl │ 3:Playlist │ 4:Hist │ 5:Radio │ 6:Fav │ q:Salir "
+    tabs = _build_nav(w)
+    if not tabs:
+        return
     win.move(h - NAV_ROW, 0)
     win.clrtoeol()
     safe_addstr(win, h - NAV_ROW, max(0, (w - len(tabs)) // 2), tabs, nav, h, w)

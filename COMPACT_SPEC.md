@@ -48,6 +48,7 @@
 | 3   | **Playlist**  | `3`   | Gestión de playlists (CRUD)                         |
 | 4   | **Historial** | `4`   | Últimos 100 reproducidos, con contador              |
 | 5   | **Radio**     | `5`   | Radios guardadas, CRUD, export M3U                  |
+| 6   | **Favoritos** | `6`   | Acceso rapido a favoritos con <f>                   |
 
 ### Acciones transversales (funcionan en cualquier vista)
 
@@ -57,7 +58,7 @@
 | `S`      | Stop (desde cualquier vista)                      |
 | `n` / `b`| Siguiente / anterior track                        |
 | `+` / `-`| Volumen +5 / -5                                   |
-| `0-5`    | Cambiar vista                                     |
+| `0-6`    | Cambiar vista                                     |
 | `?` / `F1`| Help overlay con pestañas por vista              |
 | `q`      | Salir (guarda todo)                               |
 | `Esc`    | Cancelar/cerrar overlay (Stack, Goto, KB, DirPicker, Help). En Historial: volver a Listen |
@@ -85,7 +86,7 @@
 | `t`       | Sleep timer toggle (on/off)                     |
 | `T`       | Sleep timer config (prompt minutos)             |
 | `g`       | Goto (seek dentro del track actual)             |
-| `o`       | Abrir URL de stream (radio/audio directo)       |
+| `f`       | Agregar/quitar playhead a Favoritos             |
 | `h` / `l` | Seek -5s / +5s                                  |
 | `Tab`     | Toggle Stack sub-vista (contenido del Slot)     |
 
@@ -95,6 +96,7 @@
 | ----------------- | ----------------------------------------------------- |
 | `hjkl` / `arrows` | Navegar items                                         |
 | `Enter`           | Mover playhead al item (sin overwrite)                |
+| `f`               | Agregar/quitar item a favoritos                       |
 | `d`               | Eliminar item (con confirmación)                      |
 | `x`               | Limpiar todo el Stack (con confirmación)              |
 | `s`               | Guardar Stack como playlist (prompt nombre)           |
@@ -141,6 +143,9 @@
 | `P`                     | Reproducir carpeta (carga todos los tracks al Stack)             |
 | `F5`                    | Refresh (recargar listado del directorio actual)                 |
 | `/`                     | Búsqueda inline (filtro por nombre)                              |
+| `f`                     | Agregar/Quitar item a favoritos                                  |
+| `F`                     | Abre vista [6] Favoritos                                         |
+
 
 ---
 
@@ -152,7 +157,7 @@
 | `d`       | Eliminar item de la playlist (con confirmación)                 |
 | `x`       | Limpiar toda la playlist (con confirmación)                     |
 | `c`       | Crear nueva playlist (prompt nombre)                            |
-| `e`       | Renombrar item en la playlist (prompt nuevo nombre)             |
+| `E`       | Renombrar item en la playlist (prompt nuevo nombre)             |
 | `R`       | Renombrar playlist (prompt nuevo nombre)                        |
 | `D`       | Eliminar playlist (con confirmación)                            |
 | `J` / `K` | Reordenar item (mover abajo / arriba)                           |
@@ -160,6 +165,7 @@
 | `s`       | Guardar playlist                                                |
 | `g` / `G` | Ir al inicio / fin                                              |
 | `/`       | Búsqueda inline (filtro por nombre/path)                        |
+| `f`       | Agregar/Quitar item a favoritos                                 |
 
 > **Nota**: No existe playlist "default". Si no hay playlists, se muestra helper instructivo.
 
@@ -175,6 +181,7 @@
 | `a`       | Añadir al **final** del destino (solo Stack, sin prompt) |
 | `A`       | Añadir **tras el playhead** del destino (solo Stack) |
 | `g` / `G` | Ir al inicio / fin                                      |
+| `f`       | Agregar/Quitar item a favoritos                         |
 
 > Formato entrada: nombre_archivo (visible), path + contador (interno).
 > Si el archivo ya no existe: muestra "Archivo Inexistente" sin interrumpir nada.
@@ -193,6 +200,7 @@
 | `X`       | Exportar como M3U                                       |
 | `j` / `k` | Cursor abajo / arriba                                   |
 | `g` / `G` | Ir al inicio / fin                                      |
+| `f`       | Agregar/Quitar item a favoritos                         |
 
 > Las radios se guardan en `radios.json`. Al reproducir, se añade al historial automáticamente.
 
@@ -380,14 +388,15 @@ tplay/
 
 | Feature                  | Descripción                                        |
 | ------------------------ | -------------------------------------------------- |
-| Carpeta como fuente (CD) | Enter en carpeta → carga todos los tracks al Stack |
 | Ecualizador              | Vía API VLC                                        |
-| Exportar M3U             | Desde playlist                                     |
 | Mouse support            | Clicks curses                                      |
 | Cover art                | vía chafa/viu                                      |
-| Radios guardadas         | Favoritos de URLs de stream                        |
 
-> **Modo radio** (URL/stream) ya implementado vía `o` en Listen.
+> Se implemento Carpeta como Fuente (CD) -- Ver keybiding [Explorer] <P>
+> Se implemento Exportar M3U -- Ver keybiding <X>
+> Se implemento auto-import de M3U desde vista [Explorer]
+> Se implemento vista Favoritos
+> **Modo radio** (URL/stream) con vista unica desde [Radio]
 
 ---
 
