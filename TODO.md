@@ -30,6 +30,6 @@
 
 ## Estética
 
-- [ ] **E1** — Radio emoji `📻` puede no renderizar (`views.py:819`) — Usar `[R]` o `~` consistente
-- [ ] **E2** — Barra controles Listen ancho fijo (`views.py:176-204`) — Podría desbordar en 60-61 cols
-- [ ] **E3** — Indicador `cur_s - dur_s` usa guion que parece resta (`ui.py:129`) — Usar `/` o `—`
+- [x] **E1** — Radio emoji `📻` puede no renderizar (`views.py:819`) — Cambiado a `[R]`
+- [x] **E2** — Barra controles Listen ancho fijo (`views.py:176-204`) — Responsive con mínimos + distribución de espacio
+- [x] **E3** — Indicador `cur_s - dur_s` usa guion que parece resta (`ui.py:129`) — Cambiado a ` / `

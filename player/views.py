@@ -93,7 +93,7 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
                 draw_item_row(app.stdscr, y, item.name, item.path, meta,
                               is_cursor=(idx == app.stack_cursor),
                               is_playing=is_playing, is_stream=is_stream,
-                              mode_tag=mode_tag, left_margin=8, attr=attr,
+                              mode_tag=mode_tag, left_margin=2, attr=attr,
                               h=h, w=w)
             hints1 = _build_hints([
                 ("Enter", "►"), ("Tab", "Volver"), ("d", "el"),
@@ -435,11 +435,14 @@ def draw_explorer(app: PlayerApp, h: int, w: int) -> None:
             attr = destacar
             dur_str = ""
         else:
-            base = name.rsplit('.', 1)[0] if '.' in name else name
             icon = "◉" if _is_video_file(full) else "♪"
-            line = f"  {mark}{icon} {base}  [{label}]"
-            attr = texto
             meta = app.meta_cache.get(full)
+            if meta and meta.get('title'):
+                display = f"{meta.get('artist', '?')} - {meta.get('title', name)}"
+            else:
+                display = name.rsplit('.', 1)[0] if '.' in name else name
+            line = f"  {mark}{icon} {display}  [{label}]"
+            attr = texto
             dur = meta.get('length', 0) if meta else 0
             dur_str = time_str(dur) if dur > 0 else ""
         dur_w = len(dur_str) + 3 if dur_str else 0
@@ -541,7 +544,7 @@ def draw_history(app: PlayerApp, h: int, w: int) -> None:
                       is_cursor=(idx == app.history_cursor),
                       is_stream=is_stream,
                       exists=exists, suffix=f" ({count}x)",
-                      left_margin=4, attr=texto, cursor_attr=destacar,
+                      left_margin=2, attr=texto, cursor_attr=destacar,
                       dur_attr=texto, fallback_icon="~",
                       fallback_label="Archivo Inexistente", h=h, w=w)
 
@@ -747,7 +750,7 @@ def draw_radio(app: PlayerApp, h: int, w: int) -> None:
     destacar = curses.color_pair(PAIR_DESTACAR)
     draw_box(win, h, w, "Radios")
     radios = app.radios
-    y0 = 3
+    y0 = 2
     list_h = h - app.LIST_H - 1
     scroll = app.radio_scroll
     cursor = app.radio_cursor
@@ -759,11 +762,17 @@ def draw_radio(app: PlayerApp, h: int, w: int) -> None:
         attr = destacar if is_cursor else texto
         if is_cursor:
             attr |= curses.A_REVERSE
-        line = f"  {r['name']}"
-        safe_addstr(win, y, 2, line[:w - 4], attr, h, w)
+        dur_str = "STREAM"
+        dur_w = len(dur_str) + 3
+        line = f"  [R] {r['name']}"
+        max_w = w - 2 - dur_w
+        if len(line) > max_w:
+            line = line[:max_w - 1] + "…"
+        safe_addstr(win, y, 2, line, attr, h, w)
         url_start = len(line) + 3
-        url_display = r['url'][:w - url_start - 2]
+        url_display = r['url'][:w - url_start - dur_w - 2]
         safe_addstr(win, y, url_start, url_display, attr, h, w)
+        safe_addstr(win, y, w - len(dur_str) - 2, dur_str, texto, h, w)
     if not radios:
         safe_addstr(win, y0, 2, "  Sin radios guardadas", texto, h, w)
 
@@ -827,8 +836,21 @@ def draw_favorites(app: PlayerApp, h: int, w: int) -> None:
         path = entry.get("path", "")
         is_stream = "://" in path
         icon = "[R]" if is_stream else "♪"
-        line = f"  {icon} {name}"
-        max_w = w - 4
+        if is_stream:
+            display = name
+            dur_str = "--:--"
+        else:
+            exists = os.path.isfile(path)
+            meta = app.meta_cache.get(path) if exists else None
+            if meta and meta.get('title'):
+                display = f"{meta.get('artist', '?')} - {meta.get('title', name)}"
+            else:
+                display = name.rsplit('.', 1)[0] if '.' in name else name
+            dur = meta.get('length', 0) if meta else 0
+            dur_str = time_str(dur) if dur > 0 else ""
+        dur_w = len(dur_str) + 3 if dur_str else 0
+        line = f"  {icon} {display}"
+        max_w = w - 2 - dur_w
         if len(line) > max_w:
             line = line[:max_w - 1] + "…"
 
@@ -837,3 +859,5 @@ def draw_favorites(app: PlayerApp, h: int, w: int) -> None:
             safe_addstr(win, y, 2, line, texto | curses.A_REVERSE, h, w)
         else:
             safe_addstr(win, y, 2, line, texto, h, w)
+        if dur_str:
+            safe_addstr(win, y, w - len(dur_str) - 2, dur_str, texto, h, w)
