@@ -6,11 +6,11 @@
 - [x] **B2** — Playlist Enter siempre arranca desde índice 0 (`handlers/playlist.py:207-214`) — Debería usar `playlist_cursor`
 - [x] **B3** — Favorites `a/A` bypass `Stack.append` (`handlers/favorites.py:54-64`) — Manipula lista directamente, rompe playhead cuando pila vacía
 - [x] **B4** — `_play_folder` y `_play_marked` sin snapshot (`handlers/explorer.py:243-271`) — Reemplazan pila sin `_push_snapshot()`
-- [ ] **B5** — `metadata.py` IndexError silenciado (`metadata.py:23-28`) — Tag malformado destruye toda la entrada de cache
-- [ ] **B6** — `playlist` property valida y loguea en cada acceso (`app.py:194-201`) — Multi-accesso por frame, genera salida en error.log
-- [ ] **B7** — `_handle_dialog_key` confirm: `chr(key)` para teclas no-imprimibles (`app.py:521`) — Confuso, mejor verificar explícitamente
-- [ ] **B8** — `_apply_updates` no verifica cambios locales antes de pull (`app.py:286-304`)
-- [ ] **B9** — Config view scroll clamp inconsistente (`handlers/config_view.py:67` vs `views.py:582`)
+- [x] **B5** — `metadata.py` IndexError silenciado (`metadata.py:23-28`) — Tag malformado destruye toda la entrada de cache
+- [x] **B6** — `playlist` property valida y loguea en cada acceso (`app.py:194-201`) — Multi-acceso por frame, genera salida en error.log
+- [x] **B7** — `_handle_dialog_key` confirm: `chr(key)` para teclas no-imprimibles (`app.py:521`) — Confuso, mejor verificar explícitamente
+- [x] **B8** — `_apply_updates` no verifica cambios locales antes de pull (`app.py:286-304`)
+- [x] **B9** — Config view scroll clamp inconsistente (`handlers/config_view.py:67` vs `views.py:582`)
 
 ## UX
 

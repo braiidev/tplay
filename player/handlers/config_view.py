@@ -64,7 +64,8 @@ def handle_config(app: PlayerApp, key: int) -> None:
             _open_dir_picker(app, key_name)
 
     h, _ = app.stdscr.getmaxyx()
-    app.config_scroll = _clamp_scroll(app.config_cursor, app.config_scroll, h - 5)
+    list_h = h - 5 if h < 16 else h - 6
+    app.config_scroll = _clamp_scroll(app.config_cursor, app.config_scroll, list_h)
 
 
 def _cycle_theme(app: PlayerApp, direction: int) -> None:

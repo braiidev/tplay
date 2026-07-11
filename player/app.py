@@ -193,12 +193,7 @@ class PlayerApp:
 
     @property
     def playlist(self) -> list[tuple[str, str]]:
-        pl: list[tuple[str, str]] = self.playlist_data.get(self.active_name, [])
-        for i, entry in enumerate(pl):
-            if not isinstance(entry, (list, tuple)) or len(entry) != 2:
-                import sys
-                print(f"[tplay] playlist[{i}] inválido: {entry!r}", file=sys.stderr)
-        return pl
+        return self.playlist_data.get(self.active_name, [])
 
     @property
     def paused(self) -> bool:
@@ -293,6 +288,11 @@ class PlayerApp:
             if result.returncode == 0:
                 self.update_available = False
                 return True, "Actualizado correctamente"
+            status = subprocess.run(
+                ["git", "status", "--porcelain"], cwd=repo,
+                capture_output=True, text=True, timeout=5)
+            if status.stdout.strip():
+                return False, "Hay cambios locales — hacé commit o stash primero"
             result2 = subprocess.run(
                 ["git", "reset", "--hard", "origin/main"],
                 cwd=repo, capture_output=True, text=True, timeout=10)
@@ -524,7 +524,16 @@ class PlayerApp:
             self.dialog = None
             curses.curs_set(0)
             curses.flushinp()
-            if cb and (chr(key).lower() in ("s", "y") or key in (10, 13)):
+            instant = key in (ord("s"), ord("S"), ord("y"), ord("Y"))
+            enter = key in (10, 13)
+            if cb and (instant or enter):
+                if enter:
+                    h, w = self.stdscr.getmaxyx()
+                    ui.draw_dialog(self.stdscr, h, w, "Confirmar",
+                                   "  ✓  ", is_confirm=True,
+                                   compact=h < 16)
+                    self.stdscr.refresh()
+                    time.sleep(0.15)
                 cb()
         elif d["type"] == "prompt":
             cur: int = d.get("cursor_pos", len(d["buf"]))

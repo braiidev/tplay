@@ -6,6 +6,17 @@ import mutagen
 from collections import OrderedDict
 
 
+def _safe_tag(d: Any, key: str) -> str | None:
+    v = d.get(key)
+    if not v:
+        return None
+    try:
+        result: str = v[0]
+        return result
+    except (IndexError, TypeError):
+        return None
+
+
 class MetadataCache:
     def __init__(self, maxsize: int = 10000) -> None:
         self._maxsize: int = maxsize
@@ -21,10 +32,10 @@ class MetadataCache:
                 tags = {}
             else:
                 tags = {
-                    'title': audio.get('title', [None])[0],
-                    'artist': audio.get('artist', [None])[0],
-                    'album': audio.get('album', [None])[0],
-                    'genre': audio.get('genre', [None])[0],
+                    'title': _safe_tag(audio, 'title'),
+                    'artist': _safe_tag(audio, 'artist'),
+                    'album': _safe_tag(audio, 'album'),
+                    'genre': _safe_tag(audio, 'genre'),
                     'length': int(audio.info.length) if audio.info else 0,
                 }
             self._cache[path] = tags
