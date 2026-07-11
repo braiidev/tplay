@@ -296,16 +296,26 @@ class PlayerApp:
     def _apply_updates(self) -> tuple[bool, str]:
         repo = self._repo_dir
         try:
-            subprocess.run(["git", "fetch", "origin"], cwd=repo,
-                           capture_output=True, timeout=10)
-            result = subprocess.run(["git", "pull", "--ff-only"], cwd=repo,
-                                    capture_output=True, text=True, timeout=30)
+            subprocess.run(
+                ["git", "fetch", "origin"], cwd=repo, capture_output=True, timeout=10
+            )
+            result = subprocess.run(
+                ["git", "pull", "--ff-only"],
+                cwd=repo,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
             if result.returncode == 0:
                 self.update_available = False
                 return True, "Actualizado correctamente"
             result2 = subprocess.run(
                 ["git", "reset", "--hard", "origin/main"],
-                cwd=repo, capture_output=True, text=True, timeout=10)
+                cwd=repo,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
             if result2.returncode == 0:
                 self.update_available = False
                 return True, "Actualizado correctamente"
@@ -482,8 +492,6 @@ class PlayerApp:
             if self.update_check_done and not self._update_toast_shown:
                 self._update_toast_shown = True
                 if self.update_available:
-                    n = self.update_behind
-                    s = "s" if n != 1 else ""
                     self.toast("Nueva versión disponible")
             key = self.stdscr.getch()
             if key == curses.KEY_RESIZE:
