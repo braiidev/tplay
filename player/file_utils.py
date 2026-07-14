@@ -3,12 +3,15 @@ from __future__ import annotations
 import os
 from typing import Any
 
-AUDIO_EXT: tuple[str, ...] = (".mp3", ".flac", ".wav", ".ogg")
-VIDEO_EXT: tuple[str, ...] = (".mp4", ".mkv", ".avi", ".mov")
+AUDIO_EXT: tuple[str, ...] = (".mp3", ".flac", ".wav", ".ogg", ".m4a", ".aac", ".opus", ".weba", ".wma", ".aiff", ".aif")
+VIDEO_EXT: tuple[str, ...] = (".mp4", ".mkv", ".avi", ".mov", ".flv", ".wmv")
 PLAYLIST_EXT: tuple[str, ...] = (".m3u", ".pls")
 ALLOWED_EXT: tuple[str, ...] = AUDIO_EXT + VIDEO_EXT + PLAYLIST_EXT
 EXT_LABEL: dict[str, str] = {".mp3": "mp3", ".flac": "flac", ".wav": "wav", ".ogg": "ogg",
+                             ".m4a": "m4a", ".aac": "aac", ".opus": "opus", ".weba": "webm",
+                             ".wma": "wma", ".aiff": "aiff", ".aif": "aiff",
                              ".mp4": "vid", ".mkv": "vid", ".avi": "vid", ".mov": "vid",
+                             ".flv": "vid", ".wmv": "vid",
                              ".m3u": "PL", ".pls": "PL"}
 
 
