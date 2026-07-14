@@ -144,6 +144,56 @@ def draw_scroll_indicators(win: curses.window, h: int, w: int,
         safe_addstr(win, max(0, h - 3), max(0, w - 3), "▼", nav, h, w)
 
 
+def draw_tab_carousel(win: curses.window, y: int, tab_names: list[str],
+                      current_idx: int, inner_w: int, ox: int,
+                      nav_attr: int, curr_attr: int, fill_attr: int,
+                      sep: str = " │ ",
+                      h: int = 0, w: int = 0) -> None:
+    n = len(tab_names)
+    prev_idx = (current_idx - 1) % n
+    next_idx = (current_idx + 1) % n
+    carousel_parts = [
+        (tab_names[prev_idx], nav_attr),
+        (tab_names[current_idx], curr_attr),
+        (tab_names[next_idx], nav_attr),
+    ]
+    parts_w = sum(len(name) for name, _ in carousel_parts) + len(sep) * 2
+    start_x = ox + max(0, (inner_w - parts_w) // 2)
+
+    left_fill = start_x - ox
+    if left_fill > 0:
+        safe_addstr(win, y, ox, "─" * left_fill, fill_attr, h, w)
+
+    x = start_x
+    for i, (name, attr) in enumerate(carousel_parts):
+        if i > 0:
+            safe_addstr(win, y, x, sep, nav_attr, h, w)
+            x += len(sep)
+        safe_addstr(win, y, x, name, attr, h, w)
+        x += len(name)
+
+    right_start = ox + inner_w
+    if x < right_start:
+        safe_addstr(win, y, x, "─" * (right_start - x), fill_attr, h, w)
+
+
+def clamp_scroll(scroll: int, total: int, list_h: int, cursor: int) -> int:
+    max_scroll = max(0, total - list_h)
+    scroll = max(0, min(scroll, max_scroll))
+    if cursor < scroll:
+        scroll = cursor
+    elif cursor >= scroll + list_h:
+        scroll = cursor - list_h + 1
+    return max(0, scroll)
+
+
+def draw_list_indicators(win: curses.window, h: int, w: int,
+                         scroll: int, total: int, list_h: int) -> None:
+    has_above = scroll > 0
+    has_below = scroll + list_h < total
+    draw_scroll_indicators(win, h, w, has_above, has_below)
+
+
 def draw_status(win: curses.window, h: int, w: int, audio: Any, playing: bool, current_file: str | None, volume: int,
                 shuffle: bool, repeat: bool, active_name: str, current_view: int,
                 stack: Any = None) -> None:
@@ -587,38 +637,10 @@ def draw_help(win: curses.window, h: int, w: int, scroll: int = 0, tab: int = 0)
         else:
             # Tab bar carousel at row 0 (replaces top border)
             tab_names = [t["name"] for t in HELP_TABS]
-            n = len(tab_names)
-            prev_idx = (tab - 1) % n
-            next_idx = (tab + 1) % n
-            prev_name = tab_names[prev_idx]
-            curr_name = tab_names[tab]
-            next_name = tab_names[next_idx]
             inner_w = box_w - 2
-            sep = " │ "
-            carousel_parts = [
-                (prev_name, nav),
-                (curr_name, overlay | curses.A_REVERSE),
-                (next_name, nav),
-            ]
-            parts_w = sum(len(name) for name, _ in carousel_parts) + len(sep) * 2
-            start_x = ox + 1 + max(0, (inner_w - parts_w) // 2)
-            # Draw left vertical bar + fill
-            left_fill = start_x - (ox + 1)
             safe_addstr(win, 0, ox, "│", marco, h, w)
-            if left_fill > 0:
-                safe_addstr(win, 0, ox + 1, "─" * left_fill, marco, h, w)
-            # Draw carousel
-            x = start_x
-            for i, (name, attr) in enumerate(carousel_parts):
-                if i > 0:
-                    safe_addstr(win, 0, x, sep, nav, h, w)
-                    x += len(sep)
-                safe_addstr(win, 0, x, name, attr, h, w)
-                x += len(name)
-            # Fill right + right vertical bar
-            right_start = ox + 1 + inner_w
-            if x < right_start:
-                safe_addstr(win, 0, x, "─" * (right_start - x), marco, h, w)
+            draw_tab_carousel(win, 0, tab_names, tab, inner_w, ox + 1,
+                              nav, overlay | curses.A_REVERSE, marco, h=h, w=w)
             safe_addstr(win, 0, ox + box_w - 1, "│", marco, h, w)
 
             # Vertical bars (content starts at row 1)

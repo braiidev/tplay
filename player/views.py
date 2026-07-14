@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV, PAIR_OVERLAY
 from .file_utils import time_str, ext_label, is_url as _is_url, is_video_file as _is_video_file
-from .ui import safe_addstr, draw_box, draw_box_inline, draw_scroll_indicators, _build_hints, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN, COMPACT_THRESHOLD
+from .ui import safe_addstr, draw_box, draw_box_inline, draw_scroll_indicators, draw_tab_carousel, clamp_scroll, draw_list_indicators, _build_hints, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN, COMPACT_THRESHOLD
 from . import keybindings as kb
 from .handlers import _get_current_key
 
@@ -503,9 +503,7 @@ def draw_explorer(app: PlayerApp, h: int, w: int) -> None:
             if fill_len > 0:
                 safe_addstr(app.stdscr, y, fill_start, " " * fill_len, attr | curses.A_REVERSE, h, w)
 
-    has_above = app.scroll > 0
-    has_below = app.scroll + list_h < total
-    draw_scroll_indicators(app.stdscr, h, w, has_above, has_below)
+    draw_list_indicators(app.stdscr, h, w, app.scroll, total, list_h)
 
 
 def draw_playlist(app: PlayerApp, h: int, w: int) -> None:
@@ -585,9 +583,7 @@ def draw_playlist(app: PlayerApp, h: int, w: int) -> None:
                       exists=exists, left_margin=PLAYLIST_MARGIN,
                       attr=texto, dur_attr=texto, h=h, w=w)
 
-    has_above = app.playlist_scroll > 0
-    has_below = app.playlist_scroll + list_h < len(indices)
-    draw_scroll_indicators(app.stdscr, h, w, has_above, has_below)
+    draw_list_indicators(app.stdscr, h, w, app.playlist_scroll, len(indices), list_h)
 
 
 def draw_history(app: PlayerApp, h: int, w: int) -> None:
@@ -620,9 +616,7 @@ def draw_history(app: PlayerApp, h: int, w: int) -> None:
                       dur_attr=texto, fallback_icon="~",
                       fallback_label="Archivo Inexistente", h=h, w=w)
 
-    has_above = start > 0
-    has_below = start + list_h < len(app.history)
-    draw_scroll_indicators(app.stdscr, h, w, has_above, has_below)
+    draw_list_indicators(app.stdscr, h, w, start, len(app.history), list_h)
 
 
 def draw_config(app: PlayerApp, h: int, w: int) -> None:
@@ -648,35 +642,9 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
 
     # --- Tab bar carousel at line 1 ---
     tab_names = [t["name"] for t in app.config_tabs]
-    n = len(tab_names)
-    prev_idx = (app.config_tab_idx - 1) % n
-    next_idx = (app.config_tab_idx + 1) % n
-    prev_name = tab_names[prev_idx]
-    curr_name = tab_names[app.config_tab_idx]
-    next_name = tab_names[next_idx]
     inner_w = w - 4
-    sep = " │ "
-    carousel_parts = [
-        (prev_name, nav),
-        (curr_name, overlay | curses.A_REVERSE),
-        (next_name, nav),
-    ]
-    parts_w = sum(len(name) for name, _ in carousel_parts) + len(sep) * 2
-    start_x = 2 + max(0, (inner_w - parts_w) // 2)
-    x = start_x
-    for i, (name, attr) in enumerate(carousel_parts):
-        if i > 0:
-            safe_addstr(app.stdscr, 1, x, sep, nav, h, w)
-            x += len(sep)
-        safe_addstr(app.stdscr, 1, x, name, attr, h, w)
-        x += len(name)
-    # Fill left and right with ─
-    left_fill = start_x - 2
-    if left_fill > 0:
-        safe_addstr(app.stdscr, 1, 2, "─" * left_fill, marco, h, w)
-    right_start = 2 + inner_w
-    if x < right_start:
-        safe_addstr(app.stdscr, 1, x, "─" * (right_start - x), marco, h, w)
+    draw_tab_carousel(app.stdscr, 1, tab_names, app.config_tab_idx, inner_w, 2,
+                      nav, overlay | curses.A_REVERSE, marco, h=h, w=w)
 
     # --- Hints line for Audio tab ---
     y_offset = 0
@@ -698,12 +666,7 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
     cur = app.config_cursor
     list_h = h - 5 - y_offset if h < COMPACT_THRESHOLD else h - 6 - y_offset
 
-    # Clamp scroll
-    if cur < app.config_scroll:
-        app.config_scroll = cur
-    elif cur >= app.config_scroll + list_h:
-        app.config_scroll = cur - list_h + 1
-    app.config_scroll = max(0, app.config_scroll)
+    app.config_scroll = clamp_scroll(app.config_scroll, total, list_h, cur)
 
     visible = items[app.config_scroll:app.config_scroll + list_h]
     is_custom_eq = app.config.get("eq_preset", "Flat") == "Custom"
@@ -750,9 +713,7 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
         else:
             safe_addstr(app.stdscr, y, 2, line, texto, h, w)
 
-    has_above = app.config_scroll > 0
-    has_below = app.config_scroll + list_h < total
-    draw_scroll_indicators(app.stdscr, h, w, has_above, has_below)
+    draw_list_indicators(app.stdscr, h, w, app.config_scroll, total, list_h)
 
 
 def draw_keybindings(app: PlayerApp, h: int, w: int) -> None:
@@ -911,9 +872,7 @@ def draw_radio(app: PlayerApp, h: int, w: int) -> None:
     if not radios:
         safe_addstr(win, y0, 2, "  Sin radios guardadas", texto, h, w)
         return
-    has_above = scroll > 0
-    has_below = scroll + list_h < len(radios)
-    draw_scroll_indicators(win, h, w, has_above, has_below)
+    draw_list_indicators(win, h, w, scroll, len(radios), list_h)
 
 
 def draw_dir_picker(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
@@ -1012,6 +971,4 @@ def draw_favorites(app: PlayerApp, h: int, w: int) -> None:
             if fill_len > 0:
                 safe_addstr(win, y, fill_start, " " * fill_len, texto | curses.A_REVERSE, h, w)
 
-    has_above = app.favorites_scroll > 0
-    has_below = app.favorites_scroll + list_h < len(app.favorites)
-    draw_scroll_indicators(win, h, w, has_above, has_below)
+    draw_list_indicators(win, h, w, app.favorites_scroll, len(app.favorites), list_h)
