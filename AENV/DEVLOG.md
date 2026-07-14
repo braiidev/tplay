@@ -208,3 +208,26 @@
 - Compact mode: sin filas extra, solo centrado horizontal (preserva densidad)
 
 **Estado**: v1.5.54, mypy strict pasa.
+
+---
+
+## Entrada 12 — 2026-07-14 — Config/Audio polish (solo lectura + hints)
+
+**Tarea**: Fase 4.1 (bands solo lectura) + Fase 4.2 (hints contextuales)
+
+**Cambios**:
+- **4.1** Config/Audio: bandas EQ muestran color `texto` cuando preset ≠ Custom (antes siempre `destacar` en cursor)
+- **4.2** Config/Audio: hints dinámicos por tipo de item:
+  - `eq_preamp` / `eq_band`: `← → ±0.5dB │ r reset`
+  - `choice`: `← → cambiar │ r reset`
+  - Otros: `← → cambiar` (genérico)
+- Variable `is_custom_eq` calculada una vez por frame
+
+**Archivos modificados**:
+- `player/views.py` — draw_config: is_custom_eq, hints contextuales, eq_band color
+
+**Decisión**:
+- Solo `eq_band` usa color condicional — `eq_preamp` sigue siendo editable en todos los presets
+- Hints se recalculan por frame (simple, sin caché)
+
+**Estado**: v1.5.55, mypy strict pasa.

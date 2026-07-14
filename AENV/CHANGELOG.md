@@ -1,5 +1,9 @@
 # CHANGELOG — tplay
 
+## v1.5.55
+- feat: Config/Audio — bandas EQ en modo solo lectura (color texto cuando preset ≠ Custom)
+- feat: Config/Audio — hints contextuales por tipo de item (±0.5dB para bandas/preamp, cambiar para choice)
+
 ## v1.5.54
 - feat: Listen view — metadata centrada (estado, título, artista/álbum) en full y compact mode
 - feat: indicador de volumen visual con barras (8 chars full, 4 chars compact, fallback a texto)

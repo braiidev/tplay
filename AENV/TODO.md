@@ -5,8 +5,6 @@
 |----|---------|-----------|--------|
 | F9 | Visualizer (FFT bars) | Media | Investigado en `docs/BRAINSTORM.md` |
 | F10 | yt-dlp Web Explorer | Baja | Investigado en `docs/BRAINSTORM.md` |
-| 4.1 | Config bars solo lectura (presets) | Media | En `DESIGNS.md` |
-| 4.2 | Hints contextuales Config Audio | Media | En `DESIGNS.md` |
 | 5.1 | Tab carousel helper | Baja | En `DESIGNS.md` |
 | 5.2 | List renderer helper | Baja | En `DESIGNS.md` |
 
@@ -24,6 +22,8 @@
 - [x] Fase 3.2 Scroll indicators (v1.5.53)
 - [x] Fase 2.2 Listen metadata centrada (v1.5.54)
 - [x] Fase 2.3 Indicador volumen visual (v1.5.54)
+- [x] Fase 4.1 Config bars solo lectura (v1.5.55)
+- [x] Fase 4.2 Hints contextuales Config Audio (v1.5.55)
 
 ## Completado (histórico)
 Ver CHANGELOG.md para historial completo.

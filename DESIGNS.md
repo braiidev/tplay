@@ -196,6 +196,7 @@
 
 **Archivos**: `player/views.py` (draw_config)
 **Esfuerzo**: ~15 min
+**Estado**: ✅ Hecho (v1.5.55)
 
 ### 4.2 Hints contextuales en Config —(Audio
 
@@ -213,6 +214,7 @@
 
 **Archivos**: `player/views.py` (draw_config)
 **Esfuerzo**: ~20 min
+**Estado**: ✅ Hecho (v1.5.55)
 
 ### 4.3 Explorer — Icono de directorio más visible
 

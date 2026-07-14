@@ -1,8 +1,8 @@
 # STATE — tplay
 
 ## Versión actual
-- **v1.5.54**
-- **Último commit**: `3e5f0e1` — docs: CHANGELOG + DEVLOG draw_box_inline + scroll indicators
+- **v1.5.55**
+- **Último commit**: `41c722e` — docs: Listen metadata centrada + volumen visual
 
 ## Estado del código
 - **Compila**: ✅ (mypy strict pasa)
@@ -17,12 +17,12 @@
 | F8 | Cover art (chafa/viu) | Descartado |
 | F28 | Streaming/Radio | ✅ Hecho |
 
-## Sesión actual (v1.5.54)
+## Sesión actual (v1.5.55)
 - UI polish:
   - Listen view: metadata centrada (estado, título, artista/álbum) en full y compact
   - Indicador de volumen visual con barras (8 chars full, 4 chars compact)
-  - Helper _vol_bar() para barras de volumen
-  - Fallback automático a texto si el espacio no alcanza
+  - Config/Audio: bandas EQ solo lectura cuando preset ≠ Custom (color texto)
+  - Config/Audio: hints contextuales por tipo de item (±0.5dB, cambiar, reset)
 
 ## Módulos del sistema
 | Módulo | Archivos | Estado |
