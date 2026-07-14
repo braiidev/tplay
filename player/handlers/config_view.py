@@ -148,8 +148,10 @@ def _cycle_eq_preset(app: PlayerApp, direction: int) -> None:
         idx = 0
     new_preset = EQ_PRESET_NAMES[(idx + direction) % len(EQ_PRESET_NAMES)]
     app.config["eq_preset"] = new_preset
+    saved_cursor = app.config_cursor
     app._build_config_tabs()
-    app.config_cursor = min(app.config_cursor, len(app.config_items) - 1)
+    app.config_cursor = min(saved_cursor, len(app.config_items) - 1)
+    app.config_scroll = 0
     if app.config.get("eq_enabled", False):
         if new_preset == "Custom":
             bands = app.config.get("eq_bands", [0.0] * 10)
