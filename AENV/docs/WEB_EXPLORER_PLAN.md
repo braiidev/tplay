@@ -11,236 +11,283 @@ Nueva vista V7 "Web" que permite buscar en YouTube via `yt-dlp`, navegar resulta
 
 ---
 
-## Paso 1.0: Auto-install en `--update`
+## Estado actual (v1.5.60)
 
-### Archivo: `player/__init__.py` (modificar `_cli_update`)
+### Lo que ya está implementado
+- `player/web.py` — wrapper yt-dlp (search, WebResult, format_duration)
+- `player/handlers/webexplorer.py` — handler V7 (search input, nav, playback)
+- `player/views.py` — draw_web()
+- `player/app.py` — V_WEB=7, handler/drawer, dispatch, web_search_mode intercept
+- `player/ui.py` — nav bar 7:Web, help tab Web
+- `player/config.py` — defaults online
+- `player/__init__.py` — auto-install deps en --update
+- `requirements.txt` — yt-dlp
 
-### Lógica
-1. Antes de `git pull`, leer contenido actual de `requirements.txt`
-2. Después del pull, leer nuevo `requirements.txt`
-3. Comparar líneas (ignorando espacios y comentarios)
-4. Si hay paquetes nuevos → `pip install --user <paquetes>`
-5. Si falla → mostrar toast con instrucciones manuales (`pip install --break-system-packages yt-dlp`)
+### Bugs fixeados
+- B20: web_search_mode interceptado en _handle_key_mode_specific
+- B21: web_search_mode reset en view switch
 
-### Código aproximado
+### Bug pendiente: B22 — search() siempre devuelve "Sin resultados"
+
+**Causa raíz**: `extract_flat=False` con yt-dlp search retorna entries pero `entry.get("url", "")` es string vacío. yt-dlp search solo retorna metadata básica (title, id, webpage_url) sin extraer stream URL.
+
+**Test que confirma**:
 ```python
-def _cli_update() -> bool:
-    repo = ...
-    # Guardar requirements viejo
-    req_path = os.path.join(repo, "requirements.txt")
-    old_reqs = set()
-    if os.path.isfile(req_path):
-        with open(req_path) as f:
-            old_reqs = {l.strip() for l in f if l.strip() and not l.startswith("#")}
-    
-    # git pull...
-    
-    # Detectar paquetes nuevos
-    if os.path.isfile(req_path):
-        with open(req_path) as f:
-            new_reqs = {l.strip() for l in f if l.strip() and not l.startswith("#")}
-        added = new_reqs - old_reqs
-        if added:
-            pkgs = [p.split(">=")[0].split("==")[0] for p in added]
-            result = subprocess.run(
-                [sys.executable, "-m", "pip", "install", "--user"] + pkgs,
-                capture_output=True, text=True, timeout=120
-            )
-            if result.returncode != 0:
-                print(f"  ⚠ Instalá manualmente: pip install --break-system-packages {' '.join(pkgs)}")
+import yt_dlp
+with yt_dlp.YoutubeDL(opts) as ydl:
+    info = ydl.extract_info("ytsearch3:beethoven", download=False)
+    for e in info["entries"]:
+        print(e.get("url"))  # → "" (vacío siempre)
 ```
+
+**Solución**: Usar `extract_flat=True` para obtener la lista (rápido), luego extraer stream URL de cada entry individualmente con `extract_info(entry["url"], download=False)`.
 
 ---
 
-## Paso 1.1: Wrapper `player/web.py`
+## Cambio de diseño: Registry de plataformas
 
-### Archivo: `player/web.py` (nuevo)
+### Problema
+El approach actual usa `ytsearch5:query` hardcodeado. No soporta otras plataformas ni tiene tracking de uso.
 
-### Contenido
+### Solución: Base de datos de plataformas
+Estructura JSON en `~/.config/tplay/data/platforms.json`:
+
+```json
+[
+  {
+    "name": "YouTube",
+    "url": "https://www.youtube.com",
+    "download_pattern": "/watch?v={id}",
+    "search_pattern": "/results?search_query={query}",
+    "search_prefix": "ytsearch",
+    "downloads": 0
+  },
+  {
+    "name": "Dailymotion",
+    "url": "https://www.dailymotion.com",
+    "download_pattern": "/video/{id}",
+    "search_pattern": "/search/{query}/videos",
+    "search_prefix": "dmsearch",
+    "downloads": 0
+  }
+]
+```
+
+### Campos
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `name` | str | Nombre legible (YouTube, Dailymotion) |
+| `url` | str | URL base del sitio |
+| `download_pattern` | str | Patrón de URL de video, `{id}` se reemplaza |
+| `search_pattern` | str | Patrón de URL de búsqueda, `{query}` se reemplaza |
+| `search_prefix` | str | Prefijo yt-dlp para búsqueda nativa (`ytsearch`, `dmsearch`) |
+| `downloads` | int | Contador de descargas realizadas |
+
+### Por qué `search_prefix` es clave
+yt-dlp soporta búsqueda nativa en muchas plataformas:
+- `ytsearch5:query` → YouTube
+- `dmsearch5:query` → Dailymotion
+- `scsearch5:query` → SoundCloud
+- `vpsearch5:query` → Vimeo
+
+El `search_prefix` permite construir la query de búsqueda sin parsear URLs.
+
+---
+
+## Plan de implementación
+
+### Paso 2.1: Crear `player/platforms.py` (nuevo)
+
+Módulo que maneja el registry de plataformas.
+
 ```python
-"""yt-dlp wrapper para Web Explorer."""
+"""Registry de plataformas soportadas para Web Explorer."""
 from __future__ import annotations
-import re
-from dataclasses import dataclass
-from typing import Any
+import json
+import os
+from dataclasses import dataclass, field, asdict
 
-try:
-    import yt_dlp
-except ImportError:
-    yt_dlp = None  # type: ignore[import-untyped]
+PLATFORMS_FILE = os.path.expanduser("~/.config/tplay/data/platforms.json")
+
+DEFAULT_PLATFORMS = [
+    {
+        "name": "YouTube",
+        "url": "https://www.youtube.com",
+        "download_pattern": "/watch?v={id}",
+        "search_pattern": "/results?search_query={query}",
+        "search_prefix": "ytsearch",
+        "downloads": 0,
+    },
+]
 
 
 @dataclass
-class WebResult:
-    title: str
-    url: str           # stream URL (para VLC)
-    duration: int      # segundos
-    channel: str
-    webpage_url: str   # URL original
-    platform: str      # "youtube", etc.
+class Platform:
+    name: str
+    url: str
+    download_pattern: str
+    search_pattern: str
+    search_prefix: str
+    downloads: int = 0
 
 
-def is_available() -> bool:
-    """Retorna True si yt-dlp está instalado."""
-    return yt_dlp is not None
+def load_platforms() -> list[Platform]:
+    """Carga plataformas desde archivo o crea defaults."""
+    try:
+        with open(PLATFORMS_FILE) as f:
+            data = json.load(f)
+        return [Platform(**p) for p in data]
+    except (FileNotFoundError, json.JSONDecodeError, TypeError):
+        return [Platform(**p) for p in DEFAULT_PLATFORMS]
 
 
-def search(query: str, max_results: int = 5) -> list[WebResult]:
+def save_platforms(platforms: list[Platform]) -> None:
+    """Guarda plataformas a archivo."""
+    try:
+        os.makedirs(os.path.dirname(PLATFORMS_FILE), exist_ok=True)
+        with open(PLATFORMS_FILE, "w") as f:
+            json.dump([asdict(p) for p in platforms], f, indent=2)
+    except OSError:
+        pass
+
+
+def get_search_prefix(platforms: list[Platform], name: str) -> str:
+    """Retorna el search_prefix para una plataforma."""
+    for p in platforms:
+        if p.name.lower() == name.lower():
+            return p.search_prefix
+    return "ytsearch"  # fallback
+
+
+def increment_downloads(platforms: list[Platform], name: str) -> None:
+    """Incrementa el contador de descargas de una plataforma."""
+    for p in platforms:
+        if p.name.lower() == name.lower():
+            p.downloads += 1
+            break
+```
+
+### Archivos afectados
+- **Nuevo**: `player/platforms.py`
+- **Nuevo**: `~/.config/tplay/data/platforms.json` (se crea automáticamente)
+
+---
+
+### Paso 2.2: Rediseñar `player/web.py`
+
+Cambios principales:
+1. Usar `extract_flat=True` para listar resultados (rápido)
+2. Extraer stream URL individualmente por cada entry
+3. Recibir `search_prefix` como parámetro
+4. Incrementar contador de descargas al hacer play
+
+```python
+def search(query: str, max_results: int = 5, 
+           search_prefix: str = "ytsearch") -> list[WebResult]:
     """
-    Busca en YouTube (u otra plataforma).
-    Retorna lista de WebResult o lista vacía.
-    Lanza RuntimeError si yt-dlp no está instalado.
+    Busca en la plataforma indicada.
+    1. extract_flat=True → obtiene lista de entries (rápido, sin stream URLs)
+    2. Para cada entry → extract_info para obtener stream URL
     """
     if not is_available():
-        raise RuntimeError("yt-dlp no instalado: pip install yt-dlp")
+        raise RuntimeError("yt-dlp no instalado: pip install --break-system-packages yt-dlp")
+    
     results: list[WebResult] = []
-    opts = {
+    try:
+        import yt_dlp
+    except ImportError:
+        return results
+    
+    # Paso 1: listar resultados (rápido)
+    list_opts: dict[str, object] = {
+        "quiet": True,
+        "no_warnings": True,
+        "extract_flat": True,  # No extraer URLs aún
+    }
+    try:
+        with yt_dlp.YoutubeDL(list_opts) as ydl:
+            info = ydl.extract_info(f"{search_prefix}{max_results}:{query}", download=False)
+            if not info or "entries" not in info:
+                return results
+            entries = list(info["entries"])
+    except Exception:
+        return results
+    
+    # Paso 2: extraer stream URL de cada entry
+    extract_opts: dict[str, object] = {
         "quiet": True,
         "no_warnings": True,
         "extract_flat": False,
-        "default_search": "ytsearch",
+        "skip_download": True,
     }
-    try:
-        with yt_dlp.YoutubeDL(opts) as ydl:  # type: ignore[union-attr]
-            info = ydl.extract_info(f"ytsearch{max_results}:{query}", download=False)
-            if not info or "entries" not in info:
-                return results
-            for entry in info["entries"]:
-                if entry is None:
+    for entry in entries:
+        if entry is None:
+            continue
+        entry_url = entry.get("url") or entry.get("webpage_url", "")
+        if not entry_url:
+            continue
+        try:
+            with yt_dlp.YoutubeDL(extract_opts) as ydl:
+                detail = ydl.extract_info(entry_url, download=False)
+                if not detail:
                     continue
-                stream_url = entry.get("url", "")
-                if not stream_url and entry.get("formats"):
-                    audio_fmts = [f for f in entry["formats"]
+                stream_url = detail.get("url", "")
+                if not stream_url and detail.get("formats"):
+                    audio_fmts = [f for f in detail["formats"]
                                   if f.get("acodec") != "none"]
                     if audio_fmts:
                         best = max(audio_fmts, key=lambda f: f.get("abr", 0))
                         stream_url = best.get("url", "")
                 if not stream_url:
                     continue
-                duration = entry.get("duration") or 0
                 results.append(WebResult(
-                    title=entry.get("title", "Sin título"),
+                    title=detail.get("title", entry.get("title", "Sin título")),
                     url=stream_url,
-                    duration=int(duration),
-                    channel=entry.get("channel", entry.get("uploader", "")),
-                    webpage_url=entry.get("webpage_url", ""),
-                    platform=entry.get("extractor", "unknown"),
+                    duration=int(detail.get("duration") or 0),
+                    channel=detail.get("channel", detail.get("uploader", "")),
+                    webpage_url=detail.get("webpage_url", entry_url),
+                    platform=detail.get("extractor", "unknown"),
                 ))
-    except Exception:
-        return results
+        except Exception:
+            continue
+    
     return results
-
-
-def format_duration(seconds: int) -> str:
-    """Formatea segundos a MM:SS o HH:MM:SS."""
-    if seconds <= 0:
-        return "--:--"
-    h, remainder = divmod(seconds, 3600)
-    m, s = divmod(remainder, 60)
-    if h > 0:
-        return f"{h}:{m:02d}:{s:02d}"
-    return f"{m:02d}:{s:02d}"
 ```
 
 ### Notas
-- `extract_flat=False` porque necesitamos la `url` de streaming
-- `default_search="ytsearch"` permite que yt-dlp use su búsqueda nativa
-- Si `formats` no tiene `url` directa, buscamos el mejor formato de audio
-- `format_duration` helper para UI
+- `extract_flat=True` → la búsqueda lista rápido (~1s)
+- `extract_info(entry_url)` por cada resultado → extrae stream URL (~2-3s cada uno)
+- Total para 5 resultados: ~10-15s (aceptable, con toast de progreso opcional)
+- `skip_download=True` asegura que no descargue nada
+
+### Archivos afectados
+- **Modificar**: `player/web.py` (reemplazar search())
 
 ---
 
-## Paso 1.2: Handler `player/handlers/webexplorer.py`
+### Paso 2.3: Modificar `player/handlers/webexplorer.py`
 
-### Archivo: `player/handlers/webexplorer.py` (nuevo)
+Cambios:
+1. `_do_search()` lee `search_prefix` de la plataforma activa
+2. `_play_web_result()` incrementa contador de descargas
 
-### Contenido
 ```python
-"""Handler para la vista Web Explorer (V7)."""
-from __future__ import annotations
-import curses
-from typing import TYPE_CHECKING
-
-from .. import web
-from .shared import _toast, _clamp_scroll
-
-if TYPE_CHECKING:
-    from player.app import PlayerApp
-
-
-def handle_web(app: PlayerApp, key: int) -> None:
-    """Handler principal de la vista Web."""
-    if app.web_search_mode:
-        _handle_search_input(app, key)
-        return
-
-    total = len(app.web_results)
-
-    if key == ord("/"):
-        app.web_search_mode = True
-        app.web_search_buf = ""
-        app.web_cursor = 0
-        app.web_scroll = 0
-        curses.curs_set(1)
-        curses.flushinp()
-        return
-
-    if key in (curses.KEY_DOWN, ord("j")):
-        app.web_cursor = min(app.web_cursor + 1, max(0, total - 1))
-    elif key in (curses.KEY_UP, ord("k")):
-        app.web_cursor = max(app.web_cursor - 1, 0)
-    elif key in (10, 13) and total > 0:
-        _play_web_result(app)
-        return
-    elif key == 27:
-        app.current_view = app.V_LISTEN
-        curses.flushinp()
-        return
-    elif key in (curses.KEY_NPAGE,):
-        h, _ = app.stdscr.getmaxyx()
-        page = h - 8
-        app.web_cursor = min(app.web_cursor + page, max(0, total - 1))
-    elif key in (curses.KEY_PPAGE,):
-        h, _ = app.stdscr.getmaxyx()
-        page = h - 8
-        app.web_cursor = max(app.web_cursor - page, 0)
-
-    h, _ = app.stdscr.getmaxyx()
-    list_h = h - 8
-    app.web_scroll = _clamp_scroll(app.web_cursor, app.web_scroll, list_h)
-
-
-def _handle_search_input(app: PlayerApp, key: int) -> None:
-    """Maneja input del prompt de búsqueda."""
-    if key == 27:
-        app.web_search_mode = False
-        curses.curs_set(0)
-        return
-    if key in (10, 13):
-        app.web_search_mode = False
-        curses.curs_set(0)
-        query = app.web_search_buf.strip()
-        if not query:
-            return
-        _add_to_history(app, query)
-        _do_search(app, query)
-        return
-    if key in (curses.KEY_BACKSPACE, 127):
-        app.web_search_buf = app.web_search_buf[:-1]
-    elif 32 <= key <= 126:
-        app.web_search_buf += chr(key)
-
-
 def _do_search(app: PlayerApp, query: str) -> None:
-    """Ejecuta la búsqueda y carga resultados."""
+    from .. import web
+    from ..platforms import load_platforms, get_search_prefix
     from ..config import load as _load_config
+    
+    platforms = load_platforms()
     cfg = _load_config()
     max_results = cfg.get("online_max_results", 5)
+    prefix = get_search_prefix(platforms, "YouTube")  # plataforma activa (futuro: configurable)
+    
     try:
-        results = web.search(query, max_results)
+        results = web.search(query, max_results, search_prefix=prefix)
     except RuntimeError as e:
         _toast(app, str(e))
         return
+    
     app.web_results = results
     app.web_cursor = 0
     app.web_scroll = 0
@@ -249,10 +296,16 @@ def _do_search(app: PlayerApp, query: str) -> None:
 
 
 def _play_web_result(app: PlayerApp) -> None:
-    """Reproduce un resultado web via streaming."""
     if app.web_cursor >= len(app.web_results):
         return
     result = app.web_results[app.web_cursor]
+    
+    # Incrementar contador de descargas
+    from ..platforms import load_platforms, save_platforms, increment_downloads
+    platforms = load_platforms()
+    increment_downloads(platforms, result.platform)
+    save_platforms(platforms)
+    
     from ..stack import StackItem
     item = StackItem(path=result.url, name=result.title)
     app.stack.items = [item]
@@ -260,207 +313,76 @@ def _play_web_result(app: PlayerApp) -> None:
     app.audio.play_file(result.url)
     app.current_view = app.V_LISTEN
     _toast(app, f"▶ {result.title}")
-
-
-def _add_to_history(app: PlayerApp, query: str) -> None:
-    """Agrega query al historial (máx 10)."""
-    history = app.config.get("online_search_history", [])
-    history = [h for h in history if h != query]
-    history.insert(0, query)
-    app.config["online_search_history"] = history[:10]
-    from ..config import save as _save_config
-    _save_config(app.config)
 ```
 
-### Notas
-- `web_search_mode` controla si estamos en modo input vs navegación
-- `_handle_search_input` maneja buffer de texto con Backspace y Enter
-- `_do_search` lee max_results de config
-- `_play_web_result` crea StackItem con URL de streaming
-- `_add_to_history` guarda historial (max 10)
+### Archivos afectados
+- **Modificar**: `player/handlers/webexplorer.py`
 
 ---
 
-## Paso 1.3: Drawer `draw_web()` en `player/views.py`
+### Paso 2.4: Actualizar `player/config.py`
 
-### Ubicación: al final de `views.py` (antes del `draw_mini_stack`)
-
-### Contenido
+Agregar plataforma activa:
 ```python
-def draw_web(app: PlayerApp, h: int, w: int) -> None:
-    """Dibuja la vista Web Explorer."""
-    texto = curses.color_pair(PAIR_TEXTO)
-    destacar = curses.color_pair(PAIR_DESTACAR)
-    nav = curses.color_pair(PAIR_NAV)
-
-    draw_box(app.stdscr, h, w, "Web")
-
-    if app.web_search_mode:
-        prompt = f"  Buscar: {app.web_search_buf}"
-        safe_addstr(app.stdscr, 3, 2, prompt[:w - 4], texto | curses.A_UNDERLINE, h, w)
-        safe_addstr(app.stdscr, 5, 2, "  Escribe tu búsqueda y presiona Enter", nav, h, w)
-        return
-
-    if not app.web_results:
-        safe_addstr(app.stdscr, (h - 4) // 2, 2,
-                     "  Presiona / para buscar", nav, h, w)
-        return
-
-    list_h = h - 8
-    start = app.web_scroll
-    end = min(start + list_h, len(app.web_results))
-
-    for i in range(start, end):
-        y = 5 + i - start
-        r = app.web_results[i]
-        is_cur = i == app.web_cursor
-        dur = web.format_duration(r.duration)
-        title = r.title[:w - 16]
-        line = f"  {title:<{w - 16}}{dur:>7}"
-        attr = destacar | curses.A_REVERSE if is_cur else texto
-        safe_addstr(app.stdscr, y, 2, line, attr, h, w)
-
-    draw_list_indicators(app.stdscr, 5, list_h, len(app.web_results),
-                         app.web_scroll, nav, h, w)
-
-    hints = _build_hints([
-        ("j/k", "navegar"), ("Enter", "play"), ("/", "buscar"), ("Esc", "volver"),
-    ], w)
-    if hints:
-        safe_addstr(app.stdscr, h - 4, 2, hints, nav, h, w)
+"online_platform": "YouTube",  # plataforma activa para búsqueda
 ```
 
-### Notas
-- Misma estructura que `draw_explorer`
-- Prompt de búsqueda con underline
-- Lista de resultados con cursor highlight
-- Indicadores de scroll
-- Hints en la parte inferior
+### Archivos afectados
+- **Modificar**: `player/config.py`
 
 ---
 
-## Paso 1.4: Integración en `player/app.py`
+### Paso 2.5: Actualizar `AENV/docs/ONLINE.md`
 
-### Cambios
+Documentar:
+- Estructura de `platforms.json`
+- Cómo agregar nuevas plataformas
+- Flujo de búsqueda con `extract_flat`
 
-#### 1. Agregar constante V_WEB (junto a las otras V_*)
-```python
-V_WEB: int = 7
-```
-
-#### 2. Agregar estado Web en `__init__`
-```python
-# Estado Web
-self.web_results: list = []
-self.web_cursor: int = 0
-self.web_scroll: int = 0
-self.web_search_mode: bool = False
-self.web_search_buf: str = ""
-```
-
-#### 3. Registrar handler y drawer
-```python
-self._view_handlers[self.V_WEB] = handlers.handle_web
-self._view_drawers[self.V_WEB] = views.draw_web
-```
-
-#### 4. Extender range de view switch (línea 767)
-```python
-# De:
-if ord("0") <= key <= ord("6"):
-# A:
-if ord("0") <= key <= ord("7"):
-```
+### Archivos afectados
+- **Modificar**: `AENV/docs/ONLINE.md`
 
 ---
 
-## Paso 1.5: Nav bar y Help en `player/ui.py`
+## Flujo completo de búsqueda (post-fix)
 
-### Cambios
-
-#### 1. En `draw_nav()`, agregar entrada para `7`
-Buscar la línea con las entradas de nav y agregar:
-```python
-("7", "Web"),
+```
+1. Usuario presiona 7 → V_WEB
+2. Presiona / → prompt de búsqueda
+3. Escribe "beethoven" + Enter
+4. _do_search("beethoven")
+   a. load_platforms() → obtiene prefix "ytsearch"
+   b. web.search("beethoven", 5, "ytsearch")
+      b1. extract_flat=True → lista de 5 entries (~1s)
+      b2. Para cada entry → extract_info → stream URL (~2-3s c/u)
+      b3. Retorna 5 WebResult con stream URLs
+5. draw_web() muestra resultados con títulos y duración
+6. Usuario presiona Enter → _play_web_result()
+   a. Incrementa downloads en platforms.json
+   b. Crea StackItem con URL de streaming
+   c. VLC reproduce stream HTTP directamente
+7. Cambia a V_LISTEN
 ```
 
-#### 2. En `HELP_TABS`, agregar nueva pestaña
-```python
-{
-    "name": "Web",
-    "lines": [
-        ("", None),
-        ("  WEB EXPLORER", PAIR_NAV),
-        ("", None),
-        ("    7         Abrir Web Explorer", PAIR_TEXTO),
-        ("    /         Nueva búsqueda", PAIR_TEXTO),
-        ("    j/k       Navegar resultados", PAIR_TEXTO),
-        ("    Enter     Reproducir resultado", PAIR_TEXTO),
-        ("    Esc       Volver a Escucha", PAIR_TEXTO),
-    ]
-},
-```
+## Archivos modificados (resumen total)
 
----
-
-## Paso 1.6: Config defaults en `player/config.py`
-
-### Cambios en `DEFAULT_CONFIG`
-```python
-"online_max_results": 5,
-"online_audio_quality": "128",
-"online_search_history": [],
-```
-
----
-
-## Paso 1.7: Export en `player/handlers/__init__.py`
-
-### Cambios
-```python
-from .webexplorer import handle_web
-```
-
----
-
-## Paso 1.8: Requirements
-
-### Archivo: `requirements.txt`
-Agregar:
-```
-yt-dlp
-```
-
----
+| Archivo | Acción | Estado |
+|---------|--------|--------|
+| `player/platforms.py` | CREAR | Pendiente |
+| `player/web.py` | REESCRIBIR search() | Pendiente |
+| `player/handlers/webexplorer.py` | MODIFICAR _do_search, _play_web_result | Pendiente |
+| `player/config.py` | AGREGAR online_platform | Pendiente |
+| `AENV/docs/ONLINE.md` | ACTUALIZAR | Pendiente |
+| `player/__init__.py` | Ya hecho (auto-install) | ✅ |
+| `player/app.py` | Ya hecho (V_WEB, dispatch) | ✅ |
+| `player/ui.py` | Ya hecho (nav, help) | ✅ |
+| `player/handlers/__init__.py` | Ya hecho (export) | ✅ |
+| `requirements.txt` | Ya hecho (+yt-dlp) | ✅ |
 
 ## Verificación post-implementación
 
-1. `python3 -m mypy --strict player/` → debe pasar sin errores
-2. `python3 -m player.app` → iniciar tplay
-3. Presionar `7` → debe abrir vista Web
-4. Presionar `/` → prompt de búsqueda
-5. Escribir "beethoven" + Enter → resultados
-6. `j/k` navegar, `Enter` → streaming en Listen
-7. `Esc` → volver a Listen
-8. `/` de nuevo → historial de búsquedas visible
-
-## Errores a testear
-- `yt-dlp` no instalado → toast informativo
-- Sin internet → toast "Error de red"
-- Query sin resultados → toast "Sin resultados"
-- URL stream inválida → VLC maneja (fallback)
-
-## Archivos modificados (resumen)
-
-| Archivo | Acción | Líneas approx |
-|---------|--------|---------------|
-| `player/web.py` | CREAR | ~70 |
-| `player/handlers/webexplorer.py` | CREAR | ~100 |
-| `player/views.py` | AGREGAR draw_web() | ~40 |
-| `player/app.py` | MODIFICAR | ~15 |
-| `player/ui.py` | MODIFICAR | ~15 |
-| `player/config.py` | MODIFICAR | ~3 |
-| `player/handlers/__init__.py` | MODIFICAR | ~1 |
-| `requirements.txt` | MODIFICAR | ~1 |
-
-**Total estimado**: ~245 líneas nuevas/modificadas
+1. `python3 -m mypy --strict player/` → sin errores
+2. `tplay → 7 → / → "beethoven" → Enter` → 5 resultados con títulos
+3. `Enter` en resultado → streaming en Listen
+4. `~/.config/tplay/data/platforms.json` → YouTube downloads incrementado
+5. `tplay --update` → auto-install si hay deps nuevas

@@ -49,6 +49,52 @@ def is_available() -> bool:
 └─────────────────────────────────────┘
 ```
 
+## Registry de plataformas
+
+### Archivo: `~/.config/tplay/data/platforms.json`
+
+```json
+[
+  {
+    "name": "YouTube",
+    "url": "https://www.youtube.com",
+    "download_pattern": "/watch?v={id}",
+    "search_pattern": "/results?search_query={query}",
+    "search_prefix": "ytsearch",
+    "downloads": 0
+  }
+]
+```
+
+### Campos
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `name` | str | Nombre legible |
+| `url` | str | URL base del sitio |
+| `download_pattern` | str | Patrón de URL de video (`{id}` se reemplaza) |
+| `search_pattern` | str | Patrón de URL de búsqueda (`{query}` se reemplaza) |
+| `search_prefix` | str | Prefijo yt-dlp para búsqueda nativa |
+| `downloads` | int | Contador de descargas (se incrementa al play) |
+
+### Plataformas soportadas (yt-dlp search)
+| Prefijo | Plataforma |
+|---------|------------|
+| `ytsearch` | YouTube |
+| `dmsearch` | Dailymotion |
+| `scsearch` | SoundCloud |
+| `vpsearch` | Vimeo |
+
+### Agregar nueva plataforma
+1. Agregar entrada en `platforms.json` con los campos correctos
+2. El `search_prefix` debe coincidir con el soportado por yt-dlp
+3. No requiere cambio de código — se carga dinámicamente
+
+### Módulo: `player/platforms.py`
+- `load_platforms()` → carga desde archivo o crea defaults
+- `save_platforms()` → guarda a archivo
+- `get_search_prefix(platforms, name)` → retorna prefijo de búsqueda
+- `increment_downloads(platforms, name)` → incrementa contador
+
 ## Arquitectura
 
 ```
