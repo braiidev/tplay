@@ -12,6 +12,7 @@
 - [x] B17 — cursor revierte cuando no hay item accesible (v1.5.59)
 - [x] B16 — `_cycle_eq_preset` guarda/restaura custom_bands (v1.5.59)
 - [x] B13 — Listen hints toggle con `;` (v1.5.59)
+- [x] Cleanup — eliminar `r` reset de Config/Audio (v1.5.59)
 - [x] B18 — Help Listen sección ECUALIZADOR (v1.5.58)
 - [x] B19 — Help Lista/Historial/Radio g/G (v1.5.58)
 - [x] B14 — Config bands always visible (v1.5.57)

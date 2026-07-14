@@ -2,12 +2,7 @@
 
 ## v1.5.59
 - fix: Custom EQ — key `custom_bands` guarda estado independiente al salir de Custom, restaura al entrar
-- fix: Custom EQ — `r` reset banda actualiza solo esa banda en custom_bands
-- fix: Custom EQ — `r` preset limpia custom_bands a [0.0]*10
-- fix: Listen handler `E`同步 lógica custom_bands
-- fix: B17 — `_skip_disabled` para en PRIMER item válido (no salta de eq_enabled a Preamp)
-- fix: B17 — cursor revierte a posición original cuando no hay item accesible
-- fix: B16 — `_cycle_eq_preset` guarda/restaura custom_bands al cambiar preset
+- refactor: eliminado `r` reset de Config/Audio (conflicto con shuffle global)
 - feat: Listen hints toggle con `;` — config show_listen_hints (B13)
 - fix: Help Listen — sección ECUALIZADOR con e/E (B18)
 - fix: Help Lista/Historial/Radio — g/G Inicio/Fin (B19)

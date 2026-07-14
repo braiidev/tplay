@@ -310,3 +310,19 @@
 - `player/ui.py` — Help Listen hints
 
 **Estado**: v1.5.59, mypy strict pasa, 0 bugs activos.
+
+---
+
+## Entrada 16 — 2026-07-14 — Cleanup: eliminar r reset de Config/Audio
+
+**Tarea**: Eliminar `r` reset de Config/Audio (conflicto con shuffle global)
+
+**Problema**: `r` es mapeado a "shuffle" en keybindings. `_handle_key_global` lo intercepta antes de `handle_config`.
+
+**Decisión**: Eliminar funcionalidad de reset en Config/Audio. El usuario edita manualmente.
+
+**Archivos modificados**:
+- `player/handlers/config_view.py` — eliminado bloque `elif key == ord("r")`
+- `player/views.py` — eliminado hint `(r, reset)` de Config/Audio
+
+**Estado**: v1.5.59, mypy strict pasa, 0 bugs activos.

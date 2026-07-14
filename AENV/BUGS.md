@@ -9,7 +9,7 @@
 |----|-------------|----------|
 | B13 | Listen hints no se pueden ocultar | Config `show_listen_hints` + toggle con `;` |
 | B16 | Custom EQ no se guarda — bands se sobreescriben al cambiar preset | Key `custom_bands` en config; guarda al salir de Custom, restaura al entrar |
-| B17 | Config/Audio cursor navega bands en non-Custom | `_skip_disabled` para en PRIMER item válido; guards en RIGHT/LEFT/r para eq_band |
+| B17 | Config/Audio cursor navega bands en non-Custom | `_skip_disabled` para en PRIMER item válido; guards en RIGHT/LEFT para eq_band |
 | B18 | Help tab Listen: no muestra hints de EQ (`e`/`E`) | Agregada sección ECUALIZADOR a HELP_TABS[1] con `e`/`E` |
 | B19 | Help tabs Lista/Historial/Radio: no muestran hints de `g`/`G` | Agregados `g/G Inicio/Fin` a tabs Lista, Historial, Radio |
 | B14 | Config/Audio bands no visibles para presets non-Custom | `_build_config_tabs()` siempre agrega bands (no solo Custom) |

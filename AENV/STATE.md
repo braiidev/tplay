@@ -2,7 +2,7 @@
 
 ## Versión actual
 - **v1.5.59**
-- **Último commit**: `33c6ea8` — fix: Custom EQ key custom_bands guarda/restaura estado independiente
+- **Último commit**: `2902ae4` — refactor: eliminar r reset de Config/Audio
 
 ## Estado del código
 - **Compila**: ✅ (mypy strict pasa)
@@ -18,10 +18,8 @@
 | F28 | Streaming/Radio | ✅ Hecho |
 
 ## Sesión actual (v1.5.59)
-- **Custom EQ persistence**: key `custom_bands` en config.json guarda estado independiente
+- **Custom EQ persistence**: key `custom_bands` en config.json
   - Guarda al salir de Custom → restaura al entrar
-  - `r` reset actualiza custom_bands (solo la banda, no todo)
-  - `r` preset limpia custom_bands a [0.0]*10
   - Listen handler `E`同步 lógica custom_bands
 - **B17 fix final**: `_skip_disabled` para en PRIMER item válido
   - Preamp ↓ se queda en Preamp (no salta a bands)
@@ -29,6 +27,7 @@
 - **B16**: `_cycle_eq_preset` guarda/restaura custom_bands al cambiar preset
 - **B13**: Listen hints toggle con `;`
 - **B18/B19**: Help hints actualizados
+- **Cleanup**: eliminado `r` reset de Config/Audio (conflicto con shuffle global)
 
 ## Módulos del sistema
 | Módulo | Archivos | Estado |
