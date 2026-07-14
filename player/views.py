@@ -81,6 +81,11 @@ def _eq_bar(value: float, bar_w: int) -> str:
     return "█" * pos + "░" * (bar_w - pos)
 
 
+def _vol_bar(vol: int, bar_w: int) -> str:
+    filled = int(bar_w * vol / 100)
+    return "█" * filled + "░" * (bar_w - filled)
+
+
 def draw_listen(app: PlayerApp, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
@@ -141,22 +146,23 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
     is_stream = _is_url(cur_item.path)
     meta = app.meta_cache.get(cur_item.path) if not is_stream else None
     estado = "► PLAY" if not app.paused else "❚❚ PAUSE"
+    inner_w = w - 4
 
     if is_stream:
-        safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}  [STREAM]", destacar, h, w)
-        safe_addstr(app.stdscr, mid - 1, 2, f"  {cur_item.name}", texto, h, w)
-        safe_addstr(app.stdscr, mid, 2, f"  {cur_item.path}", texto, h, w)
+        safe_addstr(app.stdscr, mid - 3, 2, _center(f"{estado}  [STREAM]", inner_w), destacar, h, w)
+        safe_addstr(app.stdscr, mid - 1, 2, _center(cur_item.name, inner_w), texto, h, w)
+        safe_addstr(app.stdscr, mid, 2, _center(cur_item.path, inner_w), texto, h, w)
     else:
         artist = (meta.get('artist') if meta else None) or "Artista desconocido"
         album = (meta.get('album') if meta else None) or "Álbum desconocido"
         title = (meta.get('title') if meta else None) or cur_item.name
-        safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}", destacar, h, w)
-        tw = w - 6
+        safe_addstr(app.stdscr, mid - 3, 2, _center(estado, inner_w), destacar, h, w)
+        tw = inner_w - 3
         title_s = title[:tw - 1] + "…" if len(title) > tw else title
-        safe_addstr(app.stdscr, mid - 1, 2, f"  ♪ {title_s}", destacar, h, w)
+        safe_addstr(app.stdscr, mid - 1, 2, _center(f"♪ {title_s}", inner_w), destacar, h, w)
         artist_album = f"{artist}  —  {album}"
         aa_s = artist_album[:tw - 1] + "…" if len(artist_album) > tw else artist_album
-        safe_addstr(app.stdscr, mid, 2, f"    {aa_s}", texto, h, w)
+        safe_addstr(app.stdscr, mid, 2, _center(aa_s, inner_w), texto, h, w)
 
     length_ms = int(app.audio.get_length())
     pos_ms = int(app.audio.get_time())
@@ -206,7 +212,12 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
     play_i = _center("▶||", cw[1])
     next_i = _center("▶▶", cw[2])
     stop_i = _center("◼", cw[3])
-    vol_i = _center(f"Vol:{app.volume:>3}%", cw[4])
+    vol_bar_w = cw[4] - 8
+    if vol_bar_w >= 4:
+        vol_bar = _vol_bar(app.volume, vol_bar_w)
+        vol_i = _center(f"Vol:{vol_bar} {app.volume}%", cw[4])
+    else:
+        vol_i = _center(f"Vol:{app.volume:>3}%", cw[4])
 
     st_parts = [
         "[S]" if app.stack.shuffle else "   ",
@@ -305,14 +316,14 @@ def draw_listen_compact(app: PlayerApp, h: int, w: int) -> None:
     else:
         title_text = (meta.get('title') if meta else None) or cur_item.name
     t = title_text[:max_w - 1] + "…" if len(title_text) > max_w else title_text
-    safe_addstr(app.stdscr, 2, 2, t, destacar, h, w)
+    safe_addstr(app.stdscr, 2, 2, _center(t, max_w), destacar, h, w)
 
     if not is_stream:
         artist = (meta.get('artist') if meta else None) or "?"
         album = (meta.get('album') if meta else None) or "?"
         aa = f"{artist} — {album}"
         a = aa[:max_w - 1] + "…" if len(aa) > max_w else aa
-        safe_addstr(app.stdscr, 3, 2, a, texto, h, w)
+        safe_addstr(app.stdscr, 3, 2, _center(a, max_w), texto, h, w)
 
     length_ms = int(app.audio.get_length())
     pos_ms = int(app.audio.get_time())
@@ -328,7 +339,9 @@ def draw_listen_compact(app: PlayerApp, h: int, w: int) -> None:
         safe_addstr(app.stdscr, 4, 2, "--:--", texto, h, w)
 
     controls = " ◀◀  ▶||  ▶▶  ◼"
-    vol_str = f" V:{app.volume}%"
+    vol_bar_w = 4
+    vol_bar = _vol_bar(app.volume, vol_bar_w)
+    vol_str = f" V:{vol_bar}{app.volume}%"
     states = ""
     if app.stack.shuffle:
         states += " S"
@@ -348,11 +361,16 @@ def draw_listen_compact(app: PlayerApp, h: int, w: int) -> None:
     if len(full) <= max_w:
         display = full
     else:
-        no_states = controls + vol_str
-        if len(no_states) <= max_w:
-            display = no_states
+        vol_str = f" V:{app.volume}%"
+        full = controls + vol_str + states
+        if len(full) <= max_w:
+            display = full
         else:
-            display = controls[:max_w]
+            no_states = controls + vol_str
+            if len(no_states) <= max_w:
+                display = no_states
+            else:
+                display = controls[:max_w]
     safe_addstr(app.stdscr, h - 2, 2, display, destacar, h, w)
 
     # ── Goto overlay for compact ──
