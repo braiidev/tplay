@@ -75,6 +75,12 @@ def _center(s: str, w: int) -> str:
     return " " * left + s + " " * (w - len(s) - left)
 
 
+def _eq_bar(value: float, bar_w: int) -> str:
+    pos = int((value + 20.0) / 40.0 * bar_w)
+    pos = max(0, min(bar_w, pos))
+    return "█" * pos + "░" * (bar_w - pos)
+
+
 def draw_listen(app: PlayerApp, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
@@ -609,12 +615,16 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
     overlay = curses.color_pair(PAIR_OVERLAY)
     marco = curses.color_pair(PAIR_MARCO)
 
+    is_audio_tab = app.config_tabs[app.config_tab_idx]["name"] == "Audio"
+    compact = h < 16 or w < 61
+    eq_bar_w = 4 if compact else 40
+
     labels = {
         "music_dir": f"Directorio música: {app.config.get('music_dir', '~/Music')}",
         "volume": f"Volumen: {app.volume}%",
         "theme": f"Tema: {app.config.get('theme', 'clasico')}",
         "sleep_timer_minutes": f"Sleep timer: {app.config.get('sleep_timer_minutes', 30)} min",
-        "eq_preset": f"Preset EQ: {app.config.get('eq_preset', 'Flat')}",
+        "eq_preset": f"Preset: {app.config.get('eq_preset', 'Flat')}",
     }
     cc = app.config.get("custom_colors", {})
 
@@ -650,11 +660,19 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
     if x < right_start:
         safe_addstr(app.stdscr, 1, x, "─" * (right_start - x), marco, h, w)
 
+    # --- Hints line for Audio tab ---
+    y_offset = 0
+    if is_audio_tab:
+        hints = _build_hints([("← →", "cambiar")], w - 4)
+        if hints:
+            safe_addstr(app.stdscr, 2, 2, hints, nav, h, w)
+            y_offset = 1
+
     # --- Items with scroll ---
     items = app.config_items
     total = len(items)
     cur = app.config_cursor
-    list_h = h - 5 if h < 16 else h - 6
+    list_h = h - 5 - y_offset if h < 16 else h - 6 - y_offset
 
     # Clamp scroll
     if cur < app.config_scroll:
@@ -665,7 +683,7 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
 
     visible = items[app.config_scroll:app.config_scroll + list_h]
     for i, (key, label, ctype) in enumerate(visible):
-        y = 3 + i
+        y = 3 + y_offset + i
         idx = app.config_scroll + i
         if ctype == "color":
             line = f"  {label}: {cc.get(key, 'Blanco')}"
@@ -673,12 +691,14 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
             line = f"  {label}: {'Sí' if app.config.get(key, True) else 'No'}"
         elif ctype == "eq_preamp":
             val = app.config.get("eq_preamp", 0.0)
-            line = f"  {label}: {val:+.1f} dB  ← →"
+            bar = _eq_bar(val, eq_bar_w)
+            line = f"  {label}: {val:+5.1f}  {bar}"
         elif ctype == "eq_band":
             band_idx = int(key.split("_")[-1])
             bands = app.config.get("eq_bands", [0.0] * 10)
             val = bands[band_idx] if band_idx < len(bands) else 0.0
-            line = f"  {label}: {val:+.1f} dB  ← →"
+            bar = _eq_bar(val, eq_bar_w)
+            line = f"  {label}: {val:+5.1f}  {bar}"
         elif key == "keybindings":
             mode_label = "Default" if app.keybinding_mode == "default" else "Custom"
             line = f"  {label}  [{mode_label}]"
@@ -688,7 +708,7 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
                 line += "  !"
         else:
             line = f"  {labels.get(key, key)}"
-        if ctype in ("choice", "color", "int", "bool"):
+        if ctype in ("choice", "color", "int", "bool") and ctype != "eq_preamp":
             line += "  ← →"
         elif ctype == "path":
             line += "  Enter"
