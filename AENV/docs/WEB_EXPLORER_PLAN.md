@@ -11,6 +11,47 @@ Nueva vista V7 "Web" que permite buscar en YouTube via `yt-dlp`, navegar resulta
 
 ---
 
+## Paso 1.0: Auto-install en `--update`
+
+### Archivo: `player/__init__.py` (modificar `_cli_update`)
+
+### Lógica
+1. Antes de `git pull`, leer contenido actual de `requirements.txt`
+2. Después del pull, leer nuevo `requirements.txt`
+3. Comparar líneas (ignorando espacios y comentarios)
+4. Si hay paquetes nuevos → `pip install --user <paquetes>`
+5. Si falla → mostrar toast con instrucciones manuales (`pip install --break-system-packages yt-dlp`)
+
+### Código aproximado
+```python
+def _cli_update() -> bool:
+    repo = ...
+    # Guardar requirements viejo
+    req_path = os.path.join(repo, "requirements.txt")
+    old_reqs = set()
+    if os.path.isfile(req_path):
+        with open(req_path) as f:
+            old_reqs = {l.strip() for l in f if l.strip() and not l.startswith("#")}
+    
+    # git pull...
+    
+    # Detectar paquetes nuevos
+    if os.path.isfile(req_path):
+        with open(req_path) as f:
+            new_reqs = {l.strip() for l in f if l.strip() and not l.startswith("#")}
+        added = new_reqs - old_reqs
+        if added:
+            pkgs = [p.split(">=")[0].split("==")[0] for p in added]
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "install", "--user"] + pkgs,
+                capture_output=True, text=True, timeout=120
+            )
+            if result.returncode != 0:
+                print(f"  ⚠ Instalá manualmente: pip install --break-system-packages {' '.join(pkgs)}")
+```
+
+---
+
 ## Paso 1.1: Wrapper `player/web.py`
 
 ### Archivo: `player/web.py` (nuevo)

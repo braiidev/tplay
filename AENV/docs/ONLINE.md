@@ -7,6 +7,48 @@
 - **ffmpeg** (sistema) — solo para Fase 2 (descarga con conversión)
 - Sin ffmpeg en Fase 1 (streaming puro)
 
+## Instalación automática (Option D)
+
+Cuando el usuario ejecuta `tplay --update`, el mecanismo detecta si `requirements.txt` cambió e instala paquetes nuevos automáticamente:
+
+```
+1. Guardar requirements.txt viejo (hash o contenido)
+2. git fetch + git pull
+3. Comparar requirements.txt viejo vs nuevo
+4. Si hay paquetes nuevos:
+   a. Intentar: python3 -m pip install --user <paquetes_nuevos>
+   b. Si falla (permisos): mostrar toast con instrucciones
+5. Si yt-dlp no está disponible en runtime:
+   a. Toast no-bloqueante: "Necesitás instalar yt-dlp: pip install --break-system-packages yt-dlp"
+   b. Vista V7 Web muestra en pantalla las instrucciones de instalación
+```
+
+### Detección en runtime
+```python
+# player/web.py
+def is_available() -> bool:
+    try:
+        import yt_dlp
+        return True
+    except ImportError:
+        return False
+```
+
+### Vista V7 cuando yt-dlp no está instalada
+```
+┌─────────────────────────────────────┐
+│              Web                    │
+│                                     │
+│   yt-dlp no está instalado.         │
+│                                     │
+│   Ejecutá en tu terminal:           │
+│   pip install --break-system-packages yt-dlp
+│                                     │
+│   Luego reiniciá tplay.             │
+│                                     │
+└─────────────────────────────────────┘
+```
+
 ## Arquitectura
 
 ```
