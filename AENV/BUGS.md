@@ -1,11 +1,15 @@
 # BUGS — tplay
 
 ## Activos
-_No hay bugs activos conocidos._
+| ID | Descripción | Estado |
+|----|-------------|--------|
+| B13 | Listen hints no se pueden ocultar — fila de hints ocupa espacio valioso en terminales pequeñas | Pendiente — requiere config option `show_listen_hints` + tecla toggle |
 
 ## Resueltos
 | ID | Descripción | Solución |
 |----|-------------|----------|
+| B14 | Config/Audio bands no visibles para presets non-Custom | `_build_config_tabs()` siempre agrega bands (no solo Custom) |
+| B15 | History g/G no implementado | Agregados handlers `g` (inicio) y `G` (fin) en history.py |
 | B12 | Explorer no ve symlinks-to-dirs (ej: ~/Music) | `follow_symlinks=True` en scandir |
 | B1 | History `count` siempre es 1 | Preserva/incrementa count existente |
 | B2 | Playlist Enter siempre arranca desde índice 0 | Usa `playlist_cursor` |

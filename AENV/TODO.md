@@ -5,6 +5,7 @@
 |----|---------|-----------|--------|
 | F9 | Visualizer (FFT bars) | Media | Investigado en `docs/BRAINSTORM.md` |
 | F10 | yt-dlp Web Explorer | Baja | Investigado en `docs/BRAINSTORM.md` |
+| B13 | Listen hints show/hide toggle | Baja | Bug activo en `BUGS.md` |
 
 ## Completado esta sesión
 - [x] F2 Ecualizador gráfico (v1.5.49)
@@ -24,9 +25,11 @@
 - [x] Fase 4.2 Hints contextuales Config Audio (v1.5.55)
 - [x] Fase 5.1 Tab carousel helper (v1.5.56)
 - [x] Fase 5.2 List helpers — clamp_scroll + draw_list_indicators (v1.5.56)
+- [x] B14 Fix Config bands always visible (v1.5.57)
+- [x] B15 Fix History g/G implemented (v1.5.57)
 
 ## Completado (histórico)
 Ver CHANGELOG.md para historial completo.
 
 ## Bugs conocidos
-No hay bugs activos. Ver BUGS.md para historial resuelto.
+Ver BUGS.md — B13 activo (Listen hints toggle).

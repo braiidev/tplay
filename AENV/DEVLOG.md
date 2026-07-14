@@ -255,3 +255,26 @@
 - 5.2: Helpers ligeros (no render genérico) — cada vista mantiene su lógica de render, pero scroll/indicators son consistentes
 
 **Estado**: v1.5.56, mypy strict pasa.
+
+---
+
+## Entrada 14 — 2026-07-14 — Bug fixes post-rediseño
+
+**Tarea**: Corregir bugs encontrados al probar el rediseño visual
+
+**Bugs corregidos**:
+- **B14** Config/Audio bands no visibles para presets non-Custom
+  - Causa: `_build_config_tabs()` solo agregaba bands cuando `eq_preset == "Custom"`
+  - Fix: siempre agregar separator + 10 bands, `views.py` ya usaba `texto` para non-Custom
+- **B15** History g/G no implementados
+  - Causa: handler no tenía cases para `g`/`G`
+  - Fix: agregados `g→cursor=0`, `G→cursor=len-1`
+
+**Pendiente**:
+- **B13** Listen hints show/hide — requiere config option + tecla toggle (para próxima sesión)
+
+**Archivos modificados**:
+- `player/app.py` — _build_config_tabs: bands siempre visibles
+- `player/handlers/history.py` — g/G handlers
+
+**Estado**: v1.5.57, mypy strict pasa.

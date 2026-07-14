@@ -1,5 +1,9 @@
 # CHANGELOG — tplay
 
+## v1.5.57
+- fix: Config/Audio bands siempre visibles (no solo Custom) — modo solo lectura para presets non-Custom
+- fix: History g/G implementados — ir a inicio/fin de historial
+
 ## v1.5.56
 - refactor: draw_tab_carousel() helper — reemplaza código duplicado en Help y Config (~30 líneas eliminadas)
 - refactor: clamp_scroll() + draw_list_indicators() helpers — reemplaza scroll clamping e indicadores en 6 vistas (~18 líneas eliminadas)
