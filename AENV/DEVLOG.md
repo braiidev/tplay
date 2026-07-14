@@ -82,3 +82,26 @@
 - Re-aplicar EQ después de play_file por seguridad
 
 **Estado**: v1.5.49, mypy strict pasa.
+
+---
+
+## Entrada 6 — 2026-07-14 — F2 refinamiento EQ
+
+**Tarea**: Refinar ecualizador — eliminar overlay, integrar Custom en Config, preamp configurable, fix volumen
+
+**Cambios**:
+- Eliminado: eq_edit_mode, draw_eq_overlay, _handle_eq_edit (overlay system)
+- Tecla E ahora cicla presets, e toggle ON/OFF
+- Preamp configurable para TODOS los presets (no solo Custom)
+- Custom bandas integradas en Config/Audio tab (items dinámicos con tipo eq_band)
+- Default preamp +12dB para compensar reducción de volumen de VLC
+- Helper _reapply_eq en config_view.py
+
+**Archivos modificados**:
+- `player/app.py` — _build_config_tabs dinámico, eliminado overlay
+- `player/config.py` — eq_preamp default 12.0
+- `player/handlers/listen.py` — E=ciclar, e=toggle
+- `player/handlers/config_view.py` — _eq_preamp_inc/dec, _eq_band_inc/dec, _reapply_eq
+- `player/views.py` — draw_config muestra preamp/bands, eliminado draw_eq_overlay
+
+**Estado**: v1.5.50, mypy strict pasa.

@@ -1,13 +1,13 @@
 # STATE — tplay
 
 ## Versión actual
-- **v1.5.49**
+- **v1.5.50**
 - **Último commit**: pendiente
 
 ## Estado del código
 - **Compila**: ✅ (mypy strict pasa)
 - **Tests**: ⚠️ No hay tests unitarios
-- **Último feature**: v1.5.49 — Ecualizador gráfico (10 bandas, preamp, 16 presets, Custom)
+- **Último feature**: v1.5.50 — EQ refinado (preamp configurable, Custom en Config, teclas E/e)
 
 ## Features activos
 | ID | Feature | Estado |
@@ -17,15 +17,13 @@
 | F8 | Cover art (chafa/viu) | Descartado |
 | F28 | Streaming/Radio | ✅ Hecho |
 
-## Sesión actual (v1.5.49)
-- Ecualizador gráfico implementado
-  - audio.py: métodos EQ (set_equalizer, apply_preset, disable_equalizer, reapply_equalizer)
-  - config.py: defaults EQ + 16 presets + Custom
-  - app.py: config tab Audio + persistencia session + eq_edit_mode
-  - handlers/listen.py: tecla E toggle EQ
-  - handlers/config_view.py: preset cycling + Custom abre overlay
-  - views.py: [EQ] indicator, hints, draw_eq_overlay
-  - state.py: save/load EQ state
+## Sesión actual (v1.5.50)
+- EQ refinado:
+  - Preamp configurable para todos los presets
+  - Custom bandas integradas en Config/Audio (items dinámicos)
+  - Teclas E=ciclar presets, e=toggle ON/OFF
+  - Default preamp +12dB (fix volumen)
+  - Eliminado overlay system
 
 ## Módulos del sistema
 | Módulo | Archivos | Estado |

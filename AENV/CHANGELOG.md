@@ -1,5 +1,8 @@
 # CHANGELOG — tplay
 
+## v1.5.50
+- refactor: EQ refinado — preamp configurable todos los presets, Custom en Config/Audio (no overlay), teclas E/e reasignadas, preamp default +12dB
+
 ## v1.5.49
 - feat: F2 ecualizador gráfico — 10 bandas, preamp, 16 presets, modo Custom, toggle `E`, persistencia session
 
