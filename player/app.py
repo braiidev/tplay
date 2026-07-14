@@ -22,7 +22,7 @@ from .file_utils import list_dir as _list_dir
 from .stack import Stack, StackItem
 from . import views
 from . import ui
-from .ui import _build_hints
+from .ui import _build_hints, COMPACT_THRESHOLD
 from . import handlers
 from . import keybindings as kb
 from .state import load_state, save_state, load_history, save_history
@@ -408,6 +408,7 @@ class PlayerApp:
             ("eq_preamp", "Preamp", "eq_preamp"),
         ]
         if self.config.get("eq_preset") == "Custom":
+            eq_items.append(("_sep_bands", "", "separator"))
             band_names = ["60 Hz", "170 Hz", "310 Hz", "600 Hz", "1k",
                           "3k", "6k", "12k", "14k", "16k"]
             for i, name in enumerate(band_names):
@@ -609,7 +610,7 @@ class PlayerApp:
                     "Confirmar",
                     "  ✓  ",
                     is_confirm=True,
-                    compact=h < 16,
+                    compact=h < COMPACT_THRESHOLD,
                 )
                 self.stdscr.refresh()
                 cb()
@@ -684,7 +685,7 @@ class PlayerApp:
         if not d or d["type"] != "prompt":
             return
         h, w = self.stdscr.getmaxyx()
-        compact = h < 16
+        compact = h < COMPACT_THRESHOLD
         box_w = w - 2 if compact else min(60, w - 10)
         inner_w = box_w - 2
         field_w = max(1, inner_w - len(d["label"]) - 6)
@@ -1040,7 +1041,7 @@ class PlayerApp:
 
             minimal = self.config.get("ui_minimal", False)
             compact = (
-                minimal or h < 16 or (self.current_view == self.V_LISTEN and w < 61)
+                minimal or h < COMPACT_THRESHOLD or (self.current_view == self.V_LISTEN and w < 61)
             )
 
             if h < 8 or w < 40:

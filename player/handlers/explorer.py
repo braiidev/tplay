@@ -11,6 +11,7 @@ from ..stack import StackItem
 from .shared import _prompt, _toast, _confirm, _clamp_scroll
 from .shared import _page_size, _play_file_direct, _rename_file
 from .shared import _open_tag_editor, _parse_m3u, _parse_pls, _toggle_favorite
+from ..ui import COMPACT_THRESHOLD
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -158,7 +159,7 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
         _play_folder(app)
 
     h, _ = app.stdscr.getmaxyx()
-    app.scroll = _clamp_scroll(app.cursor, app.scroll, h - app.LIST_H - (0 if h < 16 else 1))
+    app.scroll = _clamp_scroll(app.cursor, app.scroll, h - app.LIST_H - (0 if h < COMPACT_THRESHOLD else 1))
 
 
 def _handle_explorer_filter(app: PlayerApp, key: int) -> None:
@@ -471,7 +472,7 @@ def _handle_file_op_picker(app: PlayerApp, key: int) -> None:
         return
 
     h, _ = app.stdscr.getmaxyx()
-    list_h = h - app.LIST_H - (1 if app.file_op_mode else 0) - (0 if h < 16 else 1)
+    list_h = h - app.LIST_H - (1 if app.file_op_mode else 0) - (0 if h < COMPACT_THRESHOLD else 1)
     if app.cursor < app.scroll:
         app.scroll = app.cursor
     elif app.cursor >= app.scroll + list_h:

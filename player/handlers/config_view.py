@@ -7,9 +7,20 @@ from typing import TYPE_CHECKING, Any
 from ..config import THEME_NAMES, COLORS, EQ_PRESETS, EQ_PRESET_NAMES
 from .. import keybindings as kb
 from .shared import _toast, _clamp_scroll
+from ..ui import COMPACT_THRESHOLD
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
+
+
+def _skip_separator(app: PlayerApp, direction: int) -> None:
+    """Skip separator items when navigating."""
+    items = app.config_items
+    while 0 <= app.config_cursor < len(items):
+        _, _, ctype = items[app.config_cursor]
+        if ctype != "separator":
+            break
+        app.config_cursor += direction
 
 
 def handle_config(app: PlayerApp, key: int) -> None:
@@ -27,8 +38,10 @@ def handle_config(app: PlayerApp, key: int) -> None:
 
     if key == curses.KEY_DOWN:
         app.config_cursor = min(app.config_cursor + 1, total - 1)
+        _skip_separator(app, 1)
     elif key == curses.KEY_UP:
         app.config_cursor = max(app.config_cursor - 1, 0)
+        _skip_separator(app, -1)
     elif key in (curses.KEY_RIGHT, 10, 13):
         if total == 0:
             return
@@ -108,7 +121,7 @@ def handle_config(app: PlayerApp, key: int) -> None:
             _save_config(app.config)
 
     h, _ = app.stdscr.getmaxyx()
-    list_h = h - 5 if h < 16 else h - 6
+    list_h = h - 5 if h < COMPACT_THRESHOLD else h - 6
     app.config_scroll = _clamp_scroll(app.config_cursor, app.config_scroll, list_h)
 
 

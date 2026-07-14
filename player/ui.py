@@ -11,6 +11,7 @@ STATUS_ROW = 3
 NAV_ROW = 1
 EXPLORER_MARGIN = 2
 PLAYLIST_MARGIN = 2
+COMPACT_THRESHOLD: int = 16
 
 HINT_FULL_W: int = 70
 HINT_MID_W: int = 45
@@ -83,7 +84,7 @@ def safe_addstr(win: curses.window, y: int, x: int, text: str, attr: int | None 
 
 def draw_box(win: curses.window, h: int, w: int, title: str) -> None:
     marco = curses.color_pair(PAIR_MARCO)
-    bot = max(0, h - 1) if h < 16 else max(0, h - 2)
+    bot = max(0, h - 1) if h < COMPACT_THRESHOLD else max(0, h - 2)
     safe_addstr(win, 0, 0, "┌" + "─" * max(0, w - 2) + "┐", marco, h, w)
     if title:
         title_str = f" {title} "
@@ -119,7 +120,7 @@ def draw_status(win: curses.window, h: int, w: int, audio: Any, playing: bool, c
     status = curses.color_pair(PAIR_OVERLAY)
     if playing:
         name = os.path.basename(current_file) if current_file else ""
-        estado = "►" if not audio.paused else "||"
+        estado = "►" if not audio.paused else "❚❚"
         cur = audio.get_time()
         dur = audio.get_length()
         cur_s = f"{cur // 60000:02d}:{(cur // 1000) % 60:02d}" if cur >= 0 else "--:--"
@@ -260,7 +261,7 @@ HELP_TABS: list[HelpTab] = [
             ("", None),
             ("  REPRODUCCIÓN", PAIR_NAV),
             ("", None),
-            ("    Space     ▶ / || pausa", PAIR_TEXTO),
+            ("    Space     ▶ / ❚❚ pausa", PAIR_TEXTO),
             ("    S         ◼ Detener (global)", PAIR_TEXTO),
             ("    n / b     ►► siguiente / ◄◄ anterior", PAIR_TEXTO),
             ("    + / -     Subir / bajar volumen", PAIR_TEXTO),
@@ -508,7 +509,7 @@ def draw_help(win: curses.window, h: int, w: int, scroll: int = 0, tab: int = 0)
     tab_data = HELP_TABS[tab]
     lines = tab_data["lines"]
     total = len(lines)
-    compact = h < 12
+    compact = h < COMPACT_THRESHOLD
 
     if compact:
         list_h = max(2, h - 2)  # rows 1 to h-2 (no tab bar)

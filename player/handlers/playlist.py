@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from ..stack import StackItem
 from .shared import _prompt, _toast, _confirm, _clamp_scroll
 from .shared import _open_tag_editor, _rename_file, _prompt_export_m3u, _toggle_favorite
+from ..ui import COMPACT_THRESHOLD
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -138,7 +139,7 @@ def handle_playlist(app: PlayerApp, key: int) -> None:
             _toggle_favorite(app, path, name)
 
     h, _ = app.stdscr.getmaxyx()
-    app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.LIST_H - (0 if h < 16 else 1))
+    app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.LIST_H - (0 if h < COMPACT_THRESHOLD else 1))
 
 
 def _handle_playlist_filter(app: PlayerApp, key: int) -> None:
@@ -164,12 +165,12 @@ def _handle_playlist_filter(app: PlayerApp, key: int) -> None:
         if app.playlist_filtered:
             app.playlist_cursor = min(app.playlist_cursor + 1, len(app.playlist_filtered) - 1)
         h, _ = app.stdscr.getmaxyx()
-        app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.FILTER_LIST_H - (0 if h < 16 else 1))
+        app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.FILTER_LIST_H - (0 if h < COMPACT_THRESHOLD else 1))
         return
     if key == curses.KEY_UP:
         app.playlist_cursor = max(app.playlist_cursor - 1, 0)
         h, _ = app.stdscr.getmaxyx()
-        app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.FILTER_LIST_H - (0 if h < 16 else 1))
+        app.playlist_scroll = _clamp_scroll(app.playlist_cursor, app.playlist_scroll, h - app.FILTER_LIST_H - (0 if h < COMPACT_THRESHOLD else 1))
         return
     cur = app.playlist_filter_cursor
     if key in (curses.KEY_LEFT, ord("h")):

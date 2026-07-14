@@ -8,6 +8,7 @@ from ..file_utils import is_url as _is_url
 from ..stack import StackItem
 from .shared import _toast, _confirm, _clamp_scroll
 from .shared import _play_file_direct, _open_tag_editor, _toggle_favorite
+from ..ui import COMPACT_THRESHOLD
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -57,7 +58,7 @@ def handle_history(app: PlayerApp, key: int) -> None:
     elif key == curses.KEY_UP:
         app.history_cursor = max(app.history_cursor - 1, 0)
     h, _ = app.stdscr.getmaxyx()
-    app.history_scroll = _clamp_scroll(app.history_cursor, app.history_scroll, h - app.LIST_H - (0 if h < 16 else 1))
+    app.history_scroll = _clamp_scroll(app.history_cursor, app.history_scroll, h - app.LIST_H - (0 if h < COMPACT_THRESHOLD else 1))
 
 
 def _add_from_history(app: PlayerApp, insert_mode: str = "append") -> None:

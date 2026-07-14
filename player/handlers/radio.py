@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from ..stack import StackItem
 from ..radios import save_radios
 from .shared import _prompt, _toast, _confirm, _clamp_scroll, _toggle_favorite
+from ..ui import COMPACT_THRESHOLD
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -91,7 +92,7 @@ def _do_export_radios_m3u(app: PlayerApp) -> None:
 
 def _get_radio_page(app: PlayerApp) -> int:
     h, _ = app.stdscr.getmaxyx()
-    return int(max(1, h - app.LIST_H - (0 if h < 16 else 1)))
+    return int(max(1, h - app.LIST_H - (0 if h < COMPACT_THRESHOLD else 1)))
 
 
 def handle_radio(app: PlayerApp, key: int) -> None:
@@ -139,4 +140,4 @@ def handle_radio(app: PlayerApp, key: int) -> None:
         app.radio_cursor = len(app.radios) - 1
 
     h, _ = app.stdscr.getmaxyx()
-    app.radio_scroll = _clamp_scroll(app.radio_cursor, app.radio_scroll, h - app.LIST_H - (0 if h < 16 else 1))
+    app.radio_scroll = _clamp_scroll(app.radio_cursor, app.radio_scroll, h - app.LIST_H - (0 if h < COMPACT_THRESHOLD else 1))

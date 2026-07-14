@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV, PAIR_OVERLAY
 from .file_utils import time_str, ext_label, is_url as _is_url, is_video_file as _is_video_file
-from .ui import safe_addstr, draw_box, _build_hints, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN
+from .ui import safe_addstr, draw_box, _build_hints, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN, COMPACT_THRESHOLD
 from . import keybindings as kb
 from .handlers import _get_current_key
 
@@ -140,7 +140,7 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
 
     is_stream = _is_url(cur_item.path)
     meta = app.meta_cache.get(cur_item.path) if not is_stream else None
-    estado = "► PLAY" if not app.paused else "|| PAUSE"
+    estado = "► PLAY" if not app.paused else "❚❚ PAUSE"
 
     if is_stream:
         safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}  [STREAM]", destacar, h, w)
@@ -153,7 +153,7 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
         safe_addstr(app.stdscr, mid - 3, 2, f"  {estado}", destacar, h, w)
         tw = w - 6
         title_s = title[:tw - 1] + "…" if len(title) > tw else title
-        safe_addstr(app.stdscr, mid - 1, 2, f"    {title_s}", texto, h, w)
+        safe_addstr(app.stdscr, mid - 1, 2, f"  ♪ {title_s}", destacar, h, w)
         artist_album = f"{artist}  —  {album}"
         aa_s = artist_album[:tw - 1] + "…" if len(artist_album) > tw else artist_album
         safe_addstr(app.stdscr, mid, 2, f"    {aa_s}", texto, h, w)
@@ -432,7 +432,7 @@ def draw_explorer(app: PlayerApp, h: int, w: int) -> None:
                 pass
         offset += 1
 
-    list_h = h - LIST_H - offset - (0 if h < 16 else 1)
+    list_h = h - LIST_H - offset - (0 if h < COMPACT_THRESHOLD else 1)
     indices = app.explorer_filtered if app.explorer_filter_mode else list(range(len(app.entries)))
     total = len(indices)
     mark_s = f" [{len(app.explorer_marked)}✓]" if app.explorer_marked else ""
@@ -507,7 +507,7 @@ def draw_playlist(app: PlayerApp, h: int, w: int) -> None:
     nav = curses.color_pair(PAIR_NAV)
     marco = curses.color_pair(PAIR_MARCO)
 
-    list_h = h - LIST_H - (1 if app.playlist_filter_mode else 0) - (0 if h < 16 else 1)
+    list_h = h - LIST_H - (1 if app.playlist_filter_mode else 0) - (0 if h < COMPACT_THRESHOLD else 1)
     if total_items > list_h and total_items > 0:
         pos = f" ({app.playlist_cursor + 1}/{total_items})"
     elif total_items > 0:
@@ -585,7 +585,7 @@ def draw_history(app: PlayerApp, h: int, w: int) -> None:
     if not app.history:
         safe_addstr(app.stdscr, h // 2, 2, "  Sin historial", texto, h, w)
         return
-    _compact_history = h < 16
+    _compact_history = h < COMPACT_THRESHOLD
     list_h = h - LIST_H - (0 if _compact_history else 1)
     start = max(0, min(app.history_scroll, len(app.history) - list_h))
     visible = app.history[start:start + list_h]
@@ -616,7 +616,7 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
     marco = curses.color_pair(PAIR_MARCO)
 
     is_audio_tab = app.config_tabs[app.config_tab_idx]["name"] == "Audio"
-    compact = h < 16 or w < 61
+    compact = h < COMPACT_THRESHOLD or w < 61
     eq_bar_w = 4 if compact else 40
 
     labels = {
@@ -672,7 +672,7 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
     items = app.config_items
     total = len(items)
     cur = app.config_cursor
-    list_h = h - 5 - y_offset if h < 16 else h - 6 - y_offset
+    list_h = h - 5 - y_offset if h < COMPACT_THRESHOLD else h - 6 - y_offset
 
     # Clamp scroll
     if cur < app.config_scroll:
@@ -685,7 +685,11 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
     for i, (key, label, ctype) in enumerate(visible):
         y = 3 + y_offset + i
         idx = app.config_scroll + i
-        if ctype == "color":
+        if ctype == "separator":
+            sep_w = max(0, w - 4)
+            safe_addstr(app.stdscr, y, 2, "─" * sep_w, marco, h, w)
+            continue
+        elif ctype == "color":
             line = f"  {label}: {cc.get(key, 'Blanco')}"
         elif ctype == "bool":
             line = f"  {label}: {'Sí' if app.config.get(key, True) else 'No'}"
@@ -727,7 +731,7 @@ def draw_keybindings(app: PlayerApp, h: int, w: int) -> None:
     overlay = curses.color_pair(PAIR_OVERLAY)
     nav = curses.color_pair(PAIR_NAV)
 
-    compact = h < 16
+    compact = h < COMPACT_THRESHOLD
     is_custom = app.keybinding_mode == "custom"
     mode = "PERSONALIZADO" if is_custom else "POR DEFECTO"
 
@@ -777,7 +781,7 @@ def draw_keybindings(app: PlayerApp, h: int, w: int) -> None:
 def draw_meta_editor(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
-    compact = h < 16
+    compact = h < COMPACT_THRESHOLD
 
     pad_x = 2
     draw_box(win, h, w, "Editar metadata")
