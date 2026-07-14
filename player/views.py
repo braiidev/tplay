@@ -393,6 +393,12 @@ def draw_explorer(app: PlayerApp, h: int, w: int) -> None:
     destacar = curses.color_pair(PAIR_DESTACAR)
     overlay = curses.color_pair(PAIR_OVERLAY)
 
+    root = os.path.realpath(app.config.get("music_dir", os.path.expanduser("~/Music")))
+    cur_dir = os.path.realpath(app.current_dir)
+    read_only = not (cur_dir == root or cur_dir.startswith(root + os.sep))
+    if read_only:
+        extra += " [RO]"
+
     offset = 0
     if app.file_op_mode:
         mode_label = "Copiar" if app.file_op_mode == "copy" else "Mover"

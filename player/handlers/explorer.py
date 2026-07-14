@@ -16,6 +16,12 @@ if TYPE_CHECKING:
     from player.app import PlayerApp
 
 
+def _is_inside_root(app: PlayerApp) -> bool:
+    root = os.path.realpath(app.config.get("music_dir", os.path.expanduser("~/Music")))
+    cur = os.path.realpath(app.current_dir)
+    return cur == root or cur.startswith(root + os.sep)
+
+
 def handle_explorer(app: PlayerApp, key: int) -> None:
     if app.file_op_mode:
         _handle_file_op_picker(app, key)
@@ -113,17 +119,35 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
     elif key == ord("A"):
         _add_from_explorer(app, insert_mode="after_current")
     elif key == ord("C"):
-        _start_file_op(app, "copy")
+        if _is_inside_root(app):
+            _start_file_op(app, "copy")
+        else:
+            _toast(app, "Solo lectura fuera del directorio raíz")
     elif key == ord("V"):
-        _start_file_op(app, "move")
+        if _is_inside_root(app):
+            _start_file_op(app, "move")
+        else:
+            _toast(app, "Solo lectura fuera del directorio raíz")
     elif key == ord("E"):
-        _start_rename(app)
+        if _is_inside_root(app):
+            _start_rename(app)
+        else:
+            _toast(app, "Solo lectura fuera del directorio raíz")
     elif key == ord("I"):
-        _start_tag_edit(app)
+        if _is_inside_root(app):
+            _start_tag_edit(app)
+        else:
+            _toast(app, "Solo lectura fuera del directorio raíz")
     elif key == ord("d"):
-        _start_delete(app)
+        if _is_inside_root(app):
+            _start_delete(app)
+        else:
+            _toast(app, "Solo lectura fuera del directorio raíz")
     elif key == ord("M"):
-        _start_mkdir(app)
+        if _is_inside_root(app):
+            _start_mkdir(app)
+        else:
+            _toast(app, "Solo lectura fuera del directorio raíz")
     elif key == ord("F"):
         app.current_view = app.V_FAVORITES
     elif key == ord("f"):
@@ -410,9 +434,15 @@ def _handle_file_op_picker(app: PlayerApp, key: int) -> None:
         if app.entries:
             _, is_dir, full = app.entries[app.cursor]
             if is_dir:
-                _confirm_file_op(app, full)
+                if _is_inside_root(app):
+                    _confirm_file_op(app, full)
+                else:
+                    _toast(app, "Solo lectura fuera del directorio raíz")
             else:
-                _confirm_file_op(app, app.current_dir)
+                if _is_inside_root(app):
+                    _confirm_file_op(app, app.current_dir)
+                else:
+                    _toast(app, "Solo lectura fuera del directorio raíz")
     elif key in (curses.KEY_RIGHT, ord("l")):
         if app.entries:
             _, is_dir, full = app.entries[app.cursor]
