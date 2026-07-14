@@ -382,6 +382,11 @@ HELP_TABS: list[HelpTab] = [
             ("    w         Aumentar velocidad (+0.25x)", PAIR_TEXTO),
             ("    W         Disminuir velocidad (-0.25x)", PAIR_TEXTO),
             ("", None),
+            ("  ECUALIZADOR", PAIR_NAV),
+            ("", None),
+            ("    e         Toggle EQ ON/OFF", PAIR_TEXTO),
+            ("    E         Ciclar presets", PAIR_TEXTO),
+            ("", None),
             ("  FAVORITOS", PAIR_NAV),
             ("", None),
             ("    f         Añadir/quitar de favoritos", PAIR_TEXTO),
@@ -488,6 +493,7 @@ HELP_TABS: list[HelpTab] = [
             ("    J / K     Reordenar elementos", PAIR_TEXTO),
             ("    f         Añadir/quitar de favoritos", PAIR_TEXTO),
             ("    /         Filtrar elementos", PAIR_TEXTO),
+            ("    g / G     Inicio / Fin", PAIR_TEXTO),
             ("", None),
             ("  FILTRO (/)", PAIR_NAV),
             ("", None),
@@ -509,6 +515,7 @@ HELP_TABS: list[HelpTab] = [
             ("    a / A     Añadir a pila (final/tras)", PAIR_TEXTO),
             ("    I         Editar tags ID3", PAIR_TEXTO),
             ("    f         Añadir/quitar de favoritos", PAIR_TEXTO),
+            ("    g / G     Inicio / Fin", PAIR_TEXTO),
             ("    Esc       Volver a Escucha", PAIR_TEXTO),
         ]
     },
@@ -554,6 +561,7 @@ HELP_TABS: list[HelpTab] = [
             ("    f         Añadir/quitar de favoritos", PAIR_TEXTO),
             ("    s         Guardar radios", PAIR_TEXTO),
             ("    X         Exportar M3U", PAIR_TEXTO),
+            ("    g / G     Inicio / Fin", PAIR_TEXTO),
         ]
     },
     {

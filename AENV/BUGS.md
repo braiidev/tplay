@@ -6,12 +6,12 @@
 | B13 | Listen hints no se pueden ocultar — fila de hints ocupa espacio en terminales pequeñas | `views.py` (draw_listen), `app.py` | Config option `show_listen_hints` + tecla toggle (ej: `;`) |
 | B16 | Config/Audio: bands no actualizan valores al cambiar preset — permanecen en valores de Custom | `app.py` (_build_config_tabs), `handlers/config_view.py` (_cycle_eq_preset) | Al cambiar preset, llamar `_build_config_tabs()` + aplicar valores del preset seleccionado a `eq_bands` en config |
 | B17 | Config/Audio: cursor navega y edita bands en modo non-Custom (debería ser solo lectura/ skip) | `views.py` (draw_config), `handlers/config_view.py` | En handler, skip items `eq_band` cuando `eq_preset != "Custom"` — o marcar items como `disabled` en el tuple |
-| B18 | Help tab Listen: no muestra hints de EQ (`e`/`E`) | `ui.py` (HELP_TABS, tab "Escucha") | Agregar entradas `("e", "EQ toggle")` y `("E", "Preset cycle")` a HELP_TABS[1]["lines"] |
-| B19 | Help tabs Lista/Historial/Radio: no muestran hints de `g`/`G` (ir a inicio/fin) | `ui.py` (HELP_TABS, tabs 3/4/6) | Agregar entradas `("g/G", "Inicio/Fin")` a cada tab correspondiente |
 
 ## Resueltos
 | ID | Descripción | Solución |
 |----|-------------|----------|
+| B18 | Help tab Listen: no muestra hints de EQ (`e`/`E`) | Agregada sección ECUALIZADOR a HELP_TABS[1] con `e`/`E` |
+| B19 | Help tabs Lista/Historial/Radio: no muestran hints de `g`/`G` | Agregados `g/G Inicio/Fin` a tabs Lista, Historial, Radio |
 | B14 | Config/Audio bands no visibles para presets non-Custom | `_build_config_tabs()` siempre agrega bands (no solo Custom) |
 | B15 | History g/G no implementado | Agregados handlers `g` (inicio) y `G` (fin) en history.py |
 | B12 | Explorer no ve symlinks-to-dirs (ej: ~/Music) | `follow_symlinks=True` en scandir |
