@@ -681,7 +681,13 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
     # --- Hints line for Audio tab ---
     y_offset = 0
     if is_audio_tab:
-        hints = _build_hints([("← →", "cambiar")], w - 4)
+        cur_item_type = app.config_items[app.config_cursor][2] if app.config_cursor < len(app.config_items) else ""
+        if cur_item_type in ("eq_preamp", "eq_band"):
+            hints = _build_hints([("← →", "±0.5dB"), ("r", "reset")], w - 4)
+        elif cur_item_type == "choice":
+            hints = _build_hints([("← →", "cambiar"), ("r", "reset")], w - 4)
+        else:
+            hints = _build_hints([("← →", "cambiar")], w - 4)
         if hints:
             safe_addstr(app.stdscr, 2, 2, hints, nav, h, w)
             y_offset = 1
@@ -700,6 +706,7 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
     app.config_scroll = max(0, app.config_scroll)
 
     visible = items[app.config_scroll:app.config_scroll + list_h]
+    is_custom_eq = app.config.get("eq_preset", "Flat") == "Custom"
     for i, (key, label, ctype) in enumerate(visible):
         y = 3 + y_offset + i
         idx = app.config_scroll + i
@@ -736,7 +743,9 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
         max_w = w - 4
         if len(line) > max_w:
             line = line[:max_w - 1] + "…"
-        if idx == cur:
+        if ctype == "eq_band" and not is_custom_eq:
+            safe_addstr(app.stdscr, y, 2, line, texto, h, w)
+        elif idx == cur:
             safe_addstr(app.stdscr, y, 2, line, destacar | curses.A_REVERSE, h, w)
         else:
             safe_addstr(app.stdscr, y, 2, line, texto, h, w)
