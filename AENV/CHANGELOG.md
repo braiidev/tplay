@@ -1,5 +1,10 @@
 # CHANGELOG — tplay
 
+## v1.5.53
+- refactor: draw_box_inline() helper unifica box drawing manual (mini_stack, listen_compact)
+- feat: scroll indicators ▲/▼ en todas las vistas de lista (explorer, playlist, history, favorites, radio, config)
+- fix: favorites list_h usa COMPACT_THRESHOLD (era hardcoded 16)
+
 ## v1.5.52
 - refactor: COMPACT_THRESHOLD=16 constante unificada (reemplaza 19 hardcodes `h < 16` / `h < 12`)
 - fix: icono de pausa unificado a ❚❚ en status bar, help y listen view

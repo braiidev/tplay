@@ -166,3 +166,22 @@
 - `player/handlers/radio.py` — COMPACT_THRESHOLD import
 
 **Estado**: v1.5.52, mypy strict pasa.
+
+---
+
+## Entrada 10 — 2026-07-14 — draw_box_inline + scroll indicators
+
+**Tarea**: Fase 1.1 (unificar box drawing) + Fase 3.2 (scroll indicators)
+
+**Cambios**:
+- `draw_box_inline(win, h, w, title, clear)` en `ui.py` — helper para box con título inline + limpieza interior
+- Reemplaza implementación manual en `draw_mini_stack` y `draw_listen_compact` (~15 líneas eliminadas)
+- `draw_scroll_indicators(win, h, w, has_above, has_below)` en `ui.py` — dibuja `▲`/`▼` en borde derecho
+- Indicadores en: explorer, playlist, history, favorites, radio, config
+- Fix: `favorites` list_h usa `COMPACT_THRESHOLD` (era hardcoded `16`)
+
+**Archivos modificados**:
+- `player/ui.py` — draw_box_inline, draw_scroll_indicators
+- `player/views.py` — reemplazo manual boxes, scroll indicators en 6 vistas, fix favorites threshold
+
+**Estado**: v1.5.53, mypy strict pasa.
