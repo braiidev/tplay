@@ -4,9 +4,14 @@
 | ID | Feature | Prioridad | Notas |
 |----|---------|-----------|-------|
 | F2 | Ecualizador gráfico (VLC API) | Alta | VLC tiene API de ecualización |
-| ~~F8~~ | ~~Cover art (chafa/viu)~~ | ~~Baja~~ | Descartado por el usuario |
 
-## Completado (migrado de TODO.md raíz)
+## Completado esta sesión
+- [x] Setup AENV (migración tracking)
+- [x] Explorer read-only fuera del root (v1.5.46)
+- [x] 9 extensiones nuevas (v1.5.47)
+- [x] Fix symlinks-to-dirs en Explorer (v1.5.48)
+
+## Completado (histórico)
 Ver CHANGELOG.md para historial completo.
 
 ## Bugs conocidos

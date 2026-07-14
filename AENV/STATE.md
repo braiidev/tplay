@@ -1,13 +1,13 @@
 # STATE — tplay
 
 ## Versión actual
-- **v1.5.45** (último tag: `v1.5.45`)
-- **Último commit**: `dae0c98` — docs: actualizar AGENTS, KEYBINDINGS, TODO con v1.5.38-v1.5.45
+- **v1.5.48**
+- **Último commit**: `375f4b0` — docs: B12 symlinks fix + CHANGELOG + DEVLOG
 
 ## Estado del código
 - **Compila**: ✅ (mypy strict pasa)
 - **Tests**: ⚠️ No hay tests unitarios
-- **Último fix**: v1.5.46 — Explorer read-only fuera del directorio raíz
+- **Último fix**: v1.5.48 — Explorer no ve symlinks-to-dirs (regresión P1)
 
 ## Features activos
 | ID | Feature | Estado |
@@ -16,6 +16,12 @@
 | F4 | Exportar/Importar M3U/PLS | ✅ Hecho |
 | F8 | Cover art (chafa/viu) | Descartado |
 | F28 | Streaming/Radio | ✅ Hecho |
+
+## Sesión actual (v1.5.46-v1.5.48)
+- Setup AENV (migración tracking)
+- Explorer read-only fuera del root
+- 9 extensiones nuevas (.m4a .aac .opus .weba .wma .aiff .aif .flv .wmv)
+- Fix symlinks-to-dirs en Explorer
 
 ## Módulos del sistema
 | Módulo | Archivos | Estado |
