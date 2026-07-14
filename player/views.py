@@ -689,16 +689,15 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
             line = f"  {label}: {cc.get(key, 'Blanco')}"
         elif ctype == "bool":
             line = f"  {label}: {'Sí' if app.config.get(key, True) else 'No'}"
-        elif ctype == "eq_preamp":
-            val = app.config.get("eq_preamp", 0.0)
+        elif ctype in ("eq_preamp", "eq_band"):
+            if ctype == "eq_preamp":
+                val = app.config.get("eq_preamp", 0.0)
+            else:
+                band_idx = int(key.split("_")[-1])
+                bands = app.config.get("eq_bands", [0.0] * 10)
+                val = bands[band_idx] if band_idx < len(bands) else 0.0
             bar = _eq_bar(val, eq_bar_w)
-            line = f"  {label}: {val:+5.1f}  {bar}"
-        elif ctype == "eq_band":
-            band_idx = int(key.split("_")[-1])
-            bands = app.config.get("eq_bands", [0.0] * 10)
-            val = bands[band_idx] if band_idx < len(bands) else 0.0
-            bar = _eq_bar(val, eq_bar_w)
-            line = f"  {label}: {val:+5.1f}  {bar}"
+            line = f"  {label:<6}: {val:+5.1f}  {bar}"
         elif key == "keybindings":
             mode_label = "Default" if app.keybinding_mode == "default" else "Custom"
             line = f"  {label}  [{mode_label}]"
