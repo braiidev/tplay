@@ -59,3 +59,26 @@
 **Fix**: `entry.is_dir(follow_symlinks=True)` en file_utils.py
 
 **Estado**: v1.5.48, mypy strict pasa.
+
+---
+
+## Entrada 5 — 2026-07-14 — F2 Ecualizador gráfico
+
+**Tarea**: Implementar ecualizador gráfico de 10 bandas con presets y modo Custom
+
+**Archivos modificados**:
+- `player/audio.py` — +6 métodos EQ (set_equalizer, apply_preset, disable_equalizer, get_equalizer_info, reapply_equalizer), reapply en play_file
+- `player/config.py` — defaults EQ + 16 presets (Flat..Custom) + EQ_PRESET_NAMES
+- `player/app.py` — config tab Audio, persistencia session (save/resume), eq_edit_mode + _handle_eq_edit
+- `player/handlers/listen.py` — tecla E toggle EQ
+- `player/handlers/config_view.py` — _cycle_eq_preset, _toggle_bool con EQ, abre overlay Custom
+- `player/views.py` — [EQ] indicator, hint E, draw_eq_overlay (10 bandas + preamp), compact EQ indicator
+- `player/state.py` — save_state con eq_enabled/eq_bands/eq_preamp/eq_preset
+
+**Decisión**: 
+- VLC API: `set_amp_at_index`/`get_amp_at_index` (no `set_band_value`)
+- 16 presets propios (no nativos de VLC) — más control sobre los valores
+- Custom mode: overlay con j/k/h/l/r/s/Esc
+- Re-aplicar EQ después de play_file por seguridad
+
+**Estado**: v1.5.49, mypy strict pasa.

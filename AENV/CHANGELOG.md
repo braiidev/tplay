@@ -1,5 +1,8 @@
 # CHANGELOG — tplay
 
+## v1.5.49
+- feat: F2 ecualizador gráfico — 10 bandas, preamp, 16 presets, modo Custom, toggle `E`, persistencia session
+
 ## v1.5.48
 - fix: Explorer no ve symlinks-to-dirs — follow_symlinks=True en scandir (regresión de P1)
 

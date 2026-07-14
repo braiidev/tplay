@@ -3,11 +3,11 @@
 ## Pendiente
 | ID | Feature | Prioridad | Estado |
 |----|---------|-----------|--------|
-| F2 | Ecualizador gráfico (VLC API) | Alta | Plan listo en `docs/EQ_PLAN.md` |
 | F9 | Visualizer (FFT bars) | Media | Investigado en `docs/BRAINSTORM.md` |
 | F10 | yt-dlp Web Explorer | Baja | Investigado en `docs/BRAINSTORM.md` |
 
 ## Completado esta sesión
+- [x] F2 Ecualizador gráfico (v1.5.49)
 - [x] Setup AENV (migración tracking)
 - [x] Explorer read-only fuera del root (v1.5.46)
 - [x] 9 extensiones nuevas (v1.5.47)
