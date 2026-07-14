@@ -1,5 +1,8 @@
 # CHANGELOG — tplay
 
+## v1.5.51
+- fix: alineación visual de labels en Config/Audio — todos los labels de bandas EQ padeados a 6 chars, colon/values/barras perfectamente alineados
+
 ## v1.5.50
 - refactor: EQ refinado — preamp configurable todos los presets, Custom en Config/Audio (no overlay), teclas E/e reasignadas, preamp default +12dB
 - feat: barras visuales EQ en Config/Audio (40 chars full, 4 chars compact)

@@ -126,3 +126,18 @@
 - `player/handlers/config_view.py` — handler `r` para EQ items
 
 **Estado**: v1.5.50, mypy strict pasa.
+
+---
+
+## Entrada 8 — 2026-07-14 — Fix alineación visual EQ bands
+
+**Tarea**: Alinear labels de bandas custom en Config/Audio
+
+**Problema**: Labels con longitudes distintas ("60 Hz" vs "1k" vs "Preamp") causaban desfase visual en colon, valores y barras.
+
+**Solución**: Padear labels a 6 chars con `{label:<6}`, unificar branches `eq_preamp`/`eq_band` en uno solo.
+
+**Archivos modificados**:
+- `player/views.py` — draw_config, branch unificado eq_preamp/eq_band con label padeado
+
+**Estado**: v1.5.51, mypy strict pasa.

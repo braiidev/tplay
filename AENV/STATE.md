@@ -1,8 +1,8 @@
 # STATE — tplay
 
 ## Versión actual
-- **v1.5.50**
-- **Último commit**: `07f014c` — docs: CHANGELOG + DEVLOG barras EQ + r reset
+- **v1.5.51**
+- **Último commit**: pendiente
 
 ## Estado del código
 - **Compila**: ✅ (mypy strict pasa)
