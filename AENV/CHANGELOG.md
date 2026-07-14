@@ -1,5 +1,8 @@
 # CHANGELOG — tplay
 
+## v1.5.47
+- feat: 9 extensiones nuevas — .m4a .aac .opus .weba .wma .aiff .aif (audio) + .flv .wmv (video)
+
 ## v1.5.46
 - feat: Explorer read-only fuera del directorio raíz — bloqueo de ops de escritura + indicador [RO]
 

@@ -129,8 +129,8 @@ COLORS = {
 
 ## Extensiones soportadas
 ```python
-AUDIO_EXT = (".mp3", ".flac", ".wav", ".ogg")
-VIDEO_EXT = (".mp4", ".mkv", ".avi", ".mov")
+AUDIO_EXT = (".mp3", ".flac", ".wav", ".ogg", ".m4a", ".aac", ".opus", ".weba", ".wma", ".aiff", ".aif")
+VIDEO_EXT = (".mp4", ".mkv", ".avi", ".mov", ".flv", ".wmv")
 PLAYLIST_EXT = (".m3u", ".pls")
 ALLOWED_EXT = AUDIO_EXT + VIDEO_EXT + PLAYLIST_EXT
 ```

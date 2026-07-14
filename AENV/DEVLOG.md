@@ -34,3 +34,16 @@
 **Decisión**: Solo lectura (no bloqueo total) — el usuario puede navegar libremente pero no modificar archivos fuera del directorio raíz. Operaciones bloqueadas: delete, mkdir, rename, copy, move, tag edit.
 
 **Estado**: v1.5.46, mypy strict pasa.
+
+---
+
+## Entrada 3 — 2025-07-14 — 9 extensiones nuevas
+
+**Tarea**: Agregar soporte para .m4a .aac .opus .weba .wma .aiff .aif .flv .wmv
+
+**Archivos modificados**:
+- `player/file_utils.py` — AUDIO_EXT, VIDEO_EXT, EXT_LABEL
+
+**Decisión**: Solo alta + media (9 ext). No se agregan nicho audiophile (.wv .ape .tak .tta) ni video legacy (.3gp .mpg .mpeg .ts .m4v .ogv).
+
+**Estado**: v1.5.47, mypy strict pasa.
