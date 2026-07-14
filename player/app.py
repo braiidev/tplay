@@ -763,6 +763,9 @@ class PlayerApp:
         if self.current_view == self.V_PLAYLIST and self.playlist_filter_mode:
             handlers.handle_playlist(self, key)
             return True
+        if self.current_view == self.V_WEB and self.web_search_mode:
+            handlers.handle_web(self, key)
+            return True
         if key == ord("/"):
             if self.current_view == self.V_EXPLORER:
                 handlers.handle_explorer(self, key)
@@ -789,6 +792,8 @@ class PlayerApp:
             self.file_op_mode = None
             self.file_op_source = None
             self.dir_picker_mode = False
+            self.web_search_mode = False
+            self.web_search_buf = ""
             curses.curs_set(0)
             curses.flushinp()
             return True
