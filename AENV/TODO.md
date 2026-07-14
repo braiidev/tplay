@@ -6,6 +6,10 @@
 | F9 | Visualizer (FFT bars) | Media | Investigado en `docs/BRAINSTORM.md` |
 | F10 | yt-dlp Web Explorer | Baja | Investigado en `docs/BRAINSTORM.md` |
 | B13 | Listen hints show/hide toggle | Baja | Bug activo en `BUGS.md` |
+| B16 | Config/Audio: bands actualizan al cambiar preset | Alta | Bug activo en `BUGS.md` — critico UX |
+| B17 | Config/Audio: cursor navega bands en non-Custom | Alta | Bug activo en `BUGS.md` — critico UX |
+| B18 | Help Listen: missing EQ hints (e/E) | Baja | Bug activo en `BUGS.md` |
+| B19 | Help Lista/Hist/Radio: missing g/G hints | Baja | Bug activo en `BUGS.md` |
 
 ## Completado esta sesión
 - [x] F2 Ecualizador gráfico (v1.5.49)
