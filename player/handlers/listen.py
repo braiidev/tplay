@@ -120,6 +120,9 @@ def handle_listen(app: PlayerApp, key: int) -> None:
         else:
             app.audio.disable_equalizer()
         _toast(app, f"EQ: {'ON' if app.audio._eq_enabled else 'OFF'}")
+    elif key == ord(";"):
+        app.config["show_listen_hints"] = not app.config.get("show_listen_hints", True)
+        _toast(app, "Hints: " + ("ON" if app.config["show_listen_hints"] else "OFF"))
 
 
 def handle_stack_view(app: PlayerApp, key: int) -> None:

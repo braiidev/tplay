@@ -13,14 +13,16 @@ if TYPE_CHECKING:
     from player.app import PlayerApp
 
 
-def _skip_separator(app: PlayerApp, direction: int) -> None:
-    """Skip separator items when navigating."""
+def _skip_disabled(app: PlayerApp, direction: int) -> None:
+    """Skip separators + eq_bands when non-Custom."""
     items = app.config_items
+    is_custom = app.config.get("eq_preset", "Flat") == "Custom"
     while 0 <= app.config_cursor < len(items):
         _, _, ctype = items[app.config_cursor]
-        if ctype != "separator":
+        if ctype == "separator" or (ctype == "eq_band" and not is_custom):
+            app.config_cursor += direction
+        else:
             break
-        app.config_cursor += direction
 
 
 def handle_config(app: PlayerApp, key: int) -> None:
@@ -38,10 +40,10 @@ def handle_config(app: PlayerApp, key: int) -> None:
 
     if key == curses.KEY_DOWN:
         app.config_cursor = min(app.config_cursor + 1, total - 1)
-        _skip_separator(app, 1)
+        _skip_disabled(app, 1)
     elif key == curses.KEY_UP:
         app.config_cursor = max(app.config_cursor - 1, 0)
-        _skip_separator(app, -1)
+        _skip_disabled(app, -1)
     elif key in (curses.KEY_RIGHT, 10, 13):
         if total == 0:
             return
@@ -60,7 +62,8 @@ def handle_config(app: PlayerApp, key: int) -> None:
         elif ctype == "eq_preamp":
             _eq_preamp_inc(app)
         elif ctype == "eq_band":
-            _eq_band_inc(app, key_name)
+            if app.config.get("eq_preset", "Flat") == "Custom":
+                _eq_band_inc(app, key_name)
         elif ctype == "action" and key_name == "keybindings":
             _open_keybindings(app)
         elif ctype == "action" and key_name == "update":
@@ -86,7 +89,8 @@ def handle_config(app: PlayerApp, key: int) -> None:
         elif ctype == "eq_preamp":
             _eq_preamp_dec(app)
         elif ctype == "eq_band":
-            _eq_band_dec(app, key_name)
+            if app.config.get("eq_preset", "Flat") == "Custom":
+                _eq_band_dec(app, key_name)
         elif ctype == "path":
             _open_dir_picker(app, key_name)
 
@@ -94,7 +98,7 @@ def handle_config(app: PlayerApp, key: int) -> None:
         if total == 0:
             return
         key_name, _, ctype = app.config_items[app.config_cursor]
-        if ctype == "eq_band":
+        if ctype == "eq_band" and app.config.get("eq_preset", "Flat") == "Custom":
             idx = int(key_name.split("_")[-1])
             bands = list(app.config.get("eq_bands", [0.0] * 10))
             bands[idx] = 0.0
@@ -191,17 +195,16 @@ def _cycle_eq_preset(app: PlayerApp, direction: int) -> None:
         idx = 0
     new_preset = EQ_PRESET_NAMES[(idx + direction) % len(EQ_PRESET_NAMES)]
     app.config["eq_preset"] = new_preset
+    if new_preset != "Custom":
+        bands = EQ_PRESETS.get(new_preset, [0.0] * 10)
+        app.config["eq_bands"] = bands
     saved_cursor = app.config_cursor
     app._build_config_tabs()
     app.config_cursor = min(saved_cursor, len(app.config_items) - 1)
     app.config_scroll = 0
     if app.config.get("eq_enabled", False):
-        if new_preset == "Custom":
-            bands = app.config.get("eq_bands", [0.0] * 10)
-        else:
-            bands = EQ_PRESETS.get(new_preset, [0.0] * 10)
         preamp = app.config.get("eq_preamp", 0.0)
-        app.audio.set_equalizer(bands, preamp)
+        app.audio.set_equalizer(app.config.get("eq_bands", [0.0] * 10), preamp)
     from ..config import save as _save_config
     _save_config(app.config)
 

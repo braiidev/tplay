@@ -420,6 +420,10 @@ HELP_TABS: list[HelpTab] = [
             ("    X         Exportar como M3U", PAIR_TEXTO),
             ("    u / U     Deshacer / Rehacer", PAIR_TEXTO),
             ("    Tab/Esc   Volver", PAIR_TEXTO),
+            ("", None),
+            ("  INTERFAZ", PAIR_NAV),
+            ("", None),
+            ("    ;         Ocultar/mostrar hints", PAIR_TEXTO),
         ]
     },
     {

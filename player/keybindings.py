@@ -30,6 +30,7 @@ RESERVED_KEYS: set[int] = {
     ord("C"), ord("c"), ord("e"), ord("D"), ord("["), ord("]"), ord("/"),
     ord("V"), ord("I"), ord("T"), ord("M"), ord("R"),
     ord("j"), ord("k"), ord("h"), ord("l"),
+    ord(";"),
     ord(" "),
     curses.KEY_F1, curses.KEY_F2, curses.KEY_F3,
     curses.KEY_F4, curses.KEY_F5, curses.KEY_F6,

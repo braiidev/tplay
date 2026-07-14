@@ -245,8 +245,8 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
     extra = _build_hints([
         ("Tab", "Pila"), ("g", "Ir a"), ("t/T", "Tmp"),
         ("h/l", "Buscar"), ("r", "Azar"), ("R", "Rep"), ("m", "Sil"),
-        ("E", "Preset"), ("e", "EQ"),
-    ], w)
+        ("E", "Preset"), ("e", "EQ"), (";", "Hints"),
+    ], w) if app.config.get("show_listen_hints", True) else ""
 
     safe_addstr(app.stdscr, h - 5, 2, line1[:w - 4], destacar, h, w)
     safe_addstr(app.stdscr, h - 4, 2, line2[:w - 4], texto, h, w)
