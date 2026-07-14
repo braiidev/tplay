@@ -102,6 +102,29 @@ def draw_box(win: curses.window, h: int, w: int, title: str) -> None:
         safe_addstr(win, bot, 0, "└" + "─" * max(0, w - 2) + "┘", marco, h, w)
 
 
+def draw_box_inline(win: curses.window, h: int, w: int, title: str = "",
+                    clear: bool = True) -> None:
+    marco = curses.color_pair(PAIR_MARCO)
+    texto = curses.color_pair(PAIR_TEXTO)
+    safe_addstr(win, 0, 0, "┌" + "─" * max(0, w - 2) + "┐", marco, h, w)
+    if title:
+        title_str = f" {title} "
+        tx = max(2, (w - len(title_str)) // 2)
+        max_tw = max(0, w - tx - 1)
+        if len(title_str) > max_tw and max_tw >= 2:
+            title_str = title_str[:max_tw - 1] + "…"
+        elif len(title_str) > max_tw:
+            title_str = title_str[:max_tw]
+        safe_addstr(win, 0, tx, title_str, marco, h, w)
+    for y in range(1, max(0, h - 1)):
+        safe_addstr(win, y, 0, "│", marco, h, w)
+        safe_addstr(win, y, max(0, w - 1), "│", marco, h, w)
+        if clear:
+            safe_addstr(win, y, 1, " " * max(0, w - 2), texto, h, w)
+    if h > 1:
+        safe_addstr(win, h - 1, 0, "└" + "─" * max(0, w - 2) + "┘", marco, h, w)
+
+
 def draw_nav(win: curses.window, h: int, w: int) -> None:
     nav = curses.color_pair(PAIR_NAV)
     tabs = _build_nav(w)
@@ -110,6 +133,15 @@ def draw_nav(win: curses.window, h: int, w: int) -> None:
     win.move(h - NAV_ROW, 0)
     win.clrtoeol()
     safe_addstr(win, h - NAV_ROW, max(0, (w - len(tabs)) // 2), tabs, nav, h, w)
+
+
+def draw_scroll_indicators(win: curses.window, h: int, w: int,
+                           has_above: bool, has_below: bool) -> None:
+    nav = curses.color_pair(PAIR_NAV)
+    if has_above:
+        safe_addstr(win, 1, max(0, w - 3), "▲", nav, h, w)
+    if has_below:
+        safe_addstr(win, max(0, h - 3), max(0, w - 3), "▼", nav, h, w)
 
 
 def draw_status(win: curses.window, h: int, w: int, audio: Any, playing: bool, current_file: str | None, volume: int,

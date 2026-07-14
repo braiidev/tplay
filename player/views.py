@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV, PAIR_OVERLAY
 from .file_utils import time_str, ext_label, is_url as _is_url, is_video_file as _is_video_file
-from .ui import safe_addstr, draw_box, _build_hints, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN, COMPACT_THRESHOLD
+from .ui import safe_addstr, draw_box, draw_box_inline, draw_scroll_indicators, _build_hints, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN, COMPACT_THRESHOLD
 from . import keybindings as kb
 from .handlers import _get_current_key
 
@@ -244,15 +244,10 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
 
 
 def draw_mini_stack(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
-    marco = curses.color_pair(PAIR_MARCO)
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
 
-    safe_addstr(win, 0, 0, "┌" + "─" * max(0, w - 2) + "┐", marco, h, w)
-    safe_addstr(win, h - 1, 0, "└" + "─" * max(0, w - 2) + "┘", marco, h, w)
-    for y in range(1, h - 1):
-        safe_addstr(win, y, 0, "│", marco, h, w)
-        safe_addstr(win, y, max(0, w - 1), "│", marco, h, w)
+    draw_box_inline(win, h, w)
 
     items = app.stack.items
     total = len(items)
@@ -289,15 +284,8 @@ def draw_listen_compact(app: PlayerApp, h: int, w: int) -> None:
     status = ""
     if app.audio.playing:
         status = "❚❚" if app.paused else "▶"
-    title = f" {status} Listen " if status else " Listen "
-    safe_addstr(app.stdscr, 0, 0, "┌" + "─" * max(0, w - 2) + "┐", marco, h, w)
-    if w > len(title) + 2:
-        tx = max(2, (w - len(title)) // 2)
-        safe_addstr(app.stdscr, 0, tx, title[:w - tx - 1], marco, h, w)
-    safe_addstr(app.stdscr, h - 1, 0, "└" + "─" * max(0, w - 2) + "┘", marco, h, w)
-    for y in range(1, h - 1):
-        safe_addstr(app.stdscr, y, 0, "│", marco, h, w)
-        safe_addstr(app.stdscr, y, max(0, w - 1), "│", marco, h, w)
+    title = f"{status} Listen" if status else "Listen"
+    draw_box_inline(app.stdscr, h, w, title)
 
     if not app.stack.items or not app.audio.playing:
         msg = "Nada sonando."
@@ -497,6 +485,10 @@ def draw_explorer(app: PlayerApp, h: int, w: int) -> None:
             if fill_len > 0:
                 safe_addstr(app.stdscr, y, fill_start, " " * fill_len, attr | curses.A_REVERSE, h, w)
 
+    has_above = app.scroll > 0
+    has_below = app.scroll + list_h < total
+    draw_scroll_indicators(app.stdscr, h, w, has_above, has_below)
+
 
 def draw_playlist(app: PlayerApp, h: int, w: int) -> None:
     extra = " [Filtro]" if app.playlist_filter_mode else ""
@@ -575,6 +567,10 @@ def draw_playlist(app: PlayerApp, h: int, w: int) -> None:
                       exists=exists, left_margin=PLAYLIST_MARGIN,
                       attr=texto, dur_attr=texto, h=h, w=w)
 
+    has_above = app.playlist_scroll > 0
+    has_below = app.playlist_scroll + list_h < len(indices)
+    draw_scroll_indicators(app.stdscr, h, w, has_above, has_below)
+
 
 def draw_history(app: PlayerApp, h: int, w: int) -> None:
     total = len(app.history)
@@ -605,6 +601,10 @@ def draw_history(app: PlayerApp, h: int, w: int) -> None:
                       left_margin=2, attr=texto, cursor_attr=destacar,
                       dur_attr=texto, fallback_icon="~",
                       fallback_label="Archivo Inexistente", h=h, w=w)
+
+    has_above = start > 0
+    has_below = start + list_h < len(app.history)
+    draw_scroll_indicators(app.stdscr, h, w, has_above, has_below)
 
 
 def draw_config(app: PlayerApp, h: int, w: int) -> None:
@@ -722,6 +722,10 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
             safe_addstr(app.stdscr, y, 2, line, destacar | curses.A_REVERSE, h, w)
         else:
             safe_addstr(app.stdscr, y, 2, line, texto, h, w)
+
+    has_above = app.config_scroll > 0
+    has_below = app.config_scroll + list_h < total
+    draw_scroll_indicators(app.stdscr, h, w, has_above, has_below)
 
 
 def draw_keybindings(app: PlayerApp, h: int, w: int) -> None:
@@ -879,6 +883,10 @@ def draw_radio(app: PlayerApp, h: int, w: int) -> None:
         safe_addstr(win, y, dur_x, dur_str, texto, h, w)
     if not radios:
         safe_addstr(win, y0, 2, "  Sin radios guardadas", texto, h, w)
+        return
+    has_above = scroll > 0
+    has_below = scroll + list_h < len(radios)
+    draw_scroll_indicators(win, h, w, has_above, has_below)
 
 
 def draw_dir_picker(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
@@ -930,7 +938,7 @@ def draw_favorites(app: PlayerApp, h: int, w: int) -> None:
         safe_addstr(win, h // 2, 2, "  Sin favoritos — usa 'f' en el Explorador", texto, h, w)
         return
 
-    list_h = h - 5 if h >= 16 else h - 4
+    list_h = h - 5 if h >= COMPACT_THRESHOLD else h - 4
     visible = app.favorites[app.favorites_scroll:app.favorites_scroll + list_h]
 
     for i, entry in enumerate(visible):
@@ -976,3 +984,7 @@ def draw_favorites(app: PlayerApp, h: int, w: int) -> None:
             fill_len = w - 2 - fill_start
             if fill_len > 0:
                 safe_addstr(win, y, fill_start, " " * fill_len, texto | curses.A_REVERSE, h, w)
+
+    has_above = app.favorites_scroll > 0
+    has_below = app.favorites_scroll + list_h < len(app.favorites)
+    draw_scroll_indicators(win, h, w, has_above, has_below)
