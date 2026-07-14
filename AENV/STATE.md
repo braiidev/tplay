@@ -1,8 +1,8 @@
 # STATE — tplay
 
 ## Versión actual
-- **v1.5.53**
-- **Último commit**: pendiente
+- **v1.5.54**
+- **Último commit**: `3e5f0e1` — docs: CHANGELOG + DEVLOG draw_box_inline + scroll indicators
 
 ## Estado del código
 - **Compila**: ✅ (mypy strict pasa)
@@ -17,13 +17,12 @@
 | F8 | Cover art (chafa/viu) | Descartado |
 | F28 | Streaming/Radio | ✅ Hecho |
 
-## Sesión actual (v1.5.50)
-- EQ refinado:
-  - Preamp configurable para todos los presets
-  - Custom bandas integradas en Config/Audio (items dinámicos)
-  - Teclas E=ciclar presets, e=toggle ON/OFF
-  - Default preamp +12dB (fix volumen)
-  - Eliminado overlay system
+## Sesión actual (v1.5.54)
+- UI polish:
+  - Listen view: metadata centrada (estado, título, artista/álbum) en full y compact
+  - Indicador de volumen visual con barras (8 chars full, 4 chars compact)
+  - Helper _vol_bar() para barras de volumen
+  - Fallback automático a texto si el espacio no alcanza
 
 ## Módulos del sistema
 | Módulo | Archivos | Estado |

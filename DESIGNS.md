@@ -121,6 +121,7 @@
 
 **Archivos**: `player/views.py` (draw_listen)
 **Esfuerzo**: ~25 min
+**Estado**: ✅ Hecho (v1.5.54)
 
 ### 2.3 Indicador de volumen visual
 
@@ -134,6 +135,7 @@
 
 **Archivos**: `player/views.py` (draw_listen), `player/ui.py` (draw_status)
 **Esfuerzo**: ~20 min
+**Estado**: ✅ Hecho (v1.5.54)
 
 ---
 

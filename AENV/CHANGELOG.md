@@ -1,5 +1,9 @@
 # CHANGELOG — tplay
 
+## v1.5.54
+- feat: Listen view — metadata centrada (estado, título, artista/álbum) en full y compact mode
+- feat: indicador de volumen visual con barras (8 chars full, 4 chars compact, fallback a texto)
+
 ## v1.5.53
 - refactor: draw_box_inline() helper unifica box drawing manual (mini_stack, listen_compact)
 - feat: scroll indicators ▲/▼ en todas las vistas de lista (explorer, playlist, history, favorites, radio, config)

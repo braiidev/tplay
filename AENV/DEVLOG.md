@@ -185,3 +185,26 @@
 - `player/views.py` — reemplazo manual boxes, scroll indicators en 6 vistas, fix favorites threshold
 
 **Estado**: v1.5.53, mypy strict pasa.
+
+---
+
+## Entrada 11 — 2026-07-14 — Listen metadata centrada + volumen visual
+
+**Tarea**: Fase 2.2 (metadata centrada) + Fase 2.3 (indicador volumen visual)
+
+**Cambios**:
+- Helper `_vol_bar(vol, bar_w)` genera barra de volumen (█/░)
+- **2.2 Listen full**: estado, título ♪ y artista/álbum centrados con `_center(s, inner_w)`
+- **2.2 Listen compact**: título y artista/álbum centrados (sin filas extra, misma densidad)
+- **2.3 Listen full**: `Vol:████░░░░ 50%` en controles (8 chars bar, fallback a texto si w<50)
+- **2.3 Listen compact**: `V:██░░ 50%` en controles (4 chars bar, fallback si no cabe)
+
+**Archivos modificados**:
+- `player/views.py` — _vol_bar(), draw_listen centrado + vol bar, draw_listen_compact centrado + vol bar
+
+**Decisión**:
+- Centrado dinámico con `_center(s, w-4)` — funciona en cualquier ancho
+- Barra de volumen con fallback automático a texto si el espacio no alcanza
+- Compact mode: sin filas extra, solo centrado horizontal (preserva densidad)
+
+**Estado**: v1.5.54, mypy strict pasa.
