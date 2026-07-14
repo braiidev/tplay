@@ -2,6 +2,8 @@
 
 ## v1.5.50
 - refactor: EQ refinado — preamp configurable todos los presets, Custom en Config/Audio (no overlay), teclas E/e reasignadas, preamp default +12dB
+- feat: barras visuales EQ en Config/Audio (40 chars full, 4 chars compact)
+- fix: r resetea bandas/preamp/preset en Config, cursor no se resetea al cambiar preset
 
 ## v1.5.49
 - feat: F2 ecualizador gráfico — 10 bandas, preamp, 16 presets, modo Custom, toggle `E`, persistencia session

@@ -105,3 +105,24 @@
 - `player/views.py` — draw_config muestra preamp/bands, eliminado draw_eq_overlay
 
 **Estado**: v1.5.50, mypy strict pasa.
+
+---
+
+## Entrada 7 — 2026-07-14 — EQ barras visuales + r reset
+
+**Tarea**: Agregar barras visuales en Config/Audio + fix r reset
+
+**Cambios**:
+- Helper `_eq_bar(value, bar_w)` genera string de barras (█/░)
+- Config/Audio tab muestra barras para preamp y bandas
+  - Full mode (≥61 cols): 40 chars, 1 dB por char
+  - Compact mode (<61 cols): 4 chars, 10 dB por char
+- Hints line "← → cambiar" en tab Audio
+- `r` en config resetea: banda → 0.0, preamp → 0.0, preset → Flat
+- Fix cursor: se guarda/restaura después de _build_config_tabs
+
+**Archivos modificados**:
+- `player/views.py` — _eq_bar(), draw_config con barras y hints Audio
+- `player/handlers/config_view.py` — handler `r` para EQ items
+
+**Estado**: v1.5.50, mypy strict pasa.
