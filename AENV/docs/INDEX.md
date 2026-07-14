@@ -13,6 +13,8 @@
 | `docs/MODELS.md` | Modelos de datos, schemas | Al modificar persistencia |
 | `docs/BUSINESS.md` | Reglas de negocio | Al implementar features |
 | `docs/ARCH.md` | Arquitectura detallada | Al refactorizar o agregar módulos |
+| `docs/BRAINSTORM.md` | Investigación features futuros (EQ, Visualizer, yt-dlp) | Al planificar features |
+| `docs/EQ_PLAN.md` | Plan de implementación del Equalizer | Al implementar F2 |
 
 ## Relación con código
 
