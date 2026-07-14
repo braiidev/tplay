@@ -232,19 +232,21 @@
 
 **Problema**: Código de tab carousel duplicado en `draw_help` (~35 líneas) y `draw_config` (~30 líneas).
 
-**Solución**: `draw_tab_carousel(win, y, x, w, tabs, current_idx, attr, h)`.
+**Solución**: `draw_tab_carousel(win, y, tab_names, current_idx, inner_w, ox, nav_attr, curr_attr, fill_attr, sep, h, w)`.
 
 **Archivos**: `player/ui.py`, `player/views.py`
 **Esfuerzo**: ~30 min
+**Estado**: ✅ Hecho (v1.5.56)
 
 ### 5.2 Extraer list renderer con scroll indicators
 
 **Problema**: Cada vista de lista reimplementa scroll + render + cursor.
 
-**Solución**: `draw_scrollable_list(win, y0, items, cursor, scroll, list_h, render_fn, h, w)`.
+**Solución**: `clamp_scroll(scroll, total, list_h, cursor) → int` + `draw_list_indicators(win, h, w, scroll, total, list_h)`.
 
 **Archivos**: `player/ui.py`, `player/views.py`
 **Esfuerzo**: ~60 min (refactor grande)
+**Estado**: ✅ Hecho (v1.5.56) — helpers ligeros, render se mantiene por vista
 
 ---
 

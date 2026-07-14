@@ -231,3 +231,27 @@
 - Hints se recalculan por frame (simple, sin caché)
 
 **Estado**: v1.5.55, mypy strict pasa.
+
+---
+
+## Entrada 13 — 2026-07-14 — Refactor visual helpers (Fase 5)
+
+**Tarea**: Fase 5.1 (tab carousel helper) + Fase 5.2 (list helpers)
+
+**Cambios**:
+- **5.1** `draw_tab_carousel(win, y, tab_names, current_idx, inner_w, ox, nav_attr, curr_attr, fill_attr, sep, h, w)` — helper unificado para carousel de pestañas
+  - Reemplaza implementación manual en `draw_config` (~30 líneas → 4 líneas)
+  - Reemplaza implementación manual en `draw_help` (~35 líneas → 5 líneas)
+- **5.2** `clamp_scroll(scroll, total, list_h, cursor) → int` — normaliza scroll clamping
+- **5.2** `draw_list_indicators(win, h, w, scroll, total, list_h)` — dibuja ▲/▼ basado en scroll/total
+  - Reemplaza 3 líneas en 6 vistas (explorer, playlist, history, config, radio, favorites)
+
+**Archivos modificados**:
+- `player/ui.py` — draw_tab_carousel, clamp_scroll, draw_list_indicators
+- `player/views.py` — refactored draw_config, draw_help, draw_explorer, draw_playlist, draw_history, draw_radio, draw_favorites
+
+**Decisión**:
+- 5.1: Helper dibuja carousel + fills, caller dibuja borders/bars si necesita
+- 5.2: Helpers ligeros (no render genérico) — cada vista mantiene su lógica de render, pero scroll/indicators son consistentes
+
+**Estado**: v1.5.56, mypy strict pasa.

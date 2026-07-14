@@ -5,8 +5,6 @@
 |----|---------|-----------|--------|
 | F9 | Visualizer (FFT bars) | Media | Investigado en `docs/BRAINSTORM.md` |
 | F10 | yt-dlp Web Explorer | Baja | Investigado en `docs/BRAINSTORM.md` |
-| 5.1 | Tab carousel helper | Baja | En `DESIGNS.md` |
-| 5.2 | List renderer helper | Baja | En `DESIGNS.md` |
 
 ## Completado esta sesión
 - [x] F2 Ecualizador gráfico (v1.5.49)
@@ -24,6 +22,8 @@
 - [x] Fase 2.3 Indicador volumen visual (v1.5.54)
 - [x] Fase 4.1 Config bars solo lectura (v1.5.55)
 - [x] Fase 4.2 Hints contextuales Config Audio (v1.5.55)
+- [x] Fase 5.1 Tab carousel helper (v1.5.56)
+- [x] Fase 5.2 List helpers — clamp_scroll + draw_list_indicators (v1.5.56)
 
 ## Completado (histórico)
 Ver CHANGELOG.md para historial completo.

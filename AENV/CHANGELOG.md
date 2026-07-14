@@ -1,5 +1,9 @@
 # CHANGELOG — tplay
 
+## v1.5.56
+- refactor: draw_tab_carousel() helper — reemplaza código duplicado en Help y Config (~30 líneas eliminadas)
+- refactor: clamp_scroll() + draw_list_indicators() helpers — reemplaza scroll clamping e indicadores en 6 vistas (~18 líneas eliminadas)
+
 ## v1.5.55
 - feat: Config/Audio — bandas EQ en modo solo lectura (color texto cuando preset ≠ Custom)
 - feat: Config/Audio — hints contextuales por tipo de item (±0.5dB para bandas/preamp, cambiar para choice)
