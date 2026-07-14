@@ -14,17 +14,18 @@ if TYPE_CHECKING:
 
 
 def _skip_disabled(app: PlayerApp, direction: int) -> None:
-    """Skip separators + eq_bands when non-Custom. Revert if no valid item."""
+    """Move cursor in direction, skipping separators + non-Custom bands."""
     items = app.config_items
     total = len(items)
     is_custom = app.config.get("eq_preset", "Flat") == "Custom"
-    start = app.config_cursor
+    last_valid = app.config_cursor
+    app.config_cursor += direction
     while 0 <= app.config_cursor < total:
         _, _, ctype = items[app.config_cursor]
         if ctype != "separator" and not (ctype == "eq_band" and not is_custom):
-            return
+            last_valid = app.config_cursor
         app.config_cursor += direction
-    app.config_cursor = start
+    app.config_cursor = last_valid
 
 
 def handle_config(app: PlayerApp, key: int) -> None:
@@ -41,10 +42,8 @@ def handle_config(app: PlayerApp, key: int) -> None:
         return
 
     if key == curses.KEY_DOWN:
-        app.config_cursor = min(app.config_cursor + 1, total - 1)
         _skip_disabled(app, 1)
     elif key == curses.KEY_UP:
-        app.config_cursor = max(app.config_cursor - 1, 0)
         _skip_disabled(app, -1)
     elif key in (curses.KEY_RIGHT, 10, 13):
         if total == 0:
