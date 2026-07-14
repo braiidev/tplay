@@ -19,7 +19,16 @@
   "keybinding_mode": "default",
   "keybindings": {},
   "ui_navbar": true,
-  "ui_minimal": false
+  "ui_minimal": false,
+  "eq_enabled": false,
+  "eq_preset": "Flat",
+  "eq_bands": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+  "eq_preamp": 12.0,
+  "custom_bands": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+  "show_listen_hints": true,
+  "online_max_results": 5,
+  "online_audio_quality": "128",
+  "online_search_history": []
 }
 ```
 
@@ -88,9 +97,21 @@
 ```python
 @dataclass
 class StackItem:
-    path: str
+    path: str      # File path o URL de streaming
     name: str
     mode: Literal["normal", "repeat_once", "repeat_inf"] = "normal"
+```
+
+### WebResult (dataclass) — Fase 1 Web Explorer
+```python
+@dataclass
+class WebResult:
+    title: str          # Título del video
+    url: str            # URL de streaming (directa a VLC)
+    duration: int       # Duración en segundos
+    channel: str        # Nombre del canal
+    webpage_url: str    # URL original de YouTube
+    platform: str       # "youtube", "dailymotion", etc.
 ```
 
 ### Stack

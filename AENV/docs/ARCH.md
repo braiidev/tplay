@@ -70,11 +70,13 @@ app.py main()
 | 7 | Radio | handle_radio | draw_radio |
 | 8 | Meta Editor | (desde handle_listen) | draw_meta_editor |
 | 9 | Help | (navegación) | draw_help |
+| 10 | Web | handle_web | draw_web |
 
 ## Dependencias externas
 - **python-vlc**: wrapper de libVLC para reproducción de audio/video
 - **mutagen**: lectura de metadata de archivos de audio
 - **curses**: stdlib de Python para TUI
+- **yt-dlp**: extracción de streams online (Fase 1 Web Explorer)
 
 ## Patrones de diseño
 1. **Handler pattern**: cada vista tiene su función handler que recibe (app, key)

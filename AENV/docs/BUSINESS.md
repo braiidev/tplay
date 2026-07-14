@@ -50,6 +50,14 @@
 2. **Reproducción**: VLC maneja streams HTTP/RTMP/etc.
 3. **Exportación**: soporta exportar a archivo
 
+### Web Explorer (Online)
+1. **Búsqueda**: yt-dlp extract_info("ytsearch5:query")
+2. **Streaming**: URL directa → VLC MediaPlayer (sin descargar)
+3. **Plataformas**: YouTube (MVP), expandible a +900 via yt-dlp
+4. **Historial**: últimas 10 búsquedas, reutilizables con `/`
+5. **Descarga**: Fase 2 — tecla `D` en Listen
+6. **Persistencia**: config.json (online_search_history, online_max_results)
+
 ### Diálogos
 1. **Un solo diálogo activo**: `self.dialog: dict | None`
 2. **Tipos**: confirm, prompt, dest

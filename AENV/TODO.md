@@ -1,42 +1,34 @@
 # TODO — tplay
 
-## Pendiente
-| ID | Feature | Prioridad | Estado |
-|----|---------|-----------|--------|
-| F9 | Visualizer (FFT bars) | Media | Investigado en `docs/BRAINSTORM.md` |
-| F10 | yt-dlp Web Explorer | Baja | Investigado en `docs/BRAINSTORM.md` |
+## F10: yt-dlp Web Explorer (ACTIVO)
 
-## Completado esta sesión
-- [x] Custom EQ — key `custom_bands` guarda/restaura estado independiente (v1.5.59)
-- [x] B17 — `_skip_disabled` para en PRIMER item válido (v1.5.59)
-- [x] B17 — cursor revierte cuando no hay item accesible (v1.5.59)
-- [x] B16 — `_cycle_eq_preset` guarda/restaura custom_bands (v1.5.59)
-- [x] B13 — Listen hints toggle con `;` (v1.5.59)
-- [x] Cleanup — eliminar `r` reset de Config/Audio (v1.5.59)
-- [x] B18 — Help Listen sección ECUALIZADOR (v1.5.58)
-- [x] B19 — Help Lista/Historial/Radio g/G (v1.5.58)
-- [x] B14 — Config bands always visible (v1.5.57)
-- [x] B15 — History g/G implemented (v1.5.57)
-- [x] F2 Ecualizador gráfico (v1.5.49)
-- [x] Setup AENV (migración tracking)
-- [x] Explorer read-only fuera del root (v1.5.46)
-- [x] 9 extensiones nuevas (v1.5.47)
-- [x] Fix symlinks-to-dirs en Explorer (v1.5.48)
-- [x] Documentación brainstorm + plan EQ
-- [x] Fase 1.1 draw_box_inline (v1.5.53)
-- [x] Fase 1.2 COMPACT_THRESHOLD (v1.5.52)
-- [x] Fase 1.3 Icono pausa ❚❚ (v1.5.52)
-- [x] Fase 2.1 Separadores Config (v1.5.52)
-- [x] Fase 3.2 Scroll indicators (v1.5.53)
-- [x] Fase 2.2 Listen metadata centrada (v1.5.54)
-- [x] Fase 2.3 Indicador volumen visual (v1.5.54)
-- [x] Fase 4.1 Config bars solo lectura (v1.5.55)
-- [x] Fase 4.2 Hints contextuales Config Audio (v1.5.55)
-- [x] Fase 5.1 Tab carousel helper (v1.5.56)
-- [x] Fase 5.2 List helpers — clamp_scroll + draw_list_indicators (v1.5.56)
+### Fase 1: Streaming MVP
+- [ ] 1.1 Wrapper `player/web.py` — WebResult dataclass, search(), is_available()
+- [ ] 1.2 Handler `player/handlers/webexplorer.py` — handle_web, search input, playback
+- [ ] 1.3 Drawer `draw_web()` en `player/views.py`
+- [ ] 1.4 Integración `app.py` — V_WEB=7, register handler/drawer, view switch
+- [ ] 1.5 Nav bar + Help tab en `ui.py`
+- [ ] 1.6 Config defaults en `config.py` — online_max_results, online_audio_quality, online_search_history
+- [ ] 1.7 Historial de búsquedas (últimas 10)
+- [ ] 1.8 requirements.txt — agregar yt-dlp
 
-## Completado (histórico)
-Ver CHANGELOG.md para historial completo.
+### Fase 2: Descarga
+- [ ] 2.1 Key `D` en Listen para descargar
+- [ ] 2.2 Prompt de opciones (formato, calidad)
+- [ ] 2.3 Progress bar curses
+- [ ] 2.4 Pestaña Config "Online"
+- [ ] 2.5 Guardar en music_dir
 
-## Bugs conocidos
-Ver BUGS.md — 0 bugs activos.
+### Fase 3: Multi-plataforma
+- [ ] 3.1 Detectar plataforma desde URL
+- [ ] 3.2 Soporte Dailymotion, SoundCloud
+- [ ] 3.3 Platform registry lazy
+- [ ] 3.4 UI indicador de plataforma
+
+## Completado
+- [x] v1.5.59 — EQ custom bands, configuración, hints, help, radio
+- [x] v1.5.58 — Help EQ hints (e/E), radio hints (g/G)
+- [x] v1.5.57 — Config bands always visible, history g/G
+- [x] v1.5.56 — draw_tab_carousel(), clamp_scroll(), draw_list_indicators()
+- [x] v1.5.55 — Config/Audio bands solo lectura, hints contextuales
+- [x] v1.5.54 — Listen metadata centrada, volume bar visual
