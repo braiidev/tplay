@@ -2,7 +2,7 @@
 
 ## Versión actual
 - **v1.5.50**
-- **Último commit**: pendiente
+- **Último commit**: `07f014c` — docs: CHANGELOG + DEVLOG barras EQ + r reset
 
 ## Estado del código
 - **Compila**: ✅ (mypy strict pasa)
