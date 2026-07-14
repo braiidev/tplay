@@ -2,7 +2,7 @@
 
 ## Versión actual
 - **v1.5.59**
-- **Último commit**: `b4ceec0` — fix: Help hints EQ en Listen + g/G en Lista/Hist/Radio
+- **Último commit**: `33c6ea8` — fix: Custom EQ key custom_bands guarda/restaura estado independiente
 
 ## Estado del código
 - **Compila**: ✅ (mypy strict pasa)
@@ -18,19 +18,23 @@
 | F28 | Streaming/Radio | ✅ Hecho |
 
 ## Sesión actual (v1.5.59)
-- Bug fixes:
-  - B16: Config/Audio bands actualizan al cambiar preset — _cycle_eq_preset guarda bands del preset en config
-  - B17: Config/Audio cursor no navega ni edita bands en modo non-Custom
-  - B13: Listen hints toggle con `;` — config show_listen_hints, ON/OFF
-- Help:
-  - B18: Help Listen tab — agregada sección ECUALIZADOR (e/E)
-  - B19: Help Lista/Historial/Radio — agregados g/G Inicio/Fin
+- **Custom EQ persistence**: key `custom_bands` en config.json guarda estado independiente
+  - Guarda al salir de Custom → restaura al entrar
+  - `r` reset actualiza custom_bands (solo la banda, no todo)
+  - `r` preset limpia custom_bands a [0.0]*10
+  - Listen handler `E`同步 lógica custom_bands
+- **B17 fix final**: `_skip_disabled` para en PRIMER item válido
+  - Preamp ↓ se queda en Preamp (no salta a bands)
+  - eq_enabled ↓ llega a eq_preset (no salta a Preamp)
+- **B16**: `_cycle_eq_preset` guarda/restaura custom_bands al cambiar preset
+- **B13**: Listen hints toggle con `;`
+- **B18/B19**: Help hints actualizados
 
 ## Módulos del sistema
 | Módulo | Archivos | Estado |
 |--------|----------|--------|
 | Core | app.py, audio.py | Estable + EQ |
-| Config | config.py | Estable + EQ presets |
+| Config | config.py | Estable + custom_bands |
 | Handlers | handlers/ (8 archivos) | Estable + EQ |
 | Views | views.py | Estable + EQ overlay |
 | UI | ui.py | Estable |

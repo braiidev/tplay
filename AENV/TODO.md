@@ -7,12 +7,15 @@
 | F10 | yt-dlp Web Explorer | Baja | Investigado en `docs/BRAINSTORM.md` |
 
 ## Completado esta sesión
-- [x] B13 Listen hints toggle con `;` (v1.5.59)
-- [x] B16 Config/Audio bands actualizan al cambiar preset (v1.5.59)
-- [x] B17 Config/Audio cursor no navega bands en non-Custom (v1.5.59)
-- [x] B18 Help Listen — sección ECUALIZADOR (v1.5.58)
-- [x] B19 Help Lista/Historial/Radio — g/G Inicio/Fin (v1.5.58)
-- [x] B14 Fix Config bands always visible (v1.5.57)
+- [x] Custom EQ — key `custom_bands` guarda/restaura estado independiente (v1.5.59)
+- [x] B17 — `_skip_disabled` para en PRIMER item válido (v1.5.59)
+- [x] B17 — cursor revierte cuando no hay item accesible (v1.5.59)
+- [x] B16 — `_cycle_eq_preset` guarda/restaura custom_bands (v1.5.59)
+- [x] B13 — Listen hints toggle con `;` (v1.5.59)
+- [x] B18 — Help Listen sección ECUALIZADOR (v1.5.58)
+- [x] B19 — Help Lista/Historial/Radio g/G (v1.5.58)
+- [x] B14 — Config bands always visible (v1.5.57)
+- [x] B15 — History g/G implemented (v1.5.57)
 - [x] F2 Ecualizador gráfico (v1.5.49)
 - [x] Setup AENV (migración tracking)
 - [x] Explorer read-only fuera del root (v1.5.46)
@@ -30,11 +33,9 @@
 - [x] Fase 4.2 Hints contextuales Config Audio (v1.5.55)
 - [x] Fase 5.1 Tab carousel helper (v1.5.56)
 - [x] Fase 5.2 List helpers — clamp_scroll + draw_list_indicators (v1.5.56)
-- [x] B14 Fix Config bands always visible (v1.5.57)
-- [x] B15 Fix History g/G implemented (v1.5.57)
 
 ## Completado (histórico)
 Ver CHANGELOG.md para historial completo.
 
 ## Bugs conocidos
-Ver BUGS.md — B13 activo (Listen hints toggle).
+Ver BUGS.md — 0 bugs activos.

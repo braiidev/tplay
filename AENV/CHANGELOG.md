@@ -1,8 +1,13 @@
 # CHANGELOG — tplay
 
 ## v1.5.59
-- fix: Config/Audio bands actualizan al cambiar preset (B16)
-- fix: Config/Audio cursor no navega bands en non-Custom (B17)
+- fix: Custom EQ — key `custom_bands` guarda estado independiente al salir de Custom, restaura al entrar
+- fix: Custom EQ — `r` reset banda actualiza solo esa banda en custom_bands
+- fix: Custom EQ — `r` preset limpia custom_bands a [0.0]*10
+- fix: Listen handler `E`同步 lógica custom_bands
+- fix: B17 — `_skip_disabled` para en PRIMER item válido (no salta de eq_enabled a Preamp)
+- fix: B17 — cursor revierte a posición original cuando no hay item accesible
+- fix: B16 — `_cycle_eq_preset` guarda/restaura custom_bands al cambiar preset
 - feat: Listen hints toggle con `;` — config show_listen_hints (B13)
 - fix: Help Listen — sección ECUALIZADOR con e/E (B18)
 - fix: Help Lista/Historial/Radio — g/G Inicio/Fin (B19)
@@ -20,120 +25,32 @@
 - feat: Config/Audio — hints contextuales por tipo de item (±0.5dB para bandas/preamp, cambiar para choice)
 
 ## v1.5.54
-- feat: Listen view — metadata centrada (estado, título, artista/álbum) en full y compact mode
-- feat: indicador de volumen visual con barras (8 chars full, 4 chars compact, fallback a texto)
+- feat: Listen view — metadata centrada (estado, título, artista/álbum)
+- feat: Listen view — indicador de volumen visual con barras
 
 ## v1.5.53
-- refactor: draw_box_inline() helper unifica box drawing manual (mini_stack, listen_compact)
-- feat: scroll indicators ▲/▼ en todas las vistas de lista (explorer, playlist, history, favorites, radio, config)
-- fix: favorites list_h usa COMPACT_THRESHOLD (era hardcoded 16)
+- feat: draw_box_inline() — box inline para sub-views (Config Audio hints, Help)
+- feat: Scroll indicators — ▲/▼ en vistas con scroll
 
 ## v1.5.52
-- refactor: COMPACT_THRESHOLD=16 constante unificada (reemplaza 19 hardcodes `h < 16` / `h < 12`)
-- fix: icono de pausa unificado a ❚❚ en status bar, help y listen view
-- feat: separador visual `───` entre preamp y bandas en Config/Audio (Custom mode)
-- feat: Listen view — título con icono ♪ y color destacar para jerarquía visual
-
-## v1.5.51
-- fix: alineación visual de labels en Config/Audio — todos los labels de bandas EQ padeados a 6 chars, colon/values/barras perfectamente alineados
+- feat: COMPACT_THRESHOLD — vista compacta para terminales pequeñas (≤15 rows)
+- feat: Icono pausa ❚❚ en listen view
+- feat: Separadores en Config/Audio
 
 ## v1.5.50
-- refactor: EQ refinado — preamp configurable todos los presets, Custom en Config/Audio (no overlay), teclas E/e reasignadas, preamp default +12dB
-- feat: barras visuales EQ en Config/Audio (40 chars full, 4 chars compact)
-- fix: r resetea bandas/preamp/preset en Config, cursor no se resetea al cambiar preset
+- feat: EQ refinado — preamp configurable, Custom en Config, teclas E/e
 
 ## v1.5.49
-- feat: F2 ecualizador gráfico — 10 bandas, preamp, 16 presets, modo Custom, toggle `E`, persistencia session
+- feat: Ecualizador gráfico — VLC API, 10 bandas, presets
 
 ## v1.5.48
-- fix: Explorer no ve symlinks-to-dirs — follow_symlinks=True en scandir (regresión de P1)
+- fix: symlinks-to-dirs en Explorer
 
 ## v1.5.47
-- feat: 9 extensiones nuevas — .m4a .aac .opus .weba .wma .aiff .aif (audio) + .flv .wmv (video)
+- feat: 9 extensiones nuevas (.m4a, .aac, .opus, .weba, .wma, .aiff, .aif, .flv, .wmv)
 
 ## v1.5.46
-- feat: Explorer read-only fuera del directorio raíz — bloqueo de ops de escritura + indicador [RO]
+- feat: Explorer read-only fuera del root
 
 ## v1.5.45
-- fix: meta_edit editing — h/l insertan chars en vez de mover cursor
-
-## v1.5.44
-- feat: full-row cursor highlight + Help tab bar inside marco
-
-## v1.5.43
-- fix: Playlist carousel simplificado ◀[name]▶ + Help scroll clamp corregido
-
-## v1.5.42
-- fix: [] navegan pestañas en todas las vistas — playlist ya no usa h/l para tabs
-
-## v1.5.41
-- feat: Playlist + Config carousel tabs — cyclic, ◀[name]▶ / [prev|current|next]
-
-## v1.5.40
-- feat: Help carousel tabs + hints NAV consistentes en todas las vistas
-
-## v1.5.39
-- fix: Radio REVERSE gap, Pila hints con NAV color
-
-## v1.5.38
-- feat: 5to par de colores OVERLAY — redistribución UI + COLOR_SPEC.md
-
-## v1.5.37
-- refactor: estandarización de rows — margenes, metadata, duración, Radio [R]
-
-## v1.5.36
-- style: E1-E3 — [R] icon para streams, controles Listen responsive, time separator '/'
-
-## v1.5.35
-- refactor: P1-P3 — os.scandir(), scroll clamping redundante, playlist CONFIG_DIR import
-
-## v1.5.34
-- fix: U2-U3 — undo/redo archivos toast + metadata save toast y permanencia en editor
-
-## v1.5.33
-- fix: B10-B11 — explorer back-nav en directorios vacíos + status bar row descontada en handlers
-
-## v1.5.27
-- feat: f toggle favoritos global (Listen, Stack, Explorer, Playlist, History, Radio, Favoritos)
-
-## v1.5.26
-- feat: F5 multi-select Explorer + F6 Favoritos (vista 6, f/F, d, persistencia JSON)
-
-## v1.5.25
-- feat: F2 speed control (w/W ±0.25x, 0.25x–4.0x, persistente en state.json)
-
-## v1.5.23
-- fix: Stack d con confirmación, audio para al último item, eliminar helper [o] obsoleto
-
-## v1.5.22
-- feat: ←/→ para mover cursor en Explorer filter, Playlist filter y Meta editor
-
-## v1.5.21
-- feat: filtros con cursor visual, hjk global→Listen, s/S consistente, radio e/E cyclic, dir picker, KEYBINDINGS.md
-
-## v1.5.12
-- feat: F4 import M3U/PLS desde Explorer
-
-## v1.5.10
-- fix: C4 _restart_app ruta incorrecta tras A4 → app._repo_dir
-
-## v1.5.8
-- feat: U2-U5 (update async, toast, s/y confirm, sleep timer reset)
-
-## v1.5.7
-- feat: U1 PgDn/PgUp g/G en Playlist
-
-## v1.5.6
-- refactor: A4 handlers.py → package + A5/A6
-
-## v1.5.5
-- fix: A1 stderr→error.log + A3 lazy mkdir
-
-## v1.5.4
-- fix: A2 KEY_RESIZE resize handling
-
-## v1.5.3
-- feat: B3/B4 stack persistente
-
-## v1.5.2
-- fix: B2 undo unificado
+- feat: AENV setup (migración tracking)
