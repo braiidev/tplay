@@ -24,6 +24,8 @@ class AudioEngine:
     muted: bool
     _prev_volume: int
     rate: float
+    _eq: vlc.AudioEqualizer | None
+    _eq_enabled: bool
 
     def __init__(self) -> None:
         self._saved_stderr = os.dup(2)
@@ -45,6 +47,8 @@ class AudioEngine:
         self.muted = False
         self._prev_volume = 50
         self.rate = 1.0
+        self._eq = None
+        self._eq_enabled = False
 
     @property
     def is_playing(self) -> bool:
@@ -98,6 +102,7 @@ class AudioEngine:
         self.paused = False
         self.current_file = path
         self.sleep_timer_expired = False
+        self.reapply_equalizer()
 
     def is_ended(self) -> bool:
         return (self.playing and not self.paused
@@ -141,6 +146,43 @@ class AudioEngine:
             return int(self.player.get_length())
         except Exception:
             return 0
+
+    def set_equalizer(self, bands: list[float], preamp: float) -> None:
+        """Crear y aplicar EQ con bandas personalizadas."""
+        self._eq = vlc.AudioEqualizer()
+        for i, gain in enumerate(bands[:10]):
+            self._eq.set_amp_at_index(gain, i)
+        self._eq.set_preamp(preamp)
+        self.player.set_equalizer(self._eq)
+        self._eq_enabled = True
+
+    def apply_preset(self, preset_index: int) -> None:
+        """Aplicar preset nativo de VLC."""
+        count = vlc.libvlc_audio_equalizer_get_preset_count()
+        if 0 <= preset_index < count:
+            self._eq = vlc.libvlc_audio_equalizer_new_from_preset(preset_index)
+            self.player.set_equalizer(self._eq)
+            self._eq_enabled = True
+
+    def disable_equalizer(self) -> None:
+        """Desactivar EQ."""
+        self.player.set_equalizer(None)
+        self._eq = None
+        self._eq_enabled = False
+
+    def get_equalizer_info(self) -> dict[str, object]:
+        """Retornar info actual del EQ (bands, preamp, enabled)."""
+        bands: list[float] = []
+        preamp: float = 0.0
+        if self._eq:
+            bands = [self._eq.get_amp_at_index(i) for i in range(10)]
+            preamp = self._eq.get_preamp()
+        return {"bands": bands, "preamp": preamp, "enabled": self._eq_enabled}
+
+    def reapply_equalizer(self) -> None:
+        """Re-aplicar EQ actual (útil después de play_file)."""
+        if self._eq_enabled and self._eq:
+            self.player.set_equalizer(self._eq)
 
     def close(self) -> None:
         if hasattr(self, '_saved_stderr') and self._saved_stderr is not None:

@@ -4,7 +4,7 @@ import curses
 import os
 from typing import TYPE_CHECKING, Any
 
-from ..config import THEME_NAMES, COLORS
+from ..config import THEME_NAMES, COLORS, EQ_PRESETS, EQ_PRESET_NAMES
 from .. import keybindings as kb
 from .shared import _toast, _clamp_scroll
 
@@ -34,7 +34,15 @@ def handle_config(app: PlayerApp, key: int) -> None:
             return
         key_name, _, ctype = app.config_items[app.config_cursor]
         if ctype == "choice":
-            _cycle_theme(app, 1)
+            if key_name == "eq_preset":
+                _cycle_eq_preset(app, 1)
+                if app.config.get("eq_preset") == "Custom":
+                    app.eq_edit_bands = list(app.config.get("eq_bands", [0.0] * 10))
+                    app.eq_edit_preamp = app.config.get("eq_preamp", 0.0)
+                    app.eq_edit_cursor = 0
+                    app.eq_edit_mode = True
+            else:
+                _cycle_theme(app, 1)
         elif ctype == "bool":
             _toggle_bool(app, key_name)
         elif ctype == "color":
@@ -53,7 +61,15 @@ def handle_config(app: PlayerApp, key: int) -> None:
             return
         key_name, _, ctype = app.config_items[app.config_cursor]
         if ctype == "choice":
-            _cycle_theme(app, -1)
+            if key_name == "eq_preset":
+                _cycle_eq_preset(app, -1)
+                if app.config.get("eq_preset") == "Custom":
+                    app.eq_edit_bands = list(app.config.get("eq_bands", [0.0] * 10))
+                    app.eq_edit_preamp = app.config.get("eq_preamp", 0.0)
+                    app.eq_edit_cursor = 0
+                    app.eq_edit_mode = True
+            else:
+                _cycle_theme(app, -1)
         elif ctype == "bool":
             _toggle_bool(app, key_name)
         elif ctype == "color":
@@ -118,6 +134,29 @@ def _config_int_dec(app: PlayerApp, key_name: str) -> None:
 
 def _toggle_bool(app: PlayerApp, key_name: str) -> None:
     app.config[key_name] = not app.config.get(key_name, True)
+    if key_name == "eq_enabled":
+        if app.config["eq_enabled"]:
+            preset_name = app.config.get("eq_preset", "Flat")
+            bands = EQ_PRESETS.get(preset_name, [0.0] * 10)
+            preamp = app.config.get("eq_preamp", 0.0)
+            app.audio.set_equalizer(bands, preamp)
+        else:
+            app.audio.disable_equalizer()
+    from ..config import save as _save_config
+    _save_config(app.config)
+
+
+def _cycle_eq_preset(app: PlayerApp, direction: int) -> None:
+    try:
+        idx = EQ_PRESET_NAMES.index(app.config.get("eq_preset", "Flat"))
+    except ValueError:
+        idx = 0
+    new_preset = EQ_PRESET_NAMES[(idx + direction) % len(EQ_PRESET_NAMES)]
+    app.config["eq_preset"] = new_preset
+    if app.config.get("eq_enabled", False):
+        bands = EQ_PRESETS.get(new_preset, [0.0] * 10)
+        preamp = app.config.get("eq_preamp", 0.0)
+        app.audio.set_equalizer(bands, preamp)
     from ..config import save as _save_config
     _save_config(app.config)
 

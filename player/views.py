@@ -12,6 +12,7 @@ from .file_utils import time_str, ext_label, is_url as _is_url, is_video_file as
 from .ui import safe_addstr, draw_box, _build_hints, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN
 from . import keybindings as kb
 from .handlers import _get_current_key
+from .config import EQ_PRESET_NAMES
 
 
 def draw_item_row(win: curses.window, y: int, name: str, path: str, meta: dict[str, Any] | None, *,
@@ -206,6 +207,7 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
         "[S]" if app.stack.shuffle else "   ",
         "[R]" if app.stack.repeat  else "   ",
         "[M]" if app.audio.muted   else "   ",
+        "[EQ]" if app.audio._eq_enabled else "    ",
     ]
     if app.audio.rate != 1.0:
         st_parts.append(f"[{app.audio.rate:.2f}x]")
@@ -227,6 +229,7 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
     extra = _build_hints([
         ("Tab", "Pila"), ("g", "Ir a"), ("t/T", "Tmp"),
         ("h/l", "Buscar"), ("r", "Azar"), ("R", "Rep"), ("m", "Sil"),
+        ("E", "EQ"),
     ], w)
 
     safe_addstr(app.stdscr, h - 5, 2, line1[:w - 4], destacar, h, w)
@@ -340,6 +343,8 @@ def draw_listen_compact(app: PlayerApp, h: int, w: int) -> None:
         states += " R"
     if app.audio.muted:
         states += " M"
+    if app.audio._eq_enabled:
+        states += " EQ"
     if app.audio.rate != 1.0:
         states += f" {app.audio.rate:.2f}x"
     if app.audio.sleep_timer_active:
@@ -610,6 +615,7 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
         "volume": f"Volumen: {app.volume}%",
         "theme": f"Tema: {app.config.get('theme', 'clasico')}",
         "sleep_timer_minutes": f"Sleep timer: {app.config.get('sleep_timer_minutes', 30)} min",
+        "eq_preset": f"Preset EQ: {app.config.get('eq_preset', 'Flat')}",
     }
     cc = app.config.get("custom_colors", {})
 
@@ -940,3 +946,58 @@ def draw_favorites(app: PlayerApp, h: int, w: int) -> None:
             fill_len = w - 2 - fill_start
             if fill_len > 0:
                 safe_addstr(win, y, fill_start, " " * fill_len, texto | curses.A_REVERSE, h, w)
+
+
+def draw_eq_overlay(app: PlayerApp, h: int, w: int) -> None:
+    marco = curses.color_pair(PAIR_MARCO)
+    texto = curses.color_pair(PAIR_TEXTO)
+    destacar = curses.color_pair(PAIR_DESTACAR)
+    overlay = curses.color_pair(PAIR_OVERLAY)
+
+    eq_h = 16
+    eq_w = min(40, w - 4)
+    oy = max(0, (h - eq_h) // 2)
+    ox = max(0, (w - eq_w) // 2)
+
+    safe_addstr(app.stdscr, oy, ox, "┌" + "─" * (eq_w - 2) + "┐", marco, h, w)
+    title = " Ecualizador "
+    tx = ox + 1 + (eq_w - 2 - len(title)) // 2
+    safe_addstr(app.stdscr, oy, tx, title, destacar, h, w)
+    for yy in range(1, eq_h - 1):
+        safe_addstr(app.stdscr, oy + yy, ox, "│", marco, h, w)
+        safe_addstr(app.stdscr, oy + yy, ox + eq_w - 1, "│", marco, h, w)
+        safe_addstr(app.stdscr, oy + yy, ox + 1, " " * (eq_w - 2), texto, h, w)
+    safe_addstr(app.stdscr, oy + eq_h - 1, ox, "└" + "─" * (eq_w - 2) + "┘", marco, h, w)
+
+    band_names = ["60", "170", "310", "600", "1k", "3k", "6k", "12k", "14k", "16k"]
+    bar_w = 20
+
+    for i in range(10):
+        y = oy + 1 + i
+        gain = app.eq_edit_bands[i]
+        filled = int((gain + 20) / 40 * bar_w)
+        bar = "█" * filled + "░" * (bar_w - filled)
+        label = f"{band_names[i]:>4}"
+        is_cursor = (app.eq_edit_cursor == i)
+        attr = destacar if is_cursor else texto
+        safe_addstr(app.stdscr, y, ox + 1, label, attr, h, w)
+        safe_addstr(app.stdscr, y, ox + 6, bar, attr, h, w)
+        safe_addstr(app.stdscr, y, ox + 6 + bar_w + 1, f"{gain:+5.1f}", attr, h, w)
+
+    preamp_y = oy + 11
+    preamp_filled = int((app.eq_edit_preamp + 20) / 40 * bar_w)
+    preamp_bar = "█" * preamp_filled + "░" * (bar_w - preamp_filled)
+    is_cursor = (app.eq_edit_cursor == 10)
+    attr = destacar if is_cursor else texto
+    safe_addstr(app.stdscr, preamp_y, ox + 1, "Pre", attr, h, w)
+    safe_addstr(app.stdscr, preamp_y, ox + 6, preamp_bar, attr, h, w)
+    safe_addstr(app.stdscr, preamp_y, ox + 6 + bar_w + 1,
+                f"{app.eq_edit_preamp:+5.1f}", attr, h, w)
+
+    hints_y = oy + 13
+    hints = _build_hints([
+        ("j/k", "banda"), ("h/l", "ajustar"), ("r", "reset"),
+        ("s", "guardar"), ("Esc", "salir"),
+    ], eq_w - 2)
+    if hints:
+        safe_addstr(app.stdscr, hints_y, ox + 1, hints, overlay, h, w)

@@ -92,6 +92,17 @@ def handle_listen(app: PlayerApp, key: int) -> None:
         _prompt(app, "Minutos temporizador",
                 lambda a, b: app._setup_sleep_timer(b),
                 str(app.config.get("sleep_timer_minutes", 30)))
+    elif key == ord("E"):
+        app.audio._eq_enabled = not app.audio._eq_enabled
+        if app.audio._eq_enabled:
+            preset_name = app.config.get("eq_preset", "Flat")
+            from ..config import EQ_PRESETS
+            bands = EQ_PRESETS.get(preset_name, [0.0] * 10)
+            preamp = app.config.get("eq_preamp", 0.0)
+            app.audio.set_equalizer(bands, preamp)
+        else:
+            app.audio.disable_equalizer()
+        _toast(app, f"EQ: {'ON' if app.audio._eq_enabled else 'OFF'}")
 
 
 def handle_stack_view(app: PlayerApp, key: int) -> None:

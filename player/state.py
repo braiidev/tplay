@@ -23,7 +23,10 @@ def save_state(playing: bool, file: str = "", position: int = 0,
                stack_items: list[dict[str, Any]] | None = None,
                playhead: int = -1, shuffle: bool = False,
                repeat: bool = False, volume: int = 75,
-               rate: float = 1.0) -> None:
+               rate: float = 1.0, eq_enabled: bool = False,
+               eq_bands: list[float] | None = None,
+               eq_preamp: float = 0.0,
+               eq_preset: str = "Flat") -> None:
     try:
         os.makedirs(CONFIG_DIR, exist_ok=True)
         with open(STATE_FILE, "w") as f:
@@ -37,6 +40,10 @@ def save_state(playing: bool, file: str = "", position: int = 0,
                 "repeat": repeat,
                 "volume": volume,
                 "rate": rate,
+                "eq_enabled": eq_enabled,
+                "eq_bands": eq_bands or [0.0] * 10,
+                "eq_preamp": eq_preamp,
+                "eq_preset": eq_preset,
             }, f)
     except (OSError, PermissionError):
         pass

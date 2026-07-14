@@ -159,6 +159,11 @@ class PlayerApp:
         self.kb_conflict_msg: str = ""
         self.kb_conflict_other: str = ""
 
+        self.eq_edit_mode: bool = False
+        self.eq_edit_cursor: int = 0
+        self.eq_edit_bands: list[float] = [0.0] * 10
+        self.eq_edit_preamp: float = 0.0
+
         self._action_handlers: dict[str, Callable[[], None]] = {}
         self._view_handlers: dict[int, Callable[[PlayerApp, int], None]] = {}
         self._view_drawers: dict[int, Callable[[PlayerApp, int, int], None]] = {}
@@ -257,6 +262,10 @@ class PlayerApp:
             repeat=self.stack.repeat,
             volume=self.audio.volume,
             rate=self.audio.rate,
+            eq_enabled=self.audio._eq_enabled,
+            eq_bands=self.config.get("eq_bands", [0.0] * 10),
+            eq_preamp=self.config.get("eq_preamp", 0.0),
+            eq_preset=self.config.get("eq_preset", "Flat"),
         )
 
     def _start_update_check(self) -> None:
@@ -376,6 +385,16 @@ class PlayerApp:
         rate = st.get("rate", 1.0)
         if rate != 1.0:
             self.audio.set_rate(rate)
+        eq_enabled = st.get("eq_enabled", False)
+        eq_bands = st.get("eq_bands", [0.0] * 10)
+        eq_preamp = st.get("eq_preamp", 0.0)
+        eq_preset = st.get("eq_preset", "Flat")
+        self.config["eq_enabled"] = eq_enabled
+        self.config["eq_bands"] = eq_bands
+        self.config["eq_preamp"] = eq_preamp
+        self.config["eq_preset"] = eq_preset
+        if eq_enabled:
+            self.audio.set_equalizer(eq_bands, eq_preamp)
         if (
             st.get("playing")
             and self.stack.current
@@ -403,6 +422,13 @@ class PlayerApp:
                     ("theme", "Tema", "choice"),
                     ("ui_minimal", "Modo minimal", "bool"),
                     ("ui_navbar", "Barra de navegación", "bool"),
+                ],
+            },
+            {
+                "name": "Audio",
+                "items": [
+                    ("eq_enabled", "Ecualizador", "bool"),
+                    ("eq_preset", "Preset EQ", "choice"),
                 ],
             },
             {
@@ -517,6 +543,9 @@ class PlayerApp:
 
     def _handle_key(self, key: int) -> None:
         if self._handle_key_help(key):
+            return
+        if self.eq_edit_mode:
+            self._handle_eq_edit(key)
             return
         if self.dir_picker_mode:
             handlers.handle_dir_picker(self, key)
@@ -979,6 +1008,45 @@ class PlayerApp:
             )
             self.meta_edit_cursor_pos = len(self.meta_edit_buf)
 
+    def _handle_eq_edit(self, key: int) -> None:
+        if key == 27:
+            self.eq_edit_mode = False
+            curses.flushinp()
+            return
+        if key == ord("s"):
+            self.config["eq_bands"] = list(self.eq_edit_bands)
+            self.config["eq_preamp"] = self.eq_edit_preamp
+            if self.audio._eq_enabled:
+                self.audio.set_equalizer(self.eq_edit_bands, self.eq_edit_preamp)
+            from .config import save as _save_config
+            _save_config(self.config)
+            self.eq_edit_mode = False
+            self.toast("EQ guardado")
+            curses.flushinp()
+            return
+        if key in (ord("j"), curses.KEY_DOWN):
+            self.eq_edit_cursor = min(self.eq_edit_cursor + 1, 10)
+        elif key in (ord("k"), curses.KEY_UP):
+            self.eq_edit_cursor = max(self.eq_edit_cursor - 1, 0)
+        elif key in (curses.KEY_LEFT, ord("h")):
+            if self.eq_edit_cursor == 10:
+                self.eq_edit_preamp = max(-20.0, self.eq_edit_preamp - 0.5)
+            else:
+                self.eq_edit_bands[self.eq_edit_cursor] = max(
+                    -20.0, self.eq_edit_bands[self.eq_edit_cursor] - 0.5
+                )
+        elif key in (curses.KEY_RIGHT, ord("l")):
+            if self.eq_edit_cursor == 10:
+                self.eq_edit_preamp = min(20.0, self.eq_edit_preamp + 0.5)
+            else:
+                self.eq_edit_bands[self.eq_edit_cursor] = min(
+                    20.0, self.eq_edit_bands[self.eq_edit_cursor] + 0.5
+                )
+        elif key == ord("r"):
+            self.eq_edit_bands = [0.0] * 10
+            self.eq_edit_preamp = 0.0
+            self.toast("EQ reseteado a Flat")
+
     def _save_meta_edits(self) -> bool:
         import mutagen
 
@@ -1025,6 +1093,8 @@ class PlayerApp:
 
             if self.meta_edit_mode:
                 views.draw_meta_editor(self, self.stdscr, h, w)
+            elif self.eq_edit_mode:
+                views.draw_eq_overlay(self, h, w)
             elif self.dir_picker_mode:
                 views.draw_dir_picker(self, self.stdscr, h, w)
             elif self.current_view == self.V_CONFIG and self.kb_keybinding_view:
