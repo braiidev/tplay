@@ -53,7 +53,11 @@ def handle_history(app: PlayerApp, key: int) -> None:
         name = entry.get("name", os.path.basename(path))
         _toggle_favorite(app, path, name)
         return
-    if key == curses.KEY_DOWN:
+    if key == ord("g"):
+        app.history_cursor = 0
+    elif key == ord("G"):
+        app.history_cursor = max(0, len(app.history) - 1)
+    elif key == curses.KEY_DOWN:
         app.history_cursor = min(app.history_cursor + 1, len(app.history) - 1)
     elif key == curses.KEY_UP:
         app.history_cursor = max(app.history_cursor - 1, 0)

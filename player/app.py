@@ -406,13 +406,12 @@ class PlayerApp:
             ("eq_enabled", "Ecualizador", "bool"),
             ("eq_preset", "Preset EQ", "choice"),
             ("eq_preamp", "Preamp", "eq_preamp"),
+            ("_sep_bands", "", "separator"),
         ]
-        if self.config.get("eq_preset") == "Custom":
-            eq_items.append(("_sep_bands", "", "separator"))
-            band_names = ["60 Hz", "170 Hz", "310 Hz", "600 Hz", "1k",
-                          "3k", "6k", "12k", "14k", "16k"]
-            for i, name in enumerate(band_names):
-                eq_items.append((f"eq_band_{i}", name, "eq_band"))
+        band_names = ["60 Hz", "170 Hz", "310 Hz", "600 Hz", "1k",
+                      "3k", "6k", "12k", "14k", "16k"]
+        for i, name in enumerate(band_names):
+            eq_items.append((f"eq_band_{i}", name, "eq_band"))
         self.config_tabs = [
             {
                 "name": "General",
