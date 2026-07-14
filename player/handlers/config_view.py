@@ -95,38 +95,6 @@ def handle_config(app: PlayerApp, key: int) -> None:
         elif ctype == "path":
             _open_dir_picker(app, key_name)
 
-    elif key == ord("r"):
-        if total == 0:
-            return
-        key_name, _, ctype = app.config_items[app.config_cursor]
-        if ctype == "eq_band" and app.config.get("eq_preset", "Flat") == "Custom":
-            idx = int(key_name.split("_")[-1])
-            bands = list(app.config.get("eq_bands", [0.0] * 10))
-            bands[idx] = 0.0
-            app.config["eq_bands"] = bands
-            app.config["custom_bands"] = list(bands)
-            if app.config.get("eq_enabled", False):
-                _reapply_eq(app)
-            from ..config import save as _save_config
-            _save_config(app.config)
-        elif ctype == "eq_preamp":
-            app.config["eq_preamp"] = 0.0
-            if app.config.get("eq_enabled", False):
-                _reapply_eq(app)
-            from ..config import save as _save_config
-            _save_config(app.config)
-        elif ctype == "choice" and key_name == "eq_preset":
-            app.config["eq_bands"] = [0.0] * 10
-            app.config["custom_bands"] = [0.0] * 10
-            app.config["eq_preamp"] = 12.0
-            app.config["eq_preset"] = "Flat"
-            app._build_config_tabs()
-            app.config_scroll = 0
-            if app.config.get("eq_enabled", False):
-                _reapply_eq(app)
-            from ..config import save as _save_config
-            _save_config(app.config)
-
     h, _ = app.stdscr.getmaxyx()
     list_h = h - 5 if h < COMPACT_THRESHOLD else h - 6
     app.config_scroll = _clamp_scroll(app.config_cursor, app.config_scroll, list_h)

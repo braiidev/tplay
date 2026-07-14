@@ -651,9 +651,9 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
     if is_audio_tab:
         cur_item_type = app.config_items[app.config_cursor][2] if app.config_cursor < len(app.config_items) else ""
         if cur_item_type in ("eq_preamp", "eq_band"):
-            hints = _build_hints([("← →", "±0.5dB"), ("r", "reset")], w - 4)
+            hints = _build_hints([("← →", "±0.5dB")], w - 4)
         elif cur_item_type == "choice":
-            hints = _build_hints([("← →", "cambiar"), ("r", "reset")], w - 4)
+            hints = _build_hints([("← →", "cambiar")], w - 4)
         else:
             hints = _build_hints([("← →", "cambiar")], w - 4)
         if hints:
