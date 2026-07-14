@@ -42,6 +42,7 @@ class PlayerApp:
     V_HISTORY: int = 4
     V_RADIO: int = 5
     V_FAVORITES: int = 6
+    V_WEB: int = 7
 
     def __init__(self, stdscr: curses.window) -> None:
         self.stdscr: curses.window = stdscr
@@ -135,6 +136,12 @@ class PlayerApp:
         self.undo_stack: list[dict[str, Any]] = []
         self.redo_stack: list[dict[str, Any]] = []
 
+        self.web_results: list[Any] = []
+        self.web_cursor: int = 0
+        self.web_scroll: int = 0
+        self.web_search_mode: bool = False
+        self.web_search_buf: str = ""
+
         self.file_op_mode: str | None = None
         self.file_op_source: str | None = None
         self._file_undo: dict[str, Any] | None = None
@@ -175,6 +182,7 @@ class PlayerApp:
             self.V_CONFIG: handlers.handle_config,
             self.V_RADIO: handlers.handle_radio,
             self.V_FAVORITES: handlers.handle_favorites,
+            self.V_WEB: handlers.handle_web,
         }
         self._view_drawers = {
             self.V_LISTEN: views.draw_listen,
@@ -184,6 +192,7 @@ class PlayerApp:
             self.V_CONFIG: views.draw_config,
             self.V_RADIO: views.draw_radio,
             self.V_FAVORITES: views.draw_favorites,
+            self.V_WEB: views.draw_web,
         }
 
         curses.curs_set(0)
@@ -764,7 +773,7 @@ class PlayerApp:
         return False
 
     def _handle_key_view_switch(self, key: int) -> bool:
-        if ord("0") <= key <= ord("6"):
+        if ord("0") <= key <= ord("7"):
             self.current_view = key - ord("0")
             self.cursor = 0
             self.scroll = 0

@@ -24,6 +24,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "eq_preamp": 12.0,
     "custom_bands": [0.0] * 10,
     "show_listen_hints": True,
+    "online_max_results": 5,
+    "online_audio_quality": "128",
+    "online_search_history": [],
 }
 
 EQ_PRESETS: dict[str, list[float]] = {

@@ -912,6 +912,55 @@ def draw_dir_picker(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
         safe_addstr(win, h - 4, 2, hints, nav, h, w)
 
 
+def draw_web(app: PlayerApp, h: int, w: int) -> None:
+    from . import web as _web
+    texto = curses.color_pair(PAIR_TEXTO)
+    destacar = curses.color_pair(PAIR_DESTACAR)
+    nav = curses.color_pair(PAIR_NAV)
+
+    draw_box(app.stdscr, h, w, "Web")
+
+    if not _web.is_available():
+        safe_addstr(app.stdscr, 3, 2, "yt-dlp no está instalado.", destacar, h, w)
+        safe_addstr(app.stdscr, 5, 2, "Ejecutá en tu terminal:", texto, h, w)
+        safe_addstr(app.stdscr, 6, 2, "pip install --break-system-packages yt-dlp", nav, h, w)
+        safe_addstr(app.stdscr, 8, 2, "Luego reiniciá tplay.", texto, h, w)
+        return
+
+    if app.web_search_mode:
+        prompt = f"  Buscar: {app.web_search_buf}"
+        safe_addstr(app.stdscr, 3, 2, prompt[:w - 4], texto | curses.A_UNDERLINE, h, w)
+        safe_addstr(app.stdscr, 5, 2, "  Escribe tu búsqueda y presiona Enter", nav, h, w)
+        return
+
+    if not app.web_results:
+        safe_addstr(app.stdscr, (h - 4) // 2, 2,
+                     "  Presiona / para buscar", nav, h, w)
+        return
+
+    list_h = h - 8
+    start = app.web_scroll
+    end = min(start + list_h, len(app.web_results))
+
+    for i in range(start, end):
+        y = 5 + i - start
+        r = app.web_results[i]
+        is_cur = i == app.web_cursor
+        dur = _web.format_duration(r.duration)
+        title = r.title[:w - 16]
+        line = f"  {title:<{w - 16}}{dur:>7}"
+        attr = destacar | curses.A_REVERSE if is_cur else texto
+        safe_addstr(app.stdscr, y, 2, line, attr, h, w)
+
+    draw_list_indicators(app.stdscr, h, w, app.web_scroll, len(app.web_results), list_h)
+
+    hints = _build_hints([
+        ("j/k", "navegar"), ("Enter", "play"), ("/", "buscar"), ("Esc", "volver"),
+    ], w)
+    if hints:
+        safe_addstr(app.stdscr, h - 4, 2, hints, nav, h, w)
+
+
 def draw_favorites(app: PlayerApp, h: int, w: int) -> None:
     win = app.stdscr
 

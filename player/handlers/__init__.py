@@ -34,6 +34,7 @@ __all__ = [
     "handle_radio",
     "handle_favorites",
     "handle_dir_picker",
+    "handle_web",
 ]
 
 from .shared import _prompt, _toast, _confirm, _page_size, _clamp_scroll
@@ -74,3 +75,4 @@ from .config_view import handle_dir_picker
 
 from .radio import handle_radio
 from .favorites import handle_favorites
+from .webexplorer import handle_web

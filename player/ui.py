@@ -58,9 +58,9 @@ def _build_hints(segments: list[tuple[str, str]], w: int, prefix: str = "  ") ->
 
 
 def _build_nav(w: int) -> str:
-    full = " 0:Config │ 1:Listen │ 2:Expl │ 3:Playlist │ 4:Hist │ 5:Radio │ 6:Fav │ q:Salir "
-    mid = " 0:Cfg│1:Lis│2:Exp│3:PL│4:His│5:Rad│6:Fav│q:Salir"
-    mn = " 0│1│2│3│4│5│6│q"
+    full = " 0:Config │ 1:Listen │ 2:Expl │ 3:Playlist │ 4:Hist │ 5:Radio │ 6:Fav │ 7:Web │ q:Salir "
+    mid = " 0:Cfg│1:Lis│2:Exp│3:PL│4:His│5:Rad│6:Fav│7:Web│q:Salir"
+    mn = " 0│1│2│3│4│5│6│7│q"
     if w >= NAV_FULL_W:
         return full
     if w >= NAV_MID_W:
@@ -586,9 +586,29 @@ HELP_TABS: list[HelpTab] = [
             ("    F         Abrir vista Favoritos (Expl)", PAIR_TEXTO),
         ]
     },
+    {
+        "name": "Web",
+        "lines": [
+            ("", None),
+            ("  WEB EXPLORER", PAIR_NAV),
+            ("", None),
+            ("    7         Abrir Web Explorer", PAIR_TEXTO),
+            ("    /         Nueva búsqueda", PAIR_TEXTO),
+            ("    j/k       Navegar resultados", PAIR_TEXTO),
+            ("    Enter     Reproducir resultado", PAIR_TEXTO),
+            ("    Esc       Volver a Escucha", PAIR_TEXTO),
+            ("", None),
+            ("  BÚSQUEDA", PAIR_NAV),
+            ("", None),
+            ("    Texto     Escribir query", PAIR_TEXTO),
+            ("    Enter     Buscar", PAIR_TEXTO),
+            ("    Esc       Cancelar búsqueda", PAIR_TEXTO),
+            ("    Backsp    Borrar carácter", PAIR_TEXTO),
+        ]
+    },
 ]
 
-VIEW_TO_HELP_TAB: dict[int, int] = {1: 1, 2: 2, 3: 3, 4: 4, 0: 5, 5: 6, 6: 7}
+VIEW_TO_HELP_TAB: dict[int, int] = {1: 1, 2: 2, 3: 3, 4: 4, 0: 5, 5: 6, 6: 7, 7: 8}
 
 
 def draw_help(win: curses.window, h: int, w: int, scroll: int = 0, tab: int = 0) -> None:
