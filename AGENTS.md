@@ -32,7 +32,7 @@
 - mypy strict
 
 ## Versión actual
-- **v1.5.47** — ver `AENV/STATE.md` para detalle completo
+- **v1.5.48** — ver `AENV/STATE.md` para detalle completo
 
 ## Regla de oro
 > Cargar solo lo necesario ahora (L0-L1). Leer L2 (docs/) solo cuando el trabajo lo exija. Nunca leer L2 "por las dudas".

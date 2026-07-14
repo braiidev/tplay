@@ -47,3 +47,15 @@
 **Decisión**: Solo alta + media (9 ext). No se agregan nicho audiophile (.wv .ape .tak .tta) ni video legacy (.3gp .mpg .mpeg .ts .m4v .ogv).
 
 **Estado**: v1.5.47, mypy strict pasa.
+
+---
+
+## Entrada 4 — 2025-07-14 — Fix symlinks en Explorer
+
+**Tarea**: Corregir bug donde Explorer no ve directorios que son symlinks
+
+**Causa raíz**: refactor P1 (os.listdir → os.scandir) usó `follow_symlinks=False`, que ignora symlinks-to-dirs. `os.listdir` + `os.path.isdir()` los seguía.
+
+**Fix**: `entry.is_dir(follow_symlinks=True)` en file_utils.py
+
+**Estado**: v1.5.48, mypy strict pasa.

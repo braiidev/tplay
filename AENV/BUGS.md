@@ -6,6 +6,7 @@ _No hay bugs activos conocidos._
 ## Resueltos
 | ID | Descripción | Solución |
 |----|-------------|----------|
+| B12 | Explorer no ve symlinks-to-dirs (ej: ~/Music) | `follow_symlinks=True` en scandir |
 | B1 | History `count` siempre es 1 | Preserva/incrementa count existente |
 | B2 | Playlist Enter siempre arranca desde índice 0 | Usa `playlist_cursor` |
 | B3 | Favorites `a/A` bypass `Stack.append` | Usa `stack.append`/`insert_after_current` |

@@ -1,5 +1,8 @@
 # CHANGELOG — tplay
 
+## v1.5.48
+- fix: Explorer no ve symlinks-to-dirs — follow_symlinks=True en scandir (regresión de P1)
+
 ## v1.5.47
 - feat: 9 extensiones nuevas — .m4a .aac .opus .weba .wma .aiff .aif (audio) + .flv .wmv (video)
 
