@@ -159,11 +159,6 @@ class PlayerApp:
         self.kb_conflict_msg: str = ""
         self.kb_conflict_other: str = ""
 
-        self.eq_edit_mode: bool = False
-        self.eq_edit_cursor: int = 0
-        self.eq_edit_bands: list[float] = [0.0] * 10
-        self.eq_edit_preamp: float = 0.0
-
         self._action_handlers: dict[str, Callable[[], None]] = {}
         self._view_handlers: dict[int, Callable[[PlayerApp, int], None]] = {}
         self._view_drawers: dict[int, Callable[[PlayerApp, int, int], None]] = {}
@@ -407,6 +402,16 @@ class PlayerApp:
             self.current_view = self.V_LISTEN
 
     def _build_config_tabs(self) -> None:
+        eq_items = [
+            ("eq_enabled", "Ecualizador", "bool"),
+            ("eq_preset", "Preset EQ", "choice"),
+            ("eq_preamp", "Preamp", "eq_preamp"),
+        ]
+        if self.config.get("eq_preset") == "Custom":
+            band_names = ["60 Hz", "170 Hz", "310 Hz", "600 Hz", "1k",
+                          "3k", "6k", "12k", "14k", "16k"]
+            for i, name in enumerate(band_names):
+                eq_items.append((f"eq_band_{i}", name, "eq_band"))
         self.config_tabs = [
             {
                 "name": "General",
@@ -426,10 +431,7 @@ class PlayerApp:
             },
             {
                 "name": "Audio",
-                "items": [
-                    ("eq_enabled", "Ecualizador", "bool"),
-                    ("eq_preset", "Preset EQ", "choice"),
-                ],
+                "items": eq_items,
             },
             {
                 "name": "Sistema",
@@ -543,9 +545,6 @@ class PlayerApp:
 
     def _handle_key(self, key: int) -> None:
         if self._handle_key_help(key):
-            return
-        if self.eq_edit_mode:
-            self._handle_eq_edit(key)
             return
         if self.dir_picker_mode:
             handlers.handle_dir_picker(self, key)
@@ -1008,45 +1007,6 @@ class PlayerApp:
             )
             self.meta_edit_cursor_pos = len(self.meta_edit_buf)
 
-    def _handle_eq_edit(self, key: int) -> None:
-        if key == 27:
-            self.eq_edit_mode = False
-            curses.flushinp()
-            return
-        if key == ord("s"):
-            self.config["eq_bands"] = list(self.eq_edit_bands)
-            self.config["eq_preamp"] = self.eq_edit_preamp
-            if self.audio._eq_enabled:
-                self.audio.set_equalizer(self.eq_edit_bands, self.eq_edit_preamp)
-            from .config import save as _save_config
-            _save_config(self.config)
-            self.eq_edit_mode = False
-            self.toast("EQ guardado")
-            curses.flushinp()
-            return
-        if key in (ord("j"), curses.KEY_DOWN):
-            self.eq_edit_cursor = min(self.eq_edit_cursor + 1, 10)
-        elif key in (ord("k"), curses.KEY_UP):
-            self.eq_edit_cursor = max(self.eq_edit_cursor - 1, 0)
-        elif key in (curses.KEY_LEFT, ord("h")):
-            if self.eq_edit_cursor == 10:
-                self.eq_edit_preamp = max(-20.0, self.eq_edit_preamp - 0.5)
-            else:
-                self.eq_edit_bands[self.eq_edit_cursor] = max(
-                    -20.0, self.eq_edit_bands[self.eq_edit_cursor] - 0.5
-                )
-        elif key in (curses.KEY_RIGHT, ord("l")):
-            if self.eq_edit_cursor == 10:
-                self.eq_edit_preamp = min(20.0, self.eq_edit_preamp + 0.5)
-            else:
-                self.eq_edit_bands[self.eq_edit_cursor] = min(
-                    20.0, self.eq_edit_bands[self.eq_edit_cursor] + 0.5
-                )
-        elif key == ord("r"):
-            self.eq_edit_bands = [0.0] * 10
-            self.eq_edit_preamp = 0.0
-            self.toast("EQ reseteado a Flat")
-
     def _save_meta_edits(self) -> bool:
         import mutagen
 
@@ -1093,8 +1053,6 @@ class PlayerApp:
 
             if self.meta_edit_mode:
                 views.draw_meta_editor(self, self.stdscr, h, w)
-            elif self.eq_edit_mode:
-                views.draw_eq_overlay(self, h, w)
             elif self.dir_picker_mode:
                 views.draw_dir_picker(self, self.stdscr, h, w)
             elif self.current_view == self.V_CONFIG and self.kb_keybinding_view:

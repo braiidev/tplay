@@ -93,10 +93,27 @@ def handle_listen(app: PlayerApp, key: int) -> None:
                 lambda a, b: app._setup_sleep_timer(b),
                 str(app.config.get("sleep_timer_minutes", 30)))
     elif key == ord("E"):
+        from ..config import EQ_PRESET_NAMES
+        current = app.config.get("eq_preset", "Flat")
+        try:
+            idx = EQ_PRESET_NAMES.index(current)
+        except ValueError:
+            idx = 0
+        new_preset = EQ_PRESET_NAMES[(idx + 1) % len(EQ_PRESET_NAMES)]
+        app.config["eq_preset"] = new_preset
+        if app.audio._eq_enabled:
+            from ..config import EQ_PRESETS
+            bands = EQ_PRESETS.get(new_preset, [0.0] * 10)
+            preamp = app.config.get("eq_preamp", 0.0)
+            app.audio.set_equalizer(bands, preamp)
+        from ..config import save as _save_config
+        _save_config(app.config)
+        _toast(app, f"Preset: {new_preset}")
+    elif key == ord("e"):
         app.audio._eq_enabled = not app.audio._eq_enabled
         if app.audio._eq_enabled:
-            preset_name = app.config.get("eq_preset", "Flat")
             from ..config import EQ_PRESETS
+            preset_name = app.config.get("eq_preset", "Flat")
             bands = EQ_PRESETS.get(preset_name, [0.0] * 10)
             preamp = app.config.get("eq_preamp", 0.0)
             app.audio.set_equalizer(bands, preamp)

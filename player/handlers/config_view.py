@@ -36,11 +36,6 @@ def handle_config(app: PlayerApp, key: int) -> None:
         if ctype == "choice":
             if key_name == "eq_preset":
                 _cycle_eq_preset(app, 1)
-                if app.config.get("eq_preset") == "Custom":
-                    app.eq_edit_bands = list(app.config.get("eq_bands", [0.0] * 10))
-                    app.eq_edit_preamp = app.config.get("eq_preamp", 0.0)
-                    app.eq_edit_cursor = 0
-                    app.eq_edit_mode = True
             else:
                 _cycle_theme(app, 1)
         elif ctype == "bool":
@@ -49,6 +44,10 @@ def handle_config(app: PlayerApp, key: int) -> None:
             _cycle_color(app, key_name, 1)
         elif ctype == "int":
             _config_int_inc(app, key_name)
+        elif ctype == "eq_preamp":
+            _eq_preamp_inc(app)
+        elif ctype == "eq_band":
+            _eq_band_inc(app, key_name)
         elif ctype == "action" and key_name == "keybindings":
             _open_keybindings(app)
         elif ctype == "action" and key_name == "update":
@@ -63,11 +62,6 @@ def handle_config(app: PlayerApp, key: int) -> None:
         if ctype == "choice":
             if key_name == "eq_preset":
                 _cycle_eq_preset(app, -1)
-                if app.config.get("eq_preset") == "Custom":
-                    app.eq_edit_bands = list(app.config.get("eq_bands", [0.0] * 10))
-                    app.eq_edit_preamp = app.config.get("eq_preamp", 0.0)
-                    app.eq_edit_cursor = 0
-                    app.eq_edit_mode = True
             else:
                 _cycle_theme(app, -1)
         elif ctype == "bool":
@@ -76,6 +70,10 @@ def handle_config(app: PlayerApp, key: int) -> None:
             _cycle_color(app, key_name, -1)
         elif ctype == "int":
             _config_int_dec(app, key_name)
+        elif ctype == "eq_preamp":
+            _eq_preamp_dec(app)
+        elif ctype == "eq_band":
+            _eq_band_dec(app, key_name)
         elif ctype == "path":
             _open_dir_picker(app, key_name)
 
@@ -136,10 +134,7 @@ def _toggle_bool(app: PlayerApp, key_name: str) -> None:
     app.config[key_name] = not app.config.get(key_name, True)
     if key_name == "eq_enabled":
         if app.config["eq_enabled"]:
-            preset_name = app.config.get("eq_preset", "Flat")
-            bands = EQ_PRESETS.get(preset_name, [0.0] * 10)
-            preamp = app.config.get("eq_preamp", 0.0)
-            app.audio.set_equalizer(bands, preamp)
+            _reapply_eq(app)
         else:
             app.audio.disable_equalizer()
     from ..config import save as _save_config
@@ -153,12 +148,67 @@ def _cycle_eq_preset(app: PlayerApp, direction: int) -> None:
         idx = 0
     new_preset = EQ_PRESET_NAMES[(idx + direction) % len(EQ_PRESET_NAMES)]
     app.config["eq_preset"] = new_preset
+    app._build_config_tabs()
+    app.config_cursor = min(app.config_cursor, len(app.config_items) - 1)
     if app.config.get("eq_enabled", False):
-        bands = EQ_PRESETS.get(new_preset, [0.0] * 10)
+        if new_preset == "Custom":
+            bands = app.config.get("eq_bands", [0.0] * 10)
+        else:
+            bands = EQ_PRESETS.get(new_preset, [0.0] * 10)
         preamp = app.config.get("eq_preamp", 0.0)
         app.audio.set_equalizer(bands, preamp)
     from ..config import save as _save_config
     _save_config(app.config)
+
+
+def _eq_preamp_inc(app: PlayerApp) -> None:
+    val = app.config.get("eq_preamp", 0.0)
+    app.config["eq_preamp"] = min(20.0, round(val + 0.5, 1))
+    if app.config.get("eq_enabled", False):
+        _reapply_eq(app)
+    from ..config import save as _save_config
+    _save_config(app.config)
+
+
+def _eq_preamp_dec(app: PlayerApp) -> None:
+    val = app.config.get("eq_preamp", 0.0)
+    app.config["eq_preamp"] = max(-20.0, round(val - 0.5, 1))
+    if app.config.get("eq_enabled", False):
+        _reapply_eq(app)
+    from ..config import save as _save_config
+    _save_config(app.config)
+
+
+def _eq_band_inc(app: PlayerApp, key_name: str) -> None:
+    idx = int(key_name.split("_")[-1])
+    bands = list(app.config.get("eq_bands", [0.0] * 10))
+    bands[idx] = min(20.0, round(bands[idx] + 0.5, 1))
+    app.config["eq_bands"] = bands
+    if app.config.get("eq_enabled", False):
+        _reapply_eq(app)
+    from ..config import save as _save_config
+    _save_config(app.config)
+
+
+def _eq_band_dec(app: PlayerApp, key_name: str) -> None:
+    idx = int(key_name.split("_")[-1])
+    bands = list(app.config.get("eq_bands", [0.0] * 10))
+    bands[idx] = max(-20.0, round(bands[idx] - 0.5, 1))
+    app.config["eq_bands"] = bands
+    if app.config.get("eq_enabled", False):
+        _reapply_eq(app)
+    from ..config import save as _save_config
+    _save_config(app.config)
+
+
+def _reapply_eq(app: PlayerApp) -> None:
+    preset_name = app.config.get("eq_preset", "Flat")
+    if preset_name == "Custom":
+        bands = app.config.get("eq_bands", [0.0] * 10)
+    else:
+        bands = EQ_PRESETS.get(preset_name, [0.0] * 10)
+    preamp = app.config.get("eq_preamp", 0.0)
+    app.audio.set_equalizer(bands, preamp)
 
 
 # ── Keybinding editor ──
