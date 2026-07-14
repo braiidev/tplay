@@ -32,7 +32,7 @@ def list_dir(path: str) -> list[tuple[str, bool, str]]:
             if name.startswith("."):
                 continue
             try:
-                is_dir = entry.is_dir(follow_symlinks=False)
+                is_dir = entry.is_dir(follow_symlinks=True)
             except OSError:
                 continue
             if is_dir:
