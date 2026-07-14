@@ -141,3 +141,28 @@
 - `player/views.py` — draw_config, branch unificado eq_preamp/eq_band con label padeado
 
 **Estado**: v1.5.51, mypy strict pasa.
+
+---
+
+## Entrada 9 — 2026-07-14 — Rediseño visual Fase 1+2
+
+**Tarea**: Consistencia visual + jerarquía en Listen y Config
+
+**Cambios**:
+- `COMPACT_THRESHOLD = 16` en `ui.py` — reemplaza 19 hardcoded `h < 16` / `h < 12` en todo el codebase
+- Icono de pausa unificado a `❚❚` (antes: `||` en status, `❚❚` en compact, `||` en help)
+- Separador visual `───` entre preamp y bandas en Config/Audio (Custom mode)
+  - Item virtual `("separator")` en lista de items, cursor lo salta automáticamente
+- Listen view: título con icono `♪` y color `destacar` (antes: sin icono, color `texto`)
+
+**Archivos modificados**:
+- `player/ui.py` — COMPACT_THRESHOLD, pausa ❚❚, help text
+- `player/views.py` — COMPACT_THRESHOLD import, separador Config, Listen title
+- `player/app.py` — COMPACT_THRESHOLD import, separator item en _build_config_tabs
+- `player/handlers/config_view.py` — _skip_separator(), COMPACT_THRESHOLD import
+- `player/handlers/explorer.py` — COMPACT_THRESHOLD import
+- `player/handlers/history.py` — COMPACT_THRESHOLD import
+- `player/handlers/playlist.py` — COMPACT_THRESHOLD import
+- `player/handlers/radio.py` — COMPACT_THRESHOLD import
+
+**Estado**: v1.5.52, mypy strict pasa.

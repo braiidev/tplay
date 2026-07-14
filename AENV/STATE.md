@@ -1,7 +1,7 @@
 # STATE — tplay
 
 ## Versión actual
-- **v1.5.51**
+- **v1.5.52**
 - **Último commit**: pendiente
 
 ## Estado del código

@@ -1,5 +1,11 @@
 # CHANGELOG — tplay
 
+## v1.5.52
+- refactor: COMPACT_THRESHOLD=16 constante unificada (reemplaza 19 hardcodes `h < 16` / `h < 12`)
+- fix: icono de pausa unificado a ❚❚ en status bar, help y listen view
+- feat: separador visual `───` entre preamp y bandas en Config/Audio (Custom mode)
+- feat: Listen view — título con icono ♪ y color destacar para jerarquía visual
+
 ## v1.5.51
 - fix: alineación visual de labels en Config/Audio — todos los labels de bandas EQ padeados a 6 chars, colon/values/barras perfectamente alineados
 
