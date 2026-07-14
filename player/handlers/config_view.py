@@ -104,6 +104,7 @@ def handle_config(app: PlayerApp, key: int) -> None:
             bands = list(app.config.get("eq_bands", [0.0] * 10))
             bands[idx] = 0.0
             app.config["eq_bands"] = bands
+            app.config["custom_bands"] = list(bands)
             if app.config.get("eq_enabled", False):
                 _reapply_eq(app)
             from ..config import save as _save_config
@@ -116,6 +117,7 @@ def handle_config(app: PlayerApp, key: int) -> None:
             _save_config(app.config)
         elif ctype == "choice" and key_name == "eq_preset":
             app.config["eq_bands"] = [0.0] * 10
+            app.config["custom_bands"] = [0.0] * 10
             app.config["eq_preamp"] = 12.0
             app.config["eq_preset"] = "Flat"
             app._build_config_tabs()
@@ -194,11 +196,15 @@ def _cycle_eq_preset(app: PlayerApp, direction: int) -> None:
         idx = EQ_PRESET_NAMES.index(app.config.get("eq_preset", "Flat"))
     except ValueError:
         idx = 0
+    old_preset = app.config.get("eq_preset", "Flat")
     new_preset = EQ_PRESET_NAMES[(idx + direction) % len(EQ_PRESET_NAMES)]
+    if old_preset == "Custom":
+        app.config["custom_bands"] = list(app.config.get("eq_bands", [0.0] * 10))
     app.config["eq_preset"] = new_preset
-    if new_preset != "Custom":
-        bands = EQ_PRESETS.get(new_preset, [0.0] * 10)
-        app.config["eq_bands"] = bands
+    if new_preset == "Custom":
+        app.config["eq_bands"] = list(app.config.get("custom_bands", [0.0] * 10))
+    else:
+        app.config["eq_bands"] = list(EQ_PRESETS.get(new_preset, [0.0] * 10))
     saved_cursor = app.config_cursor
     app._build_config_tabs()
     app.config_cursor = min(saved_cursor, len(app.config_items) - 1)

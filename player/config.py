@@ -22,6 +22,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "eq_preset": "Flat",
     "eq_bands": [0.0] * 10,
     "eq_preamp": 12.0,
+    "custom_bands": [0.0] * 10,
     "show_listen_hints": True,
 }
 
