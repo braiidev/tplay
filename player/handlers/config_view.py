@@ -18,14 +18,14 @@ def _skip_disabled(app: PlayerApp, direction: int) -> None:
     items = app.config_items
     total = len(items)
     is_custom = app.config.get("eq_preset", "Flat") == "Custom"
-    last_valid = app.config_cursor
+    start = app.config_cursor
     app.config_cursor += direction
     while 0 <= app.config_cursor < total:
         _, _, ctype = items[app.config_cursor]
         if ctype != "separator" and not (ctype == "eq_band" and not is_custom):
-            last_valid = app.config_cursor
+            return
         app.config_cursor += direction
-    app.config_cursor = last_valid
+    app.config_cursor = start
 
 
 def handle_config(app: PlayerApp, key: int) -> None:
