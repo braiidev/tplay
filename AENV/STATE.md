@@ -1,8 +1,8 @@
 # STATE — tplay
 
 ## Versión actual
-- **v1.5.57**
-- **Último commit**: `33128ae` — docs: refactor 5.1+5.2 completado
+- **v1.5.59**
+- **Último commit**: `b4ceec0` — fix: Help hints EQ en Listen + g/G en Lista/Hist/Radio
 
 ## Estado del código
 - **Compila**: ✅ (mypy strict pasa)
@@ -17,19 +17,14 @@
 | F8 | Cover art (chafa/viu) | Descartado |
 | F28 | Streaming/Radio | ✅ Hecho |
 
-## Sesión actual (v1.5.57)
-- UI polish:
-  - Listen view: metadata centrada (estado, título, artista/álbum) en full y compact
-  - Indicador de volumen visual con barras (8 chars full, 4 chars compact)
-  - Config/Audio: bandas EQ siempre visibles, solo lectura para presets non-Custom
-  - Config/Audio: hints contextuales por tipo de item (±0.5dB, cambiar, reset)
-- Refactor:
-  - draw_tab_carousel() — helper unificado para carousel de pestañas (Help + Config)
-  - clamp_scroll() — normaliza scroll clamping en 6 vistas
-  - draw_list_indicators() — dibuja ▲/▼ de forma consistente
+## Sesión actual (v1.5.59)
 - Bug fixes:
-  - Config/Audio bands siempre visibles (B14)
-  - History g/G implementados (B15)
+  - B16: Config/Audio bands actualizan al cambiar preset — _cycle_eq_preset guarda bands del preset en config
+  - B17: Config/Audio cursor no navega ni edita bands en modo non-Custom
+  - B13: Listen hints toggle con `;` — config show_listen_hints, ON/OFF
+- Help:
+  - B18: Help Listen tab — agregada sección ECUALIZADOR (e/E)
+  - B19: Help Lista/Historial/Radio — agregados g/G Inicio/Fin
 
 ## Módulos del sistema
 | Módulo | Archivos | Estado |

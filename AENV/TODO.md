@@ -5,13 +5,14 @@
 |----|---------|-----------|--------|
 | F9 | Visualizer (FFT bars) | Media | Investigado en `docs/BRAINSTORM.md` |
 | F10 | yt-dlp Web Explorer | Baja | Investigado en `docs/BRAINSTORM.md` |
-| B13 | Listen hints show/hide toggle | Baja | Bug activo en `BUGS.md` |
-| B16 | Config/Audio: bands actualizan al cambiar preset | Alta | Bug activo en `BUGS.md` — critico UX |
-| B17 | Config/Audio: cursor navega bands en non-Custom | Alta | Bug activo en `BUGS.md` — critico UX |
-| B18 | Help Listen: missing EQ hints (e/E) | Baja | Bug activo en `BUGS.md` |
-| B19 | Help Lista/Hist/Radio: missing g/G hints | Baja | Bug activo en `BUGS.md` |
 
 ## Completado esta sesión
+- [x] B13 Listen hints toggle con `;` (v1.5.59)
+- [x] B16 Config/Audio bands actualizan al cambiar preset (v1.5.59)
+- [x] B17 Config/Audio cursor no navega bands en non-Custom (v1.5.59)
+- [x] B18 Help Listen — sección ECUALIZADOR (v1.5.58)
+- [x] B19 Help Lista/Historial/Radio — g/G Inicio/Fin (v1.5.58)
+- [x] B14 Fix Config bands always visible (v1.5.57)
 - [x] F2 Ecualizador gráfico (v1.5.49)
 - [x] Setup AENV (migración tracking)
 - [x] Explorer read-only fuera del root (v1.5.46)

@@ -1,5 +1,12 @@
 # CHANGELOG — tplay
 
+## v1.5.59
+- fix: Config/Audio bands actualizan al cambiar preset (B16)
+- fix: Config/Audio cursor no navega bands en non-Custom (B17)
+- feat: Listen hints toggle con `;` — config show_listen_hints (B13)
+- fix: Help Listen — sección ECUALIZADOR con e/E (B18)
+- fix: Help Lista/Historial/Radio — g/G Inicio/Fin (B19)
+
 ## v1.5.57
 - fix: Config/Audio bands siempre visibles (no solo Custom) — modo solo lectura para presets non-Custom
 - fix: History g/G implementados — ir a inicio/fin de historial

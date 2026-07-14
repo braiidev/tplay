@@ -278,3 +278,30 @@
 - `player/handlers/history.py` — g/G handlers
 
 **Estado**: v1.5.57, mypy strict pasa.
+
+---
+
+## Entrada 15 — 2026-07-14 — Bug fixes B13+B16+B17
+
+**Tarea**: Corregir bugs activos de UX en Config/Audio y Listen
+
+**Bugs corregidos**:
+- **B16** Config/Audio bands no actualizan al cambiar preset
+  - Causa: `_cycle_eq_preset` actualizaba audio pero no `config["eq_bands"]`
+  - Fix: guardar bands del preset en config cuando `new_preset != "Custom"`
+- **B17** Config/Audio cursor navega bands en non-Custom
+  - Causa: `_skip_separator` solo saltaba separadores
+  - Fix: extender a `_skip_disabled` que también salta eq_band cuando non-Custom; guards en RIGHT/LEFT/r
+- **B13** Listen hints no se pueden ocultar
+  - Causa: hints siempre se renderizaban
+  - Fix: config `show_listen_hints` + toggle con `;`
+
+**Archivos modificados**:
+- `player/handlers/config_view.py` — _cycle_eq_preset, _skip_disabled, guards
+- `player/config.py` — show_listen_hints default
+- `player/handlers/listen.py` — `;` handler
+- `player/keybindings.py` — `;` reserved
+- `player/views.py` — hints condicional
+- `player/ui.py` — Help Listen hints
+
+**Estado**: v1.5.59, mypy strict pasa, 0 bugs activos.
