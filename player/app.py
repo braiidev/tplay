@@ -562,37 +562,41 @@ class PlayerApp:
             self.history.pop()
 
     def run(self) -> None:
-        while self.running:
-            self._check_playback_end()
-            self.audio.check_sleep_timer()
-            cur = self.audio.current_file
-            if cur and cur != self._history_last:
-                self._add_history(cur)
-                self._history_last = cur
-            if self.update_check_done and not self._update_toast_shown:
-                self._update_toast_shown = True
-                if self.update_available:
-                    self.toast("Nueva versión disponible")
-            key = self.stdscr.getch()
-            if key == curses.KEY_RESIZE:
-                self.stdscr.clear()
-                continue
-            if key != -1:
-                if (
-                    self.toast_ticks > 0
-                    and key in (10, 13, 32, 27)
-                    and not self.dialog
-                    and not self.show_help
-                ):
-                    self.toast_ticks = 0
-                elif self.dialog:
-                    self._handle_dialog_key(key)
-                elif self.meta_edit_mode:
-                    self._handle_meta_edit(key)
-                else:
-                    self._handle_key(key)
-            self._draw()
-            time.sleep(0.01 if self.dialog else 0.05)
+        try:
+            while self.running:
+                self._check_playback_end()
+                self.audio.check_sleep_timer()
+                cur = self.audio.current_file
+                if cur and cur != self._history_last:
+                    self._add_history(cur)
+                    self._history_last = cur
+                if self.update_check_done and not self._update_toast_shown:
+                    self._update_toast_shown = True
+                    if self.update_available:
+                        self.toast("Nueva versión disponible")
+                key = self.stdscr.getch()
+                if key == curses.KEY_RESIZE:
+                    self.stdscr.clear()
+                    continue
+                if key != -1:
+                    if (
+                        self.toast_ticks > 0
+                        and key in (10, 13, 32, 27)
+                        and not self.dialog
+                        and not self.show_help
+                    ):
+                        self.toast_ticks = 0
+                    elif self.dialog:
+                        self._handle_dialog_key(key)
+                    elif self.meta_edit_mode:
+                        self._handle_meta_edit(key)
+                    else:
+                        self._handle_key(key)
+                self._draw()
+                time.sleep(0.01 if self.dialog else 0.05)
+        finally:
+            from .web import get_download_manager
+            get_download_manager().shutdown()
 
     def _handle_key(self, key: int) -> None:
         if self._handle_key_help(key):

@@ -590,10 +590,16 @@ class DownloadManager:
 
     def shutdown(self) -> None:
         self._running = False
+        to_stop: list[int] = []
         with self._lock:
             for item in self._items:
                 if item.state in (DownloadState.DOWNLOADING, DownloadState.PAUSED):
-                    self.stop_item(item.id)
+                    to_stop.append(item.id)
+        for item_id in to_stop:
+            self.stop_item(item_id)
+        cfg = _load_config()
+        music_dir = cfg.get("music_dir", os.path.expanduser("~/Music"))
+        _cleanup_part_files(music_dir)
 
 
 def item_status_str(item: DownloadItem) -> str:
