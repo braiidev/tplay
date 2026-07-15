@@ -204,3 +204,14 @@
 - Skipped: R4-R6 (draw_item_row ya existe), R13 (diferentes estructuras), P10 (stat rápido), V6 (fallback seguro)
 
 **Estado**: v1.6.5, mypy strict pasa (28 archivos), archivos compilan OK
+
+---
+
+## Entrada 20 — 2026-07-15 — v1.6.6 Performance Optimizations
+- P1: `config.py` — `load()` cachea con mtime invalidation; `save()` invalida cache. Evita re-leer JSON en cada `_load_config()` call.
+- P4: `app.py` — `_add_history()` usa `next()` + `remove()` en vez de scan O(n) + rebuild O(n) + insert O(n).
+- P5: `app.py` — `_snapshot_state()` usa `{k: list(v) for k,v in ...}` y `list()` en vez de `copy.deepcopy()`. Safe because tuples and StackItems are immutable.
+- Eliminado `import copy` de app.py (ya no se usa).
+- Skipped: P2 (items property copy necesaria para thread safety, max 3 items), P3 (ya usa time.sleep), P6 (frame rate limiter, no busy-wait), P7 (trivial dict), P9 (infrequent, debounce adds complexity).
+
+**Estado**: v1.6.6, mypy strict pasa (28 archivos), etapas 1-4 del audit completas

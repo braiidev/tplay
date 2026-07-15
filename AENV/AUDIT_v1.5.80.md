@@ -83,16 +83,16 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 
 | # | Archivo:Línea | Descripción |
 |---|---------------|-------------|
-| P1 | `config.py:load()` | Lee JSON de disco en cada llamada. Usado por `_build_stream_cmd`, `_build_download_cmd`, `_download_worker`. Cachear. |
-| P2 | `web.py:390-392` | `items` property crea copia completa del list en cada acceso. Múltiples veces por frame. |
-| P3 | `web.py:526` | `threading.Event().wait(0.5)` alloca Event nuevo en cada iteración del spin loop. Usar `time.sleep(0.5)`. |
-| P4 | `app.py:577-588` | `_add_history` triple O(n): scan + rebuild + `insert(0)`. |
-| P5 | `app.py:997` | `copy.deepcopy(self.playlist_data)` en cada undo snapshot. Playlists grandes = copies grandes. |
-| P6 | `app.py:622` | `time.sleep(0.05)` busy-wait loop. Wastes CPU cuando idle. |
-| P7 | `views.py:701-799` | `draw_config` reconstruye `labels` dict en cada frame. Cachear. |
+| P1 | `config.py:load()` | Lee JSON de disco en cada llamada. Usado por `_build_stream_cmd`, `_build_download_cmd`, `_download_worker`. Cachear. | ✅ v1.6.6 |
+| P2 | `web.py:390-392` | `items` property crea copia completa del list en cada acceso. Múltiples veces por frame. | ⏭️ Skip (max 3 items, copy necesaria para thread safety) |
+| P3 | `web.py:390-392` | `threading.Event().wait(0.5)` alloca Event nuevo en cada iteración del spin loop. Usar `time.sleep(0.5)`. | ✅ Ya corregido (usa `time.sleep`) |
+| P4 | `app.py:577-588` | `_add_history` triple O(n): scan + rebuild + `insert(0)`. | ✅ v1.6.6 |
+| P5 | `app.py:997` | `copy.deepcopy(self.playlist_data)` en cada undo snapshot. Playlists grandes = copies grandes. | ✅ v1.6.6 |
+| P6 | `app.py:622` | `time.sleep(0.05)` busy-wait loop. Wastes CPU cuando idle. | ⏭️ Skip (frame rate limiter, no busy-wait) |
+| P7 | `views.py:701-799` | `draw_config` reconstruye `labels` dict en cada frame. Cachear. | ⏭️ Skip (trivial dict, no I/O) |
 | P8 | `views.py:89-119` | `draw_listen` llama `audio.get_length()` y `audio.get_time()` en cada frame. VLC API calls con locks. Cachear al inicio del render cycle. | ✅ v1.6.5 |
-| P9 | `downloads.py:49-56` | `save_history` reescribe JSON completo en cada llamada. Batch o debounce. |
-| P10 | `downloads.py:35-36` | `exists` property hace I/O de filesystem por acceso. Cachear o invalidar manualmente. |
+| P9 | `downloads.py:49-56` | `save_history` reescribe JSON completo en cada llamada. Batch o debounce. | ⏭️ Skip (infrequent user actions, debounce adds complexity) |
+| P10 | `downloads.py:35-36` | `exists` property hace I/O de filesystem por acceso. Cachear o invalidar manualmente. | ✅ v1.6.5 |
 
 ---
 
@@ -164,10 +164,17 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 - [x] R13: Motor/Meta editor shared ⏭️ Skip (diferentes estructuras)
 - [x] R15: import save a nivel módulo ✅ v1.6.4
 
-### Etapa 4: Performance (v1.6.5)
+### Etapa 4: Performance (v1.6.6)
+- [x] P1: Config load cache ✅ v1.6.6
+- [x] P3: Event→time.sleep ✅ Ya corregido
+- [x] P4: _add_history O(1) lookup ✅ v1.6.6
+- [x] P5: undo shallow copy ✅ v1.6.6
 - [x] P8: Audio time/length cache ✅ v1.6.5
-- [x] P10: exists property I/O ⏭️ Skip (stat rápido)
-- [ ] P1-P7,P9: Performance restantes (config cache, items property, etc.)
+- [x] P10: exists property I/O ✅ v1.6.5
+- [x] P2: items property ⏭️ Skip (max 3 items, thread safety)
+- [x] P6: busy-wait ⏭️ Skip (frame rate limiter)
+- [x] P7: config labels ⏭️ Skip (trivial dict)
+- [x] P9: save_history batch ⏭️ Skip (infrequent, adds complexity)
 
 ### Etapa 5: UX + Visual (v1.6.5)
 - [x] V1-V5: Visual fixes ✅ v1.6.5

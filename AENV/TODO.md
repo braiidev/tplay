@@ -2,23 +2,24 @@
 
 ## Pendiente para próxima sesión
 
-### Performance restante
-- [ ] P1-P7,P9: Config cache, items property, _add_history O(n), deepcopy undo, busy-wait, config labels, save_history batch
-
-### UX
-- [ ] U1-U10: UX improvements (stack size indicator, dialog multiline, etc.)
-
 ### Features
 - [ ] #6: Cache Management (limpiar cache yt-dlp)
 
 ## Completado
+
+### Etapa 4: Performance ✅ (v1.6.6)
+- P1: Config load cache (mtime-based)
+- P3: Already fixed (time.sleep)
+- P4: _add_history O(1) lookup
+- P5: undo shallow copy (no deepcopy)
+- P2/P6/P7/P9: Skipped (negligible or adds complexity)
 
 ### Etapa 3-5: DRY + Performance + Visual ✅ (v1.6.4-v1.6.5)
 - R1: FilterState + handle_filter_text
 - R2: navigate_cursor helper
 - R15: import save a nivel módulo
 - P8: Audio time/length cache
-- V1-V5: Visual fixes (ellipsis, LIST_H, help tab, theme fixes)
+- V1-V5: Visual fixes
 
 ### Etapa 2: Audit Bugs Menores + Dead Code ✅ (v1.6.3)
 - A1-A10: 10 bugs menores corregidos

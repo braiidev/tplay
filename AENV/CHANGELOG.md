@@ -1,5 +1,16 @@
 # CHANGELOG — tplay
 
+## v1.6.6
+- perf: P1 — `config.load()` cachea con mtime invalidation (evita re-leer JSON en cada llamada)
+- perf: P4 — `_add_history` usa `next()` + `remove()` en vez de scan + rebuild O(n)
+- perf: P5 — `_snapshot_state` usa shallow copy (list comprehension) en vez de `copy.deepcopy`
+- refactor: elimina `import copy` de app.py (ya no se usa)
+- skip: P2 — items property copy es necesaria para thread safety (max 3 items)
+- skip: P3 — ya usa `time.sleep(0.5)`, no `threading.Event().wait()`
+- skip: P6 — `time.sleep(0.05)` es frame rate limiter, no busy-wait
+- skip: P7 — labels dict trivial, no vale cachear
+- skip: P9 — save_history es infrequent, debounce añade complejidad innecesaria
+
 ## v1.6.5
 - refactor: R1 — `FilterState` dataclass + `_handle_filter_text()` genérico en shared.py
 - perf: P8 — `audio.refresh_time_cache()` cachea time/length una vez por frame (reduce VLC locks)
