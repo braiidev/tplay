@@ -1,5 +1,11 @@
 # CHANGELOG — tplay
 
+## v1.5.68
+- fix: B31 — yt-dlp output redirect a /dev/null (no corrompe curses)
+- fix: B30 — download config: Esc cancela, aesthetic `[val] ←→`
+- fix: B29 — quality options: worst,144p,240p,480p,720p,1080p,best
+- feat: config tab "Sistema" — settings de descarga (formato, calidad, máx)
+
 ## v1.5.67
 - fix: B26 — download config cíclico (←→/hl para format y quality)
 - fix: B27 — estado play preciso con web_playing_idx

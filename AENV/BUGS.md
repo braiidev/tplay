@@ -6,6 +6,27 @@ _(ninguno)_
 
 ## Resueltos
 
+### B31 — yt-dlp corrompe curses (status bar desaparece)
+- **Archivo**: `player/web.py`
+- **Descripción**: Output de yt-dlp se dibuja encima de status bar, borra `│` de marcos.
+- **Causa**: yt-dlp escribe a stdout/stderr que curses captura.
+- **Fix**: Redirect stdout/stderr a `/dev/null` via `opts["stdout"]` y `opts["stderr"]`.
+- **Estado**: Resuelto en v1.5.68
+
+### B30 — Download config: q cierra app + aesthetic incorrecta
+- **Archivo**: `player/handlers/webexplorer.py`, `player/views.py`
+- **Descripción**: `q` cierra la app en vez de cancelar; aesthetic usa `◄ prev [val] next ►`.
+- **Causa**: `q` no era interceptado; aesthetic no seguía convención `[val] ←→`.
+- **Fix**: Solo `Esc` cancela; aesthetic `[selected] ←→`; quality options expandidas.
+- **Estado**: Resuelto en v1.5.68
+
+### B29 — Quality options incompletas
+- **Archivo**: `player/web.py`, `player/handlers/config_view.py`
+- **Descripción**: Solo 480p/720p/1080p/best; falta worst/144p/240p.
+- **Causa**: quality_map limitada.
+- **Fix**: Agregado worst, 144p, 240p; config tab "Sistema" con settings downloads.
+- **Estado**: Resuelto en v1.5.68
+
 ### B28 — Toast tapa status bar en Web Explorer
 - **Archivo**: `player/app.py`
 - **Descripción**: Toast de descarga se dibuja en `h-3` (misma posición que status bar).
