@@ -141,6 +141,26 @@ class PlayerApp:
         self.web_scroll: int = 0
         self.web_search_mode: bool = False
         self.web_search_buf: str = ""
+        self.web_motor_mode: bool = False
+        self.web_active_platform: int = 0
+        self.web_motor_edit_mode: bool = False
+        self.web_motor_edit_is_new: bool = False
+        self.web_motor_edit_fields: dict[str, str] = {}
+        self.web_motor_edit_cursor: int = 0
+        self.web_motor_edit_editing: bool = False
+        self.web_motor_edit_buf: str = ""
+        self.web_motor_edit_cursor_pos: int = 0
+        self.web_download_mode: bool = False
+        self.web_download_cursor: int = 0
+        self.web_download_editing: bool = False
+        self.web_download_fields: dict[str, str] = {}
+        self.web_download_buf: str = ""
+        self.web_download_cursor_pos: int = 0
+        self.web_download_queue: list[Any] = []
+        self.web_download_max: int = self.config.get("online_download_max", 3)
+        self.web_result_status: list[str] = []
+        self.web_platforms: list[Any] = []
+        self._load_web_platforms()
 
         self.file_op_mode: str | None = None
         self.file_op_source: str | None = None
@@ -244,6 +264,11 @@ class PlayerApp:
     @property
     def _repo_dir(self) -> str:
         return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    def _load_web_platforms(self) -> None:
+        from .platforms import load_platforms
+        self.web_platforms = load_platforms()
+        self.web_download_max = self.config.get("online_download_max", 3)
 
     def _save_session(self) -> None:
         pos = 0
@@ -794,6 +819,9 @@ class PlayerApp:
             self.dir_picker_mode = False
             self.web_search_mode = False
             self.web_search_buf = ""
+            self.web_motor_mode = False
+            self.web_motor_edit_mode = False
+            self.web_download_mode = False
             curses.curs_set(0)
             curses.flushinp()
             return True

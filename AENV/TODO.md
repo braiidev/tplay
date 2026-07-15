@@ -14,15 +14,15 @@
 - [x] 2.4 Fix B22: search() retorna resultados reales ✅
 
 ### Fase 3: Handler V7
-- [ ] 3.1 Reescribir `player/handlers/webexplorer.py` — 3 modos (normal/search/motor)
-- [ ] 3.2 Implementar `web_motor_mode` — gestión de plataformas (a/e/d)
-- [ ] 3.3 Implementar `web_motor_edit_mode` — editor de plataformas (patrón meta_editor)
-- [ ] 3.4 Implementar `web_download_mode` — configuración de descarga
-- [ ] 3.5 Agregar g/G navegación (primer/último resultado)
-- [ ] 3.6 Agregar D (descarga directa) y d (descarga con config)
-- [ ] 3.7 Agregar cola de descarga (max 3, configurable hasta 10)
-- [ ] 3.8 Check de re-descarga (mismo formato = no, otro formato = sí)
-- [ ] 3.9 Plataformas sin búsqueda: aceptar URL completa en prompt
+- [x] 3.1 Reescribir `player/handlers/webexplorer.py` — 3 modos (normal/search/motor) ✅
+- [x] 3.2 Implementar `web_motor_mode` — gestión de plataformas (a/e/d) ✅
+- [x] 3.3 Implementar `web_motor_edit_mode` — editor de plataformas (patrón meta_editor) ✅
+- [x] 3.4 Implementar `web_download_mode` — configuración de descarga ✅
+- [x] 3.5 Agregar g/G navegación (primer/último resultado) ✅
+- [x] 3.6 Agregar D (descarga directa) y d (descarga con config) ✅
+- [x] 3.7 Agregar cola de descarga (max 3, configurable hasta 10) ✅
+- [x] 3.8 Check de re-descarga (mismo formato = no, otro formato = sí) ✅
+- [x] 3.9 Plataformas sin búsqueda: aceptar URL completa en prompt ✅
 
 ### Fase 4: Views V7
 - [ ] 4.1 Reescribir `draw_web()` — layout motor+prompt+divider+lista
@@ -32,7 +32,7 @@
 - [ ] 4.5 Truncado de texto en lista
 
 ### Fase 5: App & Config
-- [ ] 5.1 Agregar estados web en `player/app.py` (motor_mode, download_queue, etc.)
+- [x] 5.1 Agregar estados web en `player/app.py` (motor_mode, download_queue, etc.) ✅
 - [ ] 5.2 Agregar defaults downloads en `player/config.py`
 - [ ] 5.3 Actualizar nav bar y help tab en `player/ui.py`
 

@@ -376,3 +376,32 @@
 - Quality map: 480p=480, 720p=720, 1080p=1080, best=9999
 
 **Estado**: v1.5.62, mypy strict pasa.
+
+---
+
+## Entrada 19 — 2026-07-15 — F10: reescribir player/handlers/webexplorer.py
+
+**Tarea**: Fase 3 del Web Explorer v2 — handler con 3 modos + gestión + descarga
+
+**Archivos modificados**:
+- `player/handlers/webexplorer.py` — reescritura completa (110→530 líneas)
+- `player/app.py` — nuevos estados web + _load_web_platforms()
+
+**Cambios**:
+- 3 modos: normal (lista), search (prompt), motor (gestión)
+- Motor mode: add/edit/delete plataformas (patrón meta_editor)
+- Download: D (directo), d (con config)
+- g/G: navegación primer/último resultado
+- A/a: add to queue
+- x: clear results
+- Cola de descarga: max 3 (configurable hasta 10)
+- Check re-descarga
+- Plataformas sin búsqueda: URL completa en prompt
+
+**Decisión**:
+- Patrón meta_editor para motor edit y download config
+- Estados en lista: [-] [►] [D] [P] [Q] [✓] [X] [!]
+- Tab alterna entre motor y search
+- _load_web_platforms() en __init__ para cargar plataformas al inicio
+
+**Estado**: v1.5.63, mypy strict pasa.
