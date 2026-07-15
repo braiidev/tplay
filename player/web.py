@@ -135,6 +135,9 @@ def _get_download_url(info: dict[str, Any]) -> str:
             return str(best.get("url", ""))
 
     quality_map: dict[str, int] = {
+        "worst": 0,
+        "144p": 144,
+        "240p": 240,
         "480p": 480,
         "720p": 720,
         "1080p": 1080,
@@ -148,7 +151,9 @@ def _get_download_url(info: dict[str, Any]) -> str:
         if f.get("vcodec") != "none" and f.get("acodec") != "none"
     ]
     if video_fmts:
-        if target_height == 9999:
+        if target_height == 0:
+            best = min(video_fmts, key=lambda f: f.get("height", 0))
+        elif target_height == 9999:
             best = max(video_fmts, key=lambda f: f.get("height", 0))
         else:
             suitable = [f for f in video_fmts if f.get("height", 0) <= target_height]
@@ -188,7 +193,6 @@ def download(
 
     cfg = _load_config()
     outtmpl = os.path.join(output_path, "%(title)s.%(ext)s")
-    devnull = open(os.devnull, "w")
 
     quality_map: dict[str, str] = {
         "worst": "worst",
@@ -204,6 +208,7 @@ def download(
         opts: dict[str, Any] = {
             "quiet": True,
             "no_warnings": True,
+            "progress": False,
             "format": "bestaudio/best",
             "postprocessors": [
                 {
@@ -213,19 +218,16 @@ def download(
                 }
             ],
             "outtmpl": outtmpl,
-            "stdout": devnull,
-            "stderr": devnull,
         }
     else:
         fmt_selector = quality_map.get(quality, quality_map["480p"])
         opts = {
             "quiet": True,
             "no_warnings": True,
+            "progress": False,
             "format": fmt_selector,
             "merge_output_format": "mp4",
             "outtmpl": outtmpl,
-            "stdout": devnull,
-            "stderr": devnull,
         }
 
     if progress_hook is not None:
@@ -242,8 +244,6 @@ def download(
             return False, "No se pudo obtener info del video"
     except Exception as e:
         return False, str(e)
-    finally:
-        devnull.close()
 
 
 def format_duration(seconds: int) -> str:

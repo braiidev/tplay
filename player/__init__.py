@@ -102,7 +102,8 @@ def _cli_uninstall() -> bool:
 
 def main() -> None:
     if "--update" in sys.argv:
-        sys.exit(0 if _cli_update() else 1)
+        if not _cli_update():
+            sys.exit(1)
     if "--uninstall" in sys.argv:
         sys.exit(0 if _cli_uninstall() else 1)
     try:

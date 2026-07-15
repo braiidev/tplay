@@ -482,6 +482,8 @@ def _start_download(
     app.web_download_queue.append(result)
 
     def _progress(d: dict[str, Any]) -> None:
+        if idx >= len(app.web_result_status):
+            return
         if d.get("status") == "downloading":
             total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
             current = d.get("downloaded_bytes") or 0
@@ -496,14 +498,15 @@ def _start_download(
             result.webpage_url, music_dir, fmt, quality, progress_hook=_progress
         )
 
-        if success:
-            app.web_result_status[idx] = "[✓]"
-            _toast(app, f"Descargado: {msg}")
-            if app.current_dir == os.path.realpath(music_dir):
-                app.entries = _list_dir(app.current_dir)
-        else:
-            app.web_result_status[idx] = "[!]"
-            _toast(app, f"Error: {msg}")
+        if idx < len(app.web_result_status):
+            if success:
+                app.web_result_status[idx] = "[✓]"
+                _toast(app, f"Descargado: {msg}")
+                if app.current_dir == os.path.realpath(music_dir):
+                    app.entries = _list_dir(app.current_dir)
+            else:
+                app.web_result_status[idx] = "[!]"
+                _toast(app, f"Error: {msg}")
 
         if result in app.web_download_queue:
             app.web_download_queue.remove(result)
