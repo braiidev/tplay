@@ -533,26 +533,48 @@ def _do_download(app: PlayerApp) -> None:
 
 
 def _add_to_queue(app: PlayerApp) -> None:
-    """Añade resultado al final de la cola de reproducción."""
+    """Añade resultado al final de la cola de reproducción (resuelve stream URL async)."""
     if app.web_cursor >= len(app.web_results):
         return
     result = app.web_results[app.web_cursor]
-    from ..stack import StackItem
-    item = StackItem(path=result.url, name=result.title)
-    app.stack.items.append(item)
-    _toast(app, f"Añadido: {result.title}")
+    from .. import web
+
+    def _run() -> None:
+        stream_url = web.get_stream_url(result.webpage_url)
+        if not stream_url:
+            _toast(app, "No se puede añadir — video no disponible")
+            return
+        from ..stack import StackItem
+        item = StackItem(path=stream_url, name=result.title)
+        app.stack.items.append(item)
+        _toast(app, f"Añadido: {result.title}")
+
+    import threading
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
 
 
 def _add_to_queue_next(app: PlayerApp) -> None:
-    """Añade resultado siguiente al playhead en la cola."""
+    """Añade resultado siguiente al playhead en la cola (resuelve stream URL async)."""
     if app.web_cursor >= len(app.web_results):
         return
     result = app.web_results[app.web_cursor]
-    from ..stack import StackItem
-    item = StackItem(path=result.url, name=result.title)
-    insert_pos = app.stack.playhead + 1
-    app.stack.items.insert(insert_pos, item)
-    _toast(app, f"Añadido después del actual: {result.title}")
+    from .. import web
+
+    def _run() -> None:
+        stream_url = web.get_stream_url(result.webpage_url)
+        if not stream_url:
+            _toast(app, "No se puede añadir — video no disponible")
+            return
+        from ..stack import StackItem
+        item = StackItem(path=stream_url, name=result.title)
+        insert_pos = app.stack.playhead + 1
+        app.stack.items.insert(insert_pos, item)
+        _toast(app, f"Añadido después del actual: {result.title}")
+
+    import threading
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
 
 
 def _clear_results(app: PlayerApp) -> None:

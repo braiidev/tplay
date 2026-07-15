@@ -1235,7 +1235,7 @@ class PlayerApp:
                 and self.config.get("ui_navbar", True)
             ):
                 ui.draw_nav(self.stdscr, h, w)
-            if self.toast_ticks > 0:
+            if not compact and self.toast_ticks > 0:
                 toast_y = max(0, h - 2)
                 ui.safe_addstr(
                     self.stdscr,

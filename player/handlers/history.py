@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from ..file_utils import is_url as _is_url
 from ..stack import StackItem
+from ..state import save_history
 from .shared import _toast, _confirm, _clamp_scroll
 from .shared import _play_file_direct, _open_tag_editor, _toggle_favorite
 from ..ui import COMPACT_THRESHOLD
@@ -84,11 +85,13 @@ def _add_from_history(app: PlayerApp, insert_mode: str = "append") -> None:
 def _do_history_remove(app: PlayerApp) -> None:
     if 0 <= app.history_cursor < len(app.history):
         app.history.pop(app.history_cursor)
+        save_history(app.history)
         if app.history_cursor > 0:
             app.history_cursor -= 1
 
 
 def _do_history_clear(app: PlayerApp) -> None:
     app.history.clear()
+    save_history(app.history)
     app.history_cursor = 0
     app.history_scroll = 0
