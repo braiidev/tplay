@@ -134,3 +134,12 @@
 - C4: `web.py` — skip (dead code, función `download()` nunca se llama).
 
 **Estado**: v1.6.0, mypy strict pasa (28 archivos), archivos compilan OK
+
+---
+
+## Entrada 15 — 2025-07-15 — v1.6.1 Audit: Thread Safety
+- C5: `web.py` — TOCTOU race en `_active_count`. Loop ahora lee bajo `_active_lock` antes de proceder. También reemplazado `threading.Event().wait(0.5)` por `time.sleep(0.5)` (P3).
+- C6: `web.py` — `_callbacks` list race. `_notify()` ahora copia lista antes de iterar (`cbs = list(self._callbacks)`).
+- C2: `app.py` — data race en `_on_download_change`. Callback ahora solo setea flag `_download_completed_pending`. Main loop procesa en `_process_download_completions()` (seguro, main thread).
+
+**Estado**: v1.6.1, mypy strict pasa (28 archivos), archivos compilan OK

@@ -1,5 +1,11 @@
 # CHANGELOG — tplay
 
+## v1.6.1
+- fix: C2 — data race en _on_download_change: callback setea flag, main loop procesa
+- fix: C5 — TOCTOU race en _active_count: lectura bajo _active_lock
+- fix: C6 — _callbacks list race: copia lista antes de iterar en _notify
+- fix: P3 — reemplazado threading.Event().wait() por time.sleep() en worker loop
+
 ## v1.6.0
 - fix: C1 — toast double-decrement en compact mode (app.py)
 - fix: C3 — history data loss: _do_history_remove/_clear ahora persisten con save_history()
