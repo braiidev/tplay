@@ -265,6 +265,21 @@ class PlayerApp:
     def _load_web_platforms(self) -> None:
         from .platforms import load_platforms
         self.web_platforms = load_platforms()
+        from .web import get_download_manager, DownloadState
+        dm = get_download_manager()
+        completed: set[int] = set()
+
+        def _on_download_change() -> None:
+            new_completed = {
+                i.id for i in dm.items
+                if i.state == DownloadState.COMPLETED
+            }
+            if new_completed - completed:
+                completed.update(new_completed)
+                from .file_utils import list_dir as _list_dir
+                self.entries = _list_dir(self.current_dir)
+
+        dm.add_callback(_on_download_change)
 
     def _save_session(self) -> None:
         pos = 0
