@@ -102,16 +102,16 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 
 | # | Descripción |
 |---|-------------|
-| U1 | `draw_listen` no muestra stack size fuera del stack view. Mostrar `(N items)` indicador. |
-| U2 | Explorer: directorios muestran `[+]/ ` pero no está documentado en help. |
-| U3 | `draw_radio` no tiene hints/keyboard reference en la parte inferior. |
-| U4 | Nav bar muestra keybindings hardcodeados, no respeta custom keybindings. |
-| U5 | `draw_dialog` no soporta multi-line text. Mensajes largos se truncan. |
-| U6 | No hay preview de theme antes de aplicar. Cambios son instantáneos. |
-| U7 | Help system no tiene búsqueda dentro del contenido. |
-| U8 | Compact mode: toast se dibuja en row 1, sobre-escribe título del box. |
-| U9 | Compact listen: goto overlay puede superponerse con controls bar. |
-| U10 | `curses.curs_set(0)` se llama cada frame dentro de `draw_dialog`. Mover a transición de estado. |
+| U1 | `draw_listen` no muestra stack size fuera del stack view. Mostrar `(N items)` indicador. | ✅ v1.6.7 |
+| U2 | Explorer: directorios muestran `[+]/ ` pero no está documentado en help. | ✅ v1.6.7 |
+| U3 | `draw_radio` no tiene hints/keyboard reference en la parte inferior. | ✅ v1.6.7 |
+| U4 | Nav bar muestra keybindings hardcodeados, no respeta custom keybindings. | ⏭️ Skip (números 0-8 son hardcoded en view switch, siempre correctos) |
+| U5 | `draw_dialog` no soporta multi-line text. Mensajes largos se truncan. | ✅ v1.6.7 |
+| U6 | No hay preview de theme antes de aplicar. Cambios son instantáneos. | ⏭️ Skip (complejo, feature nueva) |
+| U7 | Help system no tiene búsqueda dentro del contenido. | ⏭️ Skip (feature nueva, no bug) |
+| U8 | Compact mode: toast se dibuja en row 1, sobre-escribe título del box. | ✅ v1.6.7 |
+| U9 | Compact listen: goto overlay puede superponerse con controls bar. | ✅ v1.6.7 |
+| U10 | `curses.curs_set(0)` se llama cada frame dentro de `draw_dialog`. Mover a transición de estado. | ✅ v1.6.7 |
 
 ### ARQUITECTURA
 
@@ -176,10 +176,19 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 - [x] P7: config labels ⏭️ Skip (trivial dict)
 - [x] P9: save_history batch ⏭️ Skip (infrequent, adds complexity)
 
-### Etapa 5: UX + Visual (v1.6.5)
+### Etapa 5: UX + Visual (v1.6.7)
+- [x] U1: stack size indicator en listen title ✅ v1.6.7
+- [x] U2: help doc para directorios [+]/ ✅ v1.6.7
+- [x] U3: radio hints bar ✅ v1.6.7
+- [x] U5: dialog multiline ✅ v1.6.7
+- [x] U8: toast compact mode position ✅ v1.6.7
+- [x] U9: goto overlay compact overlap ✅ v1.6.7
+- [x] U10: curs_set(0) en state transition ✅ v1.6.7
 - [x] V1-V5: Visual fixes ✅ v1.6.5
 - [x] V6: Color name fallback ⏭️ Skip (fallback seguro)
-- [ ] U1-U10: UX improvements
+- [x] U4: Nav bar keybindings ⏭️ Skip (siempre correctos)
+- [x] U6: Theme preview ⏭️ Skip (complejo)
+- [x] U7: Help search ⏭️ Skip (feature nueva)
 
 ### Etapa 4: Performance (v1.6.3)
 - [ ] P1: Cache config load

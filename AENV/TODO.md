@@ -7,26 +7,31 @@
 
 ## Completado
 
+### Etapa 5: UX + Visual ✅ (v1.6.7)
+- U1: stack size indicator en listen title
+- U2: help doc para directorios [+]/
+- U3: radio hints bar
+- U5: dialog multiline
+- U8: toast compact mode position
+- U9: goto overlay compact overlap
+- U10: curs_set(0) en state transition
+- U4/U6/U7: Skipped (correcto / complejo / feature nueva)
+
 ### Etapa 4: Performance ✅ (v1.6.6)
-- P1: Config load cache (mtime-based)
-- P3: Already fixed (time.sleep)
-- P4: _add_history O(1) lookup
-- P5: undo shallow copy (no deepcopy)
-- P2/P6/P7/P9: Skipped (negligible or adds complexity)
+- P1,P3,P4,P5: Implementados
+- P2,P6,P7,P9: Skipped (negligible)
 
 ### Etapa 3-5: DRY + Performance + Visual ✅ (v1.6.4-v1.6.5)
-- R1: FilterState + handle_filter_text
-- R2: navigate_cursor helper
-- R15: import save a nivel módulo
+- R1,R2,R15: DRY refactoring
 - P8: Audio time/length cache
 - V1-V5: Visual fixes
 
 ### Etapa 2: Audit Bugs Menores + Dead Code ✅ (v1.6.3)
-- A1-A10: 10 bugs menores corregidos
-- D1-D12: 10 dead code items eliminados
+- A1-A10: 10 bugs menores
+- D1-D12: 10 dead code items
 
 ### Etapa 1: Audit Critical Bugs ✅ (v1.6.0-v1.6.2)
-- C1-C8: 7 critical bugs corregidos
+- C1-C8: 7 critical bugs
 
 ### #4+#5: Historial Unificado ✅ (v1.5.80)
 - Unificado downloads + streams en una sola vista `H`

@@ -1,5 +1,17 @@
 # CHANGELOG — tplay
 
+## v1.6.7
+- feat: U1 — `draw_listen` muestra stack size `(N)` en el título cuando hay items
+- feat: U2 — help tab "Explorador" documenta indicador `[+]/` para directorios con subdirs
+- feat: U3 — `draw_radio` muestra hints bar (Enter, a/A, e, d, f, x)
+- feat: U5 — `draw_dialog` soporta multiline text (separado por `\n`), ajusta altura automáticamente
+- fix: U8 — toast en compact mode ahora se dibuja en `h-2` en vez de row 1 (no sobreescribe contenido)
+- fix: U9 — goto overlay en compact mode respeta `h-3` para no superponerse con controls bar
+- refactor: U10 — `curses.curs_set(0)` movido de `draw_dialog` a `_prompt()` y `_confirm()` (state transition)
+- skip: U4 — nav bar números 0-8 son hardcoded en view switch, siempre correctos
+- skip: U6 — theme preview requiere feature nueva compleja
+- skip: U7 — help search es feature nueva, no bug fix
+
 ## v1.6.6
 - perf: P1 — `config.load()` cachea con mtime invalidation (evita re-leer JSON en cada llamada)
 - perf: P4 — `_add_history` usa `next()` + `remove()` en vez de scan + rebuild O(n)

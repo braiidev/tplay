@@ -215,3 +215,17 @@
 - Skipped: P2 (items property copy necesaria para thread safety, max 3 items), P3 (ya usa time.sleep), P6 (frame rate limiter, no busy-wait), P7 (trivial dict), P9 (infrequent, debounce adds complexity).
 
 **Estado**: v1.6.6, mypy strict pasa (28 archivos), etapas 1-4 del audit completas
+
+---
+
+## Entrada 21 — 2026-07-15 — v1.6.7 UX Improvements
+- U1: `views.py` — `draw_listen` muestra `(N)` en el título cuando hay items en la pila.
+- U2: `ui.py` — help tab "Explorador" documenta indicador `[+]/` para directorios con subdirectorios.
+- U3: `views.py` — `draw_radio` muestra hints bar con teclas disponibles (Enter, a/A, e, d, f, x).
+- U5: `ui.py` — `draw_dialog` soporta multiline text via `\n`, ajusta DH automáticamente.
+- U8: `app.py` — toast en compact mode dibuja en `max(1, h-2)` en vez de row 1 fijo.
+- U9: `views.py` — goto overlay en compact mode clampa `oy` para no superponerse con controls bar.
+- U10: `ui.py` + `shared.py` — `curses.curs_set(0)` movido de `draw_dialog` (cada frame) a `_prompt()` y `_confirm()` (state transition).
+- Skipped: U4 (nav bar correcto), U6 (complejo), U7 (feature nueva).
+
+**Estado**: v1.6.7, mypy strict pasa (28 archivos), AUDIT COMPLETO (todas las etapas 1-5)

@@ -1,15 +1,15 @@
 # STATE — tplay
 
 ## Estado actual
-- **Version**: v1.6.6
-- **Plan activo**: Audit etapas 1-5 COMPLETAS
+- **Version**: v1.6.7
+- **Plan activo**: Audit COMPLETO (todas las etapas)
 - **Bugs abiertos**: 0
-- **Docs**: Sincronizados con v1.6.6
+- **Docs**: Sincronizados con v1.6.7
 
 ## Último commit
-- `perf - 1.6.6 - P1 config cache, P4 history O(1), P5 undo shallow copy`
+- `feat - 1.6.7 - U1-U10 UX improvements`
 
-## Resumen v1.5.75→v1.6.6
+## Resumen v1.5.75→v1.6.7
 | Versión | Cambio |
 |---------|--------|
 | 1.5.75 | Migración Python API → subprocess |
@@ -25,7 +25,8 @@
 | 1.6.4 | R2 navigate_cursor + R15 import save |
 | 1.6.5 | R1 FilterState, P8 audio cache, V1-V5 visual |
 | 1.6.6 | P1 config cache, P4 history lookup, P5 undo shallow copy |
+| 1.6.7 | U1-U10 UX improvements (stack size, help, radio hints, dialog multiline, toast, goto, curs_set) |
 
 ## Pendiente para próxima sesión
-- [ ] U1-U10: UX improvements
 - [ ] #6: Cache management
+- [ ] Features nuevas según necesidad
