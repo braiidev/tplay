@@ -2,12 +2,12 @@
 
 ## Estado actual
 - **Version**: v1.6.7
-- **Plan activo**: Audit COMPLETO (todas las etapas)
+- **Plan activo**: Audit completo + Security audit generado (AUDIT_v1.6.7_SECURITY.md)
 - **Bugs abiertos**: 0
 - **Docs**: Sincronizados con v1.6.7
 
 ## Último commit
-- `feat - 1.6.7 - U1-U10 UX improvements`
+- `docs: v1.6.7 — audit completo (todas las etapas 1-5)`
 
 ## Resumen v1.5.75→v1.6.7
 | Versión | Cambio |
@@ -25,8 +25,10 @@
 | 1.6.4 | R2 navigate_cursor + R15 import save |
 | 1.6.5 | R1 FilterState, P8 audio cache, V1-V5 visual |
 | 1.6.6 | P1 config cache, P4 history lookup, P5 undo shallow copy |
-| 1.6.7 | U1-U10 UX improvements (stack size, help, radio hints, dialog multiline, toast, goto, curs_set) |
+| 1.6.7 | U1-U10 UX improvements + Security audit completo |
 
 ## Pendiente para próxima sesión
+- [ ] Security fixes: D1 (js-runtime condicional), D8 (VLC import graceful), D2+D9 (pin versions)
+- [ ] Security fixes: S1+S2 (-- end-of-options), S12-S13 (atomic writes), S9 (stack thread safety)
 - [ ] #6: Cache management
 - [ ] Features nuevas según necesidad

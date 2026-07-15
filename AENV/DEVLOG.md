@@ -229,3 +229,15 @@
 - Skipped: U4 (nav bar correcto), U6 (complejo), U7 (feature nueva).
 
 **Estado**: v1.6.7, mypy strict pasa (28 archivos), AUDIT COMPLETO (todas las etapas 1-5)
+
+---
+
+## Entrada 22 — 2026-07-15 — Security Audit Completo
+- Re-escaneo completo del codebase: seguridad, dependencias, arquitectura, escenarios de rotura.
+- Generado `AENV/AUDIT_v1.6.7_SECURITY.md` con 27 hallazgos consolidados.
+- **Críticos**: D1 (`--js-runtime node` sin Node.js = crash), D8 (VLC no instalado = ImportError sin fallback).
+- **Altos**: S1/S2 (yt-dlp argument injection), S4 (path traversal en mkdir), S9 (stack thread safety), D2/D9 (dep versions sin pin), S12 (config non-atomic write), B5 (config corruption on crash).
+- **Top 5 fixes**: (1) js-runtime condicional + VLC import graceful, (2) pin versions, (3) -- end-of-options, (4) atomic writes, (5) confirm before delete.
+- Fortalezas: handler dispatch table, DownloadManager thread safety, error-aware VLC wrapper, graceful degradation, compact UI, shared utilities, undo/redo, config cache.
+
+**Estado**: v1.6.7, mypy strict, audit funcional COMPLETO + security audit generado

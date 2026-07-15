@@ -2,6 +2,16 @@
 
 ## Pendiente para próxima sesión
 
+### Security Fixes (prioritarios)
+- [ ] S1+S2: Agregar `--` end-of-options a subprocess de yt-dlp
+- [ ] S4: Path validation en `_do_mkdir`
+- [ ] S9: Thread safety en `Stack._items` (pending-flag pattern)
+- [ ] S12-S13: Atomic writes para config/persistence (temp + os.replace)
+- [ ] D1: Hacer `--js-runtime node` condicional (detectar `node` en PATH)
+- [ ] D8: Wrap VLC import con graceful fallback antes de curses
+- [ ] D2+D9: Pin `yt-dlp==<tested>` y `python-vlc>=3.0.0,<4.0.0`
+- [ ] S15+S16: Agregar `_confirm` antes de borrado de download history
+
 ### Features
 - [ ] #6: Cache Management (limpiar cache yt-dlp)
 
