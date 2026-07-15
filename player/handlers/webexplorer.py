@@ -401,7 +401,7 @@ def _handle_url_input(app: PlayerApp, url: str, platform: Platform) -> None:
 
 
 def _play_web_result(app: PlayerApp) -> None:
-    """Reproduce un resultado de la lista."""
+    """Reproduce un resultado de la lista (async: get_stream_url en thread)."""
     if app.web_cursor >= len(app.web_results):
         return
     result = app.web_results[app.web_cursor]
@@ -412,20 +412,25 @@ def _play_web_result(app: PlayerApp) -> None:
     app.web_result_status[app.web_cursor] = "[►]"
 
     from .. import web
-    stream_url = web.get_stream_url(result.webpage_url)
-    if not stream_url:
-        app.web_result_status[app.web_cursor] = "[!]"
-        app.web_playing_idx = -1
-        _toast(app, "No se puede reproducir — video restringido o no disponible")
-        return
 
-    from ..stack import StackItem
-    item = StackItem(path=stream_url, name=result.title)
-    app.stack.items = [item]
-    app.stack.playhead = 0
-    app.audio.play_file(stream_url)
-    app.current_view = app.V_LISTEN
-    _toast(app, f"▶ {result.title}")
+    def _run() -> None:
+        stream_url = web.get_stream_url(result.webpage_url)
+        if not stream_url:
+            app.web_result_status[app.web_cursor] = "[!]"
+            app.web_playing_idx = -1
+            _toast(app, "No se puede reproducir — video restringido o no disponible")
+            return
+
+        from ..stack import StackItem
+        item = StackItem(path=stream_url, name=result.title)
+        app.stack.items = [item]
+        app.stack.playhead = 0
+        app.audio.play_file(stream_url)
+        app.current_view = app.V_LISTEN
+        _toast(app, f"▶ {result.title}")
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
 
 
 def _handle_download_key(app: PlayerApp, with_config: bool) -> None:
@@ -546,12 +551,14 @@ def _start_download(
         app.web_download_cancel.pop(dl_idx, None)
 
         if dl_idx < len(app.web_result_status):
+            was_paused = dl_idx in app.web_download_paused
             if success:
                 app.web_result_status[dl_idx] = "[✓]"
                 _toast(app, f"Descargado: {msg}")
                 app.entries = _list_dir(app.current_dir)
             elif msg == "Cancelado por usuario":
-                app.web_result_status[dl_idx] = "[C]"
+                if not was_paused:
+                    app.web_result_status[dl_idx] = "[C]"
             else:
                 app.web_result_status[dl_idx] = "[!]"
                 _toast(app, f"Error: {msg}")

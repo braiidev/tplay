@@ -1,6 +1,7 @@
 """yt-dlp wrapper para Web Explorer — subprocess approach."""
 from __future__ import annotations
 
+import glob
 import json
 import os
 import subprocess
@@ -13,6 +14,7 @@ from .config import load as _load_config
 
 _YTDLP_BIN = "yt-dlp"
 _YTDLP_COMMON = [_YTDLP_BIN, "--no-warnings", "--ignore-errors", "--no-colors"]
+_ytdlp_available: bool | None = None
 
 
 @dataclass
@@ -29,15 +31,19 @@ class WebResult:
 
 
 def is_available() -> bool:
-    """Verifica si yt-dlp está instalado."""
+    """Verifica si yt-dlp está instalado (cached)."""
+    global _ytdlp_available
+    if _ytdlp_available is not None:
+        return _ytdlp_available
     try:
         r = subprocess.run(
             [_YTDLP_BIN, "--version"],
             capture_output=True, text=True, timeout=5,
         )
-        return r.returncode == 0
+        _ytdlp_available = r.returncode == 0
     except (FileNotFoundError, subprocess.TimeoutExpired):
-        return False
+        _ytdlp_available = False
+    return _ytdlp_available
 
 
 def _classify_error(msg: str) -> str:
@@ -198,6 +204,15 @@ def get_stream_url(webpage_url: str) -> str | None:
     return url if url.startswith("http") else None
 
 
+def _cleanup_part_files(directory: str) -> None:
+    """Elimina archivos .part dejados por yt-dlp al ser interrumpido."""
+    try:
+        for f in glob.glob(os.path.join(directory, "*.part")):
+            os.remove(f)
+    except OSError:
+        pass
+
+
 def download(
     url: str,
     output_path: str,
@@ -235,7 +250,8 @@ def download(
         if cancel_event and cancel_event.is_set():
             proc.kill()
             proc.wait()
-            return False, "Cancelado"
+            _cleanup_part_files(output_path)
+            return False, "Cancelado por usuario"
 
         line = line.strip()
         if not line:
