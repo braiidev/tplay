@@ -2,11 +2,11 @@
 
 ## Pendiente para próxima sesión
 
-### Etapa 3: DRY Refactoring
-- [ ] R1-R3: FilterState + navigate_cursor + scroll clamping
+### Etapa 3: DRY Refactoring (restante)
+- [ ] R1: FilterState + handle_filter_input genérico
 - [ ] R4-R6: Drawing helpers (_draw_row, _draw_item_with_duration, _draw_empty)
 - [ ] R7-R10: Handler pattern helpers
-- [ ] R11-R15: Unificación de funciones duplicadas
+- [ ] R13-R14: Motor/Meta editor shared + color pair caching
 
 ### Etapa 4: Performance
 - [ ] P1-P10: Config cache, DownloadManager opts, app state opts, view render opts
@@ -19,6 +19,11 @@
 - [ ] #6: Cache Management (limpiar cache yt-dlp)
 
 ## Completado
+
+### Etapa 3: DRY Refactoring (parcial) ✅ (v1.6.4)
+- R2: navigate_cursor helper
+- R15: import save a nivel módulo
+- R11/R12: Skip (diferentes firmas / deps circulares)
 
 ### Etapa 2: Audit Bugs Menores + Dead Code ✅ (v1.6.3)
 - A1-A10: 10 bugs menores corregidos

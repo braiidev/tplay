@@ -1,5 +1,12 @@
 # CHANGELOG — tplay
 
+## v1.6.4
+- refactor: R2 — `_navigate_cursor()` helper en shared.py (down/up/pgup/pgdn/g/G)
+- refactor: R2 — explorer, playlist, download_history, favorites, radio usan `_navigate_cursor()`
+- refactor: R15 — `config_view.py` import `save as _save_config` a nivel módulo (eliminados 15 imports locales)
+- skip: R11 — clamp_scroll unificado (diferentes firmas, no vale el churn)
+- skip: R12 — format_duration unificado (dependencias circulares, no vale el churn)
+
 ## v1.6.3
 - fix: A1 — shallow copy de nested dict en config fallback (copy.deepcopy)
 - fix: A2 — theme mono ahora usa MONO_BOLD flag para diferenciar visual hierarchy

@@ -179,3 +179,14 @@
 - A10: `ui.py` — dialog text usa `PAIR_TEXTO` en vez de `PAIR_OVERLAY`
 
 **Estado**: v1.6.3, mypy strict pasa (28 archivos), archivos compilan OK
+
+---
+
+## Entrada 18 — 2025-07-15 — v1.6.4 Audit: DRY Refactoring (parcial)
+- R2: `shared.py` — nuevo `_navigate_cursor(cursor, key, total, page_h)` helper para navegación down/up/pgup/pgdn/g/G
+- R2: `explorer.py`, `playlist.py`, `download_history.py`, `favorites.py`, `radio.py` — migrados a `_navigate_cursor()`
+- R15: `config_view.py` — `from ..config import save as _save_config` movido a nivel módulo (eliminados 15 imports locales)
+- R11: Skip — `clamp_scroll` unificado (diferentes firmas en `ui.py` vs `shared.py`, no vale el churn)
+- R12: Skip — `format_duration` unificado (dependencias circulares entre `web.py` y `downloads.py`, no vale el churn)
+
+**Estado**: v1.6.4, mypy strict pasa (28 archivos), archivos compilan OK

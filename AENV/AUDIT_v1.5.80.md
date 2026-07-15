@@ -64,7 +64,7 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 | # | Patrón | Archivos | Sugerencia |
 |---|--------|----------|------------|
 | R1 | **Modo filtro** (init/cancel/backspace/char) | `explorer.py`, `playlist.py`, `download_history.py` | `FilterState` + `handle_filter_input()` genérico en `shared.py` |
-| R2 | **Navegación de cursor** (down/up/pgup/pgdn/g/G) | 6 handlers | `navigate_cursor(cursor, key, total, page_size) -> int` |
+| R2 | **Navegación de cursor** (down/up/pgup/pgdn/g/G) | 6 handlers | `navigate_cursor(cursor, key, total, page_size) -> int` | ✅ v1.6.4 |
 | R3 | **Scroll clamping** | Todos los handlers | Unificar offset compact/no-compact en helper |
 | R4 | **Cursor row con REVERSE highlight** | 14+ ubicaciones en `views.py` | `_draw_row(win, y, x, text, attr, is_cursor, h, w)` |
 | R5 | **Duration string en borde derecho** | 4 ubicaciones en `views.py` | `_draw_item_with_duration(...)` |
@@ -73,11 +73,11 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 | R8 | **Add-to-stack** (append vs after_current) | `history.py`, `favorites.py`, `explorer.py` | `add_to_stack(app, items, mode)` |
 | R9 | **_on_rename** callback updating refs | `explorer.py`, `playlist.py`, `shared.py` | 3 implementaciones, consolidar a 1 |
 | R10 | **EQ preset cycling** | `listen.py`, `config_view.py` | Lógica duplicada, extraer a helper |
-| R11 | **`clamp_scroll` duplicado** | `ui.py:180` vs `handlers/shared.py:33` | Firmas diferentes, unificar |
-| R12 | **`format_duration` duplicado** | `web.py:347` vs `downloads.py:173` | Comportamiento distinto para ≤0, unificar |
+| R11 | **`clamp_scroll` duplicado** | `ui.py:180` vs `handlers/shared.py:33` | Firmas diferentes, unificar | ⏭️ Skip (diferentes firmas) |
+| R12 | **`format_duration` duplicado** | `web.py:347` vs `downloads.py:173` | Comportamiento distinto para ≤0, unificar | ⏭️ Skip (deps circulares) |
 | R13 | **Motor/Meta editor** | `views.py:856-915` vs `views.py:1141-1206` | Estructuralmente idénticos, share `_draw_field_editor` |
 | R14 | **Color pair init por frame** | Todos los `draw_*` | Cachear referencias o namedtuple `Colors` |
-| R15 | **`from ..config import save`** | `config_view.py` 12+ veces | Import a nivel módulo |
+| R15 | **`from ..config import save`** | `config_view.py` 12+ veces | Import a nivel módulo | ✅ v1.6.4 |
 
 ### RENDIMIENTO
 
@@ -156,10 +156,14 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 - [x] D1-D12: Eliminar código muerto ✅ v1.6.3 (D3,D5 skipped — audit incorrecto)
 
 ### Etapa 3: Abstracciones + DRY (v1.6.4)
-- [ ] R1-R3: FilterState + navigate_cursor + scroll clamping
+- [x] R2: navigate_cursor helper ✅ v1.6.4
+- [x] R11: clamp_scroll unificado ⏭️ Skip (diferentes firmas)
+- [x] R12: format_duration unificado ⏭️ Skip (deps circulares)
+- [x] R15: import save a nivel módulo ✅ v1.6.4
+- [ ] R1: FilterState + handle_filter_input genérico
 - [ ] R4-R6: Drawing helpers (_draw_row, _draw_item_with_duration, _draw_empty)
 - [ ] R7-R10: Handler pattern helpers
-- [ ] R11-R15: Unificación de funciones duplicadas
+- [ ] R13-R14: Motor/Meta editor shared + color pair caching
 
 ### Etapa 4: Performance (v1.6.3)
 - [ ] P1: Cache config load
