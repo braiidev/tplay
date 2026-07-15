@@ -918,7 +918,6 @@ def draw_dir_picker(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
 def draw_web(app: PlayerApp, h: int, w: int) -> None:
     """V7 Web Explorer con motor + prompt + divider + lista."""
     from . import web as _web
-    from .ui import _build_hints
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
     nav = curses.color_pair(PAIR_NAV)
@@ -943,10 +942,6 @@ def draw_web(app: PlayerApp, h: int, w: int) -> None:
     platforms = app.web_platforms
     p_name = platforms[app.web_active_platform].name if platforms else "Ninguna"
 
-    if app.web_motor_mode:
-        _draw_motor_list(app, h, w, platforms, p_name)
-        return
-
     _draw_web_main(app, h, w, p_name)
 
 
@@ -957,18 +952,19 @@ def _draw_web_main(app: PlayerApp, h: int, w: int, p_name: str) -> None:
     destacar = curses.color_pair(PAIR_DESTACAR)
     nav = curses.color_pair(PAIR_NAV)
 
-    motor_str = f"[←{p_name}→]"
+    multi = len(app.web_platforms) > 1
+    motor_str = f"[h← {p_name} →l]" if multi else f"[{p_name}]"
     if app.web_search_mode:
         prompt_str = f"buscar: {app.web_search_buf}"
-        motor_attr = texto
+        motor_attr = nav
         prompt_attr = texto | curses.A_UNDERLINE
     elif app.web_last_query:
         prompt_str = f"buscar: {app.web_last_query}"
-        motor_attr = texto
-        prompt_attr = nav
+        motor_attr = nav
+        prompt_attr = texto
     else:
         prompt_str = "presiona / para buscar"
-        motor_attr = destacar | curses.A_REVERSE if False else texto
+        motor_attr = nav
         prompt_attr = nav
 
     y_motor = 2
@@ -1022,60 +1018,36 @@ def _draw_web_hints(app: PlayerApp, h: int, w: int) -> None:
 
     if app.web_search_mode:
         hints = _build_hints([
-            ("Enter", "buscar"), ("Tab", "motor"), ("Esc", "cancelar"),
+            ("Enter", "buscar"), ("Tab", "buscar"), ("Esc", "cancelar"),
         ], w)
-    elif app.web_motor_mode:
+    elif app.web_download_mode:
         hints = _build_hints([
-            ("j/k", "navegar"), ("Enter", "seleccionar"), ("a", "agregar"),
-            ("e", "editar"), ("d", "eliminar"), ("Tab", "prompt"),
+            ("h/l", "ciclar"), ("j/k", "campo"), ("Enter", "descargar"),
+            ("Esc", "volver"),
+        ], w)
+    elif app.web_motor_edit_mode:
+        hints = _build_hints([
+            ("j/k", "campo"), ("Enter", "editar"), ("s", "guardar"),
+            ("q/Esc", "cancelar"),
         ], w)
     else:
-        hints = _build_hints([
-            ("j/k", "navegar"), ("g/G", "inicio/fin"), ("Enter", "play"),
-            ("D", "descargar"), ("d", "config descarga"), ("A", "anadir"),
-            ("c", "cancelar"), ("x", "limpiar"),
-            ("/", "buscar"), ("Tab", "motor"), ("Esc", "volver"),
-        ], w)
-    if hints:
-        safe_addstr(app.stdscr, h - 4, 2, hints, nav, h, w)
-
-
-def _draw_motor_list(
-    app: PlayerApp, h: int, w: int, platforms: list[Any], p_name: str
-) -> None:
-    """Lista de plataformas (modo motor)."""
-    texto = curses.color_pair(PAIR_TEXTO)
-    destacar = curses.color_pair(PAIR_DESTACAR)
-    nav = curses.color_pair(PAIR_NAV)
-
-    title = f"Plataformas ({len(platforms)})"
-    draw_box(app.stdscr, h, w, title)
-
-    if not platforms:
-        safe_addstr(app.stdscr, (h - 4) // 2, 2, "  Sin plataformas", nav, h, w)
-        return
-
-    list_h = h - 6
-    start = app.web_scroll
-    end = min(start + list_h, len(platforms))
-
-    for i in range(start, end):
-        y = 3 + i - start
-        p = platforms[i]
-        is_cur = i == app.web_active_platform
-        prefix = p.search_prefix if p.search_prefix else "URL"
-        downloads = f"↓{p.downloads}"
-        default = " [default]" if p.is_default else ""
-        line = f"  {p.name:<16} {prefix:<10} {downloads:>6}{default}"
-        attr = destacar | curses.A_REVERSE if is_cur else texto
-        safe_addstr(app.stdscr, y, 2, line[:w - 4], attr, h, w)
-
-    draw_list_indicators(app.stdscr, h, w, app.web_scroll, len(platforms), list_h)
-
-    hints = _build_hints([
-        ("j/k", "navegar"), ("a", "agregar"), ("e", "editar"),
-        ("d", "eliminar"), ("Enter", "seleccionar"), ("Tab", "prompt"),
-    ], w)
+        has_results = len(app.web_results) > 0
+        hints_list = [
+            ("j/k", "navegar"), ("g/G", "inicio/fin"),
+            ("h/l", "motor"),
+        ]
+        if has_results:
+            hints_list.extend([
+                ("Enter", "play"), ("D", "descargar"), ("d", "config"),
+                ("a", "añadir"), ("A", "siguiente"),
+                ("c", "cancelar"), ("x", "limpiar"),
+            ])
+        else:
+            hints_list.extend([
+                ("a", "nuevo motor"), ("e", "editar"), ("d", "eliminar"),
+            ])
+        hints_list.extend([("/", "buscar"), ("Esc", "volver")])
+        hints = _build_hints(hints_list, w)
     if hints:
         safe_addstr(app.stdscr, h - 4, 2, hints, nav, h, w)
 

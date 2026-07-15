@@ -14,17 +14,13 @@ if TYPE_CHECKING:
 
 
 def handle_web(app: PlayerApp, key: int) -> None:
-    """Handler principal para V7 con 3 modos."""
+    """Handler principal para V7 con modos: normal, search, download config, motor edit."""
     if app.web_motor_edit_mode:
         _handle_motor_edit(app, key)
         return
 
     if app.web_download_mode:
         _handle_download_mode(app, key)
-        return
-
-    if app.web_motor_mode:
-        _handle_motor_mode(app, key)
         return
 
     if app.web_search_mode:
@@ -34,8 +30,18 @@ def handle_web(app: PlayerApp, key: int) -> None:
     _handle_normal_mode(app, key)
 
 
+def _cycle_platform(app: PlayerApp, direction: int) -> None:
+    """Cicla plataformas con h/l."""
+    total = len(app.web_platforms)
+    if total == 0:
+        return
+    app.web_active_platform = (app.web_active_platform + direction) % total
+    p = app.web_platforms[app.web_active_platform]
+    _toast(app, f"Motor: {p.name}")
+
+
 def _handle_normal_mode(app: PlayerApp, key: int) -> None:
-    """Modo normal: navegar lista de resultados."""
+    """Modo normal: navegar lista de resultados + gestión de motor inline."""
     total = len(app.web_results)
 
     if key == ord("/"):
@@ -46,7 +52,27 @@ def _handle_normal_mode(app: PlayerApp, key: int) -> None:
         return
 
     if key == 9:
-        app.web_motor_mode = True
+        app.web_search_mode = True
+        app.web_search_buf = ""
+        curses.curs_set(1)
+        curses.flushinp()
+        return
+
+    if key == ord("h"):
+        _cycle_platform(app, -1)
+        return
+    elif key == ord("l"):
+        _cycle_platform(app, 1)
+        return
+
+    if key == ord("e"):
+        _enter_motor_edit(app, is_new=False)
+        return
+    elif key == ord("a") and total == 0:
+        _enter_motor_edit(app, is_new=True)
+        return
+    elif key == ord("d") and total == 0:
+        _delete_platform(app)
         return
 
     if key in (curses.KEY_DOWN, ord("j")):
@@ -74,8 +100,11 @@ def _handle_normal_mode(app: PlayerApp, key: int) -> None:
     elif key == ord("d") and total > 0:
         _handle_download_key(app, with_config=True)
         return
-    elif key in (ord("A"), ord("a")) and total > 0:
+    elif key == ord("a") and total > 0:
         _add_to_queue(app)
+        return
+    elif key == ord("A") and total > 0:
+        _add_to_queue_next(app)
         return
     elif key == ord("x"):
         _clear_results(app)
@@ -102,7 +131,6 @@ def _handle_search_input(app: PlayerApp, key: int) -> None:
 
     if key == 9:
         app.web_search_mode = False
-        app.web_motor_mode = True
         curses.curs_set(0)
         return
 
@@ -123,28 +151,9 @@ def _handle_search_input(app: PlayerApp, key: int) -> None:
         app.web_search_buf += chr(key)
 
 
-def _handle_motor_mode(app: PlayerApp, key: int) -> None:
-    """Modo motor: gestionar plataformas."""
-    platforms = app.web_platforms
-    total = len(platforms)
-
-    if key == 9:
-        app.web_motor_mode = False
-        app.web_search_mode = True
-        app.web_search_buf = ""
-        curses.curs_set(1)
-        curses.flushinp()
-        return
-
-    if key == 27:
-        app.web_motor_mode = False
-        return
-
-    if key in (curses.KEY_DOWN, ord("j")):
-        app.web_active_platform = min(app.web_active_platform + 1, max(0, total - 1))
-    elif key in (curses.KEY_UP, ord("k")):
-        app.web_active_platform = max(app.web_active_platform - 1, 0)
-    elif key == ord("a"):
+def _enter_motor_edit(app: PlayerApp, is_new: bool) -> None:
+    """Abre editor de plataforma (nueva o existente)."""
+    if is_new:
         app.web_motor_edit_mode = True
         app.web_motor_edit_is_new = True
         app.web_motor_edit_fields = {
@@ -154,11 +163,10 @@ def _handle_motor_mode(app: PlayerApp, key: int) -> None:
             "download_pattern": "",
             "search_prefix": "",
         }
-        app.web_motor_edit_cursor = 0
-        app.web_motor_edit_buf = ""
-        app.web_motor_edit_cursor_pos = 0
-        return
-    elif key == ord("e") and total > 0:
+    else:
+        platforms = app.web_platforms
+        if not platforms:
+            return
         p = platforms[app.web_active_platform]
         app.web_motor_edit_mode = True
         app.web_motor_edit_is_new = False
@@ -169,31 +177,25 @@ def _handle_motor_mode(app: PlayerApp, key: int) -> None:
             "download_pattern": p.download_pattern,
             "search_prefix": p.search_prefix,
         }
-        app.web_motor_edit_cursor = 0
-        app.web_motor_edit_buf = ""
-        app.web_motor_edit_cursor_pos = 0
-        return
-    elif key == ord("d") and total > 0:
-        p = platforms[app.web_active_platform]
-        if not p.is_default:
-            app.web_platforms = [
-                x for x in platforms if x.name.lower() != p.name.lower()
-            ]
-            _save_platforms(app)
-            if app.web_active_platform >= len(app.web_platforms):
-                app.web_active_platform = max(0, len(app.web_platforms) - 1)
-            _toast(app, f"Eliminada: {p.name}")
-        else:
-            _toast(app, "No se puede eliminar plataforma default")
-        return
-    elif key in (10, 13) and total > 0:
-        app.web_motor_mode = False
-        _toast(app, f"Motor: {platforms[app.web_active_platform].name}")
-        return
+    app.web_motor_edit_cursor = 0
+    app.web_motor_edit_buf = ""
+    app.web_motor_edit_cursor_pos = 0
 
-    h, _ = app.stdscr.getmaxyx()
-    list_h = h - 6
-    app.web_scroll = _clamp_scroll(app.web_active_platform, app.web_scroll, list_h)
+
+def _delete_platform(app: PlayerApp) -> None:
+    """Elimina la plataforma activa (no default)."""
+    platforms = app.web_platforms
+    if not platforms:
+        return
+    p = platforms[app.web_active_platform]
+    if p.is_default:
+        _toast(app, "No se puede eliminar plataforma default")
+        return
+    app.web_platforms = [x for x in platforms if x.name.lower() != p.name.lower()]
+    _save_platforms(app)
+    if app.web_active_platform >= len(app.web_platforms):
+        app.web_active_platform = max(0, len(app.web_platforms) - 1)
+    _toast(app, f"Eliminada: {p.name}")
 
 
 def _handle_motor_edit(app: PlayerApp, key: int) -> None:
@@ -446,6 +448,7 @@ def _handle_download_key(app: PlayerApp, with_config: bool) -> None:
 
     if with_config:
         app.web_download_mode = True
+        app.web_download_idx = app.web_cursor
         app.web_download_cursor = 0
         cfg = app.config
         app.web_download_fields = {
@@ -467,31 +470,34 @@ def _is_downloading_pct(status: str) -> bool:
 
 def _do_download_direct(app: PlayerApp) -> None:
     """Ejecuta descarga directa con configuracion guardada."""
-    if app.web_cursor >= len(app.web_results):
+    idx = app.web_download_idx
+    if idx >= len(app.web_results):
         return
 
-    result = app.web_results[app.web_cursor]
+    result = app.web_results[idx]
     cfg = app.config
     fmt = cfg.get("online_download_format", "audio")
     quality = cfg.get("online_download_quality", "480p")
 
-    _start_download(app, result, fmt, quality)
+    _start_download(app, result, fmt, quality, idx=idx)
 
 
 def _do_download(app: PlayerApp) -> None:
     """Ejecuta descarga con configuracion del editor."""
-    if app.web_cursor >= len(app.web_results):
+    idx = app.web_download_idx
+    if idx >= len(app.web_results):
         return
 
-    result = app.web_results[app.web_cursor]
+    result = app.web_results[idx]
     fmt = app.web_download_fields.get("format", "audio")
     quality = app.web_download_fields.get("quality", "480p")
 
-    _start_download(app, result, fmt, quality)
+    _start_download(app, result, fmt, quality, idx=idx)
 
 
 def _start_download(
-    app: PlayerApp, result: Any, fmt: str, quality: str, resume: bool = False
+    app: PlayerApp, result: Any, fmt: str, quality: str,
+    resume: bool = False, idx: int | None = None,
 ) -> None:
     """Inicia una descarga en background thread."""
     from .. import web
@@ -504,25 +510,26 @@ def _start_download(
     if not os.path.exists(music_dir):
         os.makedirs(music_dir, exist_ok=True)
 
-    idx = app.web_cursor
-    app.web_result_status[idx] = "[D]"
+    dl_idx = idx if idx is not None else app.web_cursor
+    cancel_event = threading.Event()
+    app.web_download_cancel[dl_idx] = cancel_event
+    app.web_result_status[dl_idx] = "[D]"
     app.web_download_queue.append(result)
-    app.web_download_cancel.clear()
 
     def _progress(d: dict[str, Any]) -> None:
-        if app.web_download_cancel.is_set():
+        if cancel_event.is_set():
             from yt_dlp.utils import DownloadCancelled
             raise DownloadCancelled("Cancelado por usuario")
-        if idx >= len(app.web_result_status):
+        if dl_idx >= len(app.web_result_status):
             return
         if d.get("status") == "downloading":
             total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
             current = d.get("downloaded_bytes") or 0
             if total > 0:
                 pct = int(current * 100 / total)
-                app.web_result_status[idx] = f"[{pct:2d}%]"
+                app.web_result_status[dl_idx] = f"[{pct:2d}%]"
         elif d.get("status") in ("finished", "postprocessor"):
-            app.web_result_status[idx] = "[PP]"
+            app.web_result_status[dl_idx] = "[PP]"
 
     def _run() -> None:
         success, msg = web.download(
@@ -530,15 +537,17 @@ def _start_download(
             progress_hook=_progress, resume=resume,
         )
 
-        if idx < len(app.web_result_status):
+        app.web_download_cancel.pop(dl_idx, None)
+
+        if dl_idx < len(app.web_result_status):
             if success:
-                app.web_result_status[idx] = "[✓]"
+                app.web_result_status[dl_idx] = "[✓]"
                 _toast(app, f"Descargado: {msg}")
                 app.entries = _list_dir(app.current_dir)
             elif msg == "Cancelado por usuario":
-                app.web_result_status[idx] = "[C]"
+                app.web_result_status[dl_idx] = "[C]"
             else:
-                app.web_result_status[idx] = "[!]"
+                app.web_result_status[dl_idx] = "[!]"
                 _toast(app, f"Error: {msg}")
 
         if result in app.web_download_queue:
@@ -549,7 +558,7 @@ def _start_download(
 
 
 def _add_to_queue(app: PlayerApp) -> None:
-    """Añade resultado a la cola de reproducción."""
+    """Añade resultado al final de la cola de reproducción."""
     if app.web_cursor >= len(app.web_results):
         return
     result = app.web_results[app.web_cursor]
@@ -557,6 +566,18 @@ def _add_to_queue(app: PlayerApp) -> None:
     item = StackItem(path=result.url, name=result.title)
     app.stack.items.append(item)
     _toast(app, f"Añadido: {result.title}")
+
+
+def _add_to_queue_next(app: PlayerApp) -> None:
+    """Añade resultado siguiente al playhead en la cola."""
+    if app.web_cursor >= len(app.web_results):
+        return
+    result = app.web_results[app.web_cursor]
+    from ..stack import StackItem
+    item = StackItem(path=result.url, name=result.title)
+    insert_pos = app.stack.playhead + 1
+    app.stack.items.insert(insert_pos, item)
+    _toast(app, f"Añadido después del actual: {result.title}")
 
 
 def _clear_results(app: PlayerApp) -> None:
@@ -569,34 +590,37 @@ def _clear_results(app: PlayerApp) -> None:
 
 
 def _cancel_download(app: PlayerApp) -> None:
-    """Cancela la descarga activa del item actual."""
+    """Cancela la descarga activa del item actual y limpia todo estado."""
     idx = app.web_cursor
     status = app.web_result_status[idx] if idx < len(app.web_result_status) else "[-]"
 
-    if status not in ("[D]", "[PP]") and not _is_downloading_pct(status):
-        if idx in app.web_download_paused:
-            del app.web_download_paused[idx]
-            app.web_result_status[idx] = "[C]"
-            _toast(app, "Descarga cancelada")
+    is_active = (
+        status in ("[D]", "[PP]")
+        or _is_downloading_pct(status)
+        or idx in app.web_download_paused
+    )
+
+    if not is_active:
         return
 
-    app.web_download_cancel.set()
+    if idx in app.web_download_cancel:
+        app.web_download_cancel[idx].set()
+    app.web_download_paused.pop(idx, None)
     if idx < len(app.web_result_status):
-        app.web_result_status[idx] = "[C]"
-    _toast(app, "Cancelando descarga...")
+        app.web_result_status[idx] = "[-]"
+    _toast(app, "Descarga cancelada")
 
 
 def _pause_download(app: PlayerApp, idx: int) -> None:
     """Pausa la descarga del item idx."""
-    if len(app.web_download_queue) == 0:
-        return
+    if idx in app.web_download_cancel:
+        app.web_download_cancel[idx].set()
     if idx < len(app.web_results):
         result = app.web_results[idx]
         fmt = app.config.get("online_download_format", "audio")
         quality = app.config.get("online_download_quality", "480p")
         app.web_download_paused[idx] = (result.webpage_url, fmt, quality)
         app.web_result_status[idx] = "[P]"
-    app.web_download_cancel.set()
     _toast(app, "Descarga pausada (d/D para reanudar)")
 
 

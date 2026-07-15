@@ -143,7 +143,6 @@ class PlayerApp:
         self.web_search_buf: str = ""
         self.web_last_query: str = ""
         self.web_loading: bool = False
-        self.web_motor_mode: bool = False
         self.web_active_platform: int = 0
         self.web_motor_edit_mode: bool = False
         self.web_motor_edit_is_new: bool = False
@@ -153,11 +152,12 @@ class PlayerApp:
         self.web_motor_edit_buf: str = ""
         self.web_motor_edit_cursor_pos: int = 0
         self.web_download_mode: bool = False
+        self.web_download_idx: int = 0
         self.web_download_cursor: int = 0
         self.web_download_fields: dict[str, str] = {}
         self.web_download_queue: list[Any] = []
         self.web_download_max: int = self.config.get("online_download_max", 3)
-        self.web_download_cancel: threading.Event = threading.Event()
+        self.web_download_cancel: dict[int, threading.Event] = {}
         self.web_download_paused: dict[int, tuple[str, str, str]] = {}
         self.web_result_status: list[str] = []
         self.web_playing_idx: int = -1
@@ -623,9 +623,9 @@ class PlayerApp:
                 key = curses.KEY_DOWN
             elif key == ord("k"):
                 key = curses.KEY_UP
-            elif key == ord("h"):
+            elif key == ord("h") and self.current_view != self.V_WEB:
                 key = curses.KEY_LEFT
-            elif key == ord("l"):
+            elif key == ord("l") and self.current_view != self.V_WEB:
                 key = curses.KEY_RIGHT
 
         if self._handle_key_global(key):
@@ -829,7 +829,6 @@ class PlayerApp:
             self.web_search_mode = False
             self.web_search_buf = ""
             self.web_loading = False
-            self.web_motor_mode = False
             self.web_motor_edit_mode = False
             self.web_download_mode = False
             curses.curs_set(0)
@@ -874,7 +873,7 @@ class PlayerApp:
             curses.flushinp()
             return True
         if key == ord("q"):
-            active = len(self.web_download_queue)
+            active = len(self.web_download_queue) + len(self.web_download_paused)
             if active > 0:
                 self.toast_msg = f"Hay {active} descarga/s en curso. Presiona q de nuevo para salir"
                 self.toast_ticks = 80
@@ -894,6 +893,10 @@ class PlayerApp:
         if key == 27:
             if self.file_op_mode:
                 return False  # Let view handler (_handle_file_op_picker) handle it
+            if self.current_view == self.V_WEB and any(
+                (self.web_download_mode, self.web_motor_edit_mode)
+            ):
+                return False  # Let handle_web manage ESC for download/motor config
             if self.current_view == self.V_HISTORY and not any(
                 (
                     self.show_stack_view,
