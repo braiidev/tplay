@@ -167,6 +167,7 @@ class PlayerApp:
         self.dl_history_filter: str = ""
         self.dl_history_filtered: list[int] = list(range(len(self.download_history)))
         self.dl_history_tab: int = 0  # 0=Descargas, 1=Streams
+        self._download_completed_pending: bool = False
 
         self._load_web_platforms()
 
@@ -289,21 +290,7 @@ class PlayerApp:
             }
             if new_completed - completed:
                 completed.update(new_completed)
-                from .file_utils import list_dir as _list_dir
-                self.entries = _list_dir(self.current_dir)
-                for item in dm.items:
-                    if item.id in new_completed and item.file_path:
-                        from .downloads import add_entry, save_history
-                        add_entry(
-                            self.download_history,
-                            item.title, item.url, item.url,
-                            item.file_path, item.fmt, item.quality,
-                            item.platform,
-                        )
-                        save_history(self.download_history)
-                        self.dl_history_filtered = list(
-                            range(len(self.download_history))
-                        )
+                self._download_completed_pending = True
 
         dm.add_callback(_on_download_change)
 
@@ -554,6 +541,28 @@ class PlayerApp:
         self.stack.playhead = prev
         self._play_current()
 
+    def _process_download_completions(self) -> None:
+        if not self._download_completed_pending:
+            return
+        self._download_completed_pending = False
+        from .web import get_download_manager, DownloadState
+        from .file_utils import list_dir as _list_dir
+        dm = get_download_manager()
+        self.entries = _list_dir(self.current_dir)
+        for item in dm.items:
+            if item.state == DownloadState.COMPLETED and item.file_path:
+                from .downloads import add_entry, save_history
+                add_entry(
+                    self.download_history,
+                    item.title, item.url, item.url,
+                    item.file_path, item.fmt, item.quality,
+                    item.platform,
+                )
+                save_history(self.download_history)
+                self.dl_history_filtered = list(
+                    range(len(self.download_history))
+                )
+
     def _check_playback_end(self) -> None:
         if not self.audio.is_ended():
             return
@@ -591,6 +600,7 @@ class PlayerApp:
         try:
             while self.running:
                 self._check_playback_end()
+                self._process_download_completions()
                 self.audio.check_sleep_timer()
                 cur = self.audio.current_file
                 if cur and cur != self._history_last:

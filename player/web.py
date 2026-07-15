@@ -9,6 +9,7 @@ import queue
 import signal
 import subprocess
 import threading
+import time
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -400,7 +401,8 @@ class DownloadManager:
         self._max_concurrent = val
 
     def _notify(self) -> None:
-        for cb in self._callbacks:
+        cbs = list(self._callbacks)
+        for cb in cbs:
             try:
                 cb()
             except Exception:
@@ -520,10 +522,13 @@ class DownloadManager:
                 continue
             if item.state == DownloadState.STOPPED:
                 continue
-            while self._active_count >= self._max_concurrent:
+            while True:
+                with self._active_lock:
+                    if self._active_count < self._max_concurrent:
+                        break
                 if not self._running:
                     return
-                threading.Event().wait(0.5)
+                time.sleep(0.5)
             with self._active_lock:
                 self._active_count += 1
             t = threading.Thread(
