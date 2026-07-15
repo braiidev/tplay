@@ -5,6 +5,42 @@ _(ninguno)_
 
 ## Resueltos recientes
 
+### Audit C1 — Toast double-decrement en compact mode
+- **Archivo**: `player/app.py`
+- **Descripción**: `toast_ticks` se decrementaba 2x por frame en compact mode (línea 1190 + 1249).
+- **Fix**: Agregado guard `not compact` en toast no-compact (línea 1238).
+- **Estado**: Resuelto en v1.6.0
+
+### Audit C2 — Data race en _on_download_change
+- **Archivo**: `player/app.py`
+- **Descripción**: Callback de DownloadManager mutaba `entries`, `download_history`, `dl_history_filtered` desde thread worker sin locks.
+- **Fix**: Callback ahora solo setea flag `_download_completed_pending`. Main loop procesa en `_process_download_completions()`.
+- **Estado**: Resuelto en v1.6.1
+
+### Audit C3 — History data loss
+- **Archivo**: `player/handlers/history.py`
+- **Descripción**: `_do_history_remove` y `_do_history_clear` nunca persistían cambios a disco.
+- **Fix**: Agregado `save_history(app.history)` después de mutaciones.
+- **Estado**: Resuelto en v1.6.0
+
+### Audit C5 — TOCTOU race en _active_count
+- **Archivo**: `player/web.py`
+- **Descripción**: `_active_count` se leía sin lock en el while loop del worker, permitiendo exceder límite de concurrencia.
+- **Fix**: Lectura bajo `_active_lock`. También reemplazado `threading.Event().wait()` por `time.sleep()`.
+- **Estado**: Resuelto en v1.6.1
+
+### Audit C6 — _callbacks list race
+- **Archivo**: `player/web.py`
+- **Descripción**: `add_callback` (main thread) hacía append mientras `_notify` (worker) iteraba la lista.
+- **Fix**: `_notify()` ahora copia lista antes de iterar.
+- **Estado**: Resuelto en v1.6.1
+
+### Audit C8 — URL incorrecta en _add_to_queue
+- **Archivo**: `player/handlers/webexplorer.py`
+- **Descripción**: `_add_to_queue` usaba `result.url` (stream URL temporal) en vez de `result.webpage_url`.
+- **Fix**: Ahora resuelve stream URL async con `get_stream_url()` antes de agregar al stack.
+- **Estado**: Resuelto en v1.6.0
+
 ### B61 — .part files no se limpian al salir de la app
 - **Archivo**: `player/web.py`, `player/app.py`
 - **Descripción**: Al salir de la app con descargas en curso, los archivos `.part` quedaban en `~/Music` ocupando espacio. También `shutdown()` tenía deadlock (sostén `_lock` + llamada a `stop_item()` que también agarraba `_lock`).
