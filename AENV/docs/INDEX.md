@@ -13,10 +13,7 @@
 | `docs/MODELS.md` | Modelos de datos, schemas | Al modificar persistencia |
 | `docs/BUSINESS.md` | Reglas de negocio | Al implementar features |
 | `docs/ARCH.md` | Arquitectura detallada | Al refactorizar o agregar módulos |
-| `docs/BRAINSTORM.md` | Investigación features futuros | Al planificar features |
-| `docs/EQ_PLAN.md` | Plan de implementación del Equalizer | Al implementar F2 |
-| `docs/ONLINE.md` | Features online (yt-dlp) | Al implementar F10 |
-| `docs/WEB_EXPLORER_PLAN.md` | Plan paso a paso Web Explorer | Al implementar F10 |
+| `docs/ONLINE.md` | Features online (yt-dlp) | Al trabajar con Web Explorer |
 
 ## Relación con código
 
@@ -29,4 +26,5 @@ handlers/     → docs/BUSINESS.md
 config.py     → docs/MODELS.md (config schema)
 state.py      → docs/MODELS.md (state schema)
 web.py        → docs/ONLINE.md
+platforms.py  → docs/ONLINE.md
 ```

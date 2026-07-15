@@ -4,216 +4,110 @@
 
 ## Dependencias
 - **yt-dlp** (pip) — librería Python para extracción de audio/video
-- **ffmpeg** (sistema) — solo para Fase 2 (descarga con conversión)
-- Sin ffmpeg en Fase 1 (streaming puro)
+- **ffmpeg** (sistema) — para descarga con conversión (audio→mp3, video→mp4)
 
-## Instalación automática (Option D)
+## Arquitectura actual (v1.5.65)
 
-Cuando el usuario ejecuta `tplay --update`, el mecanismo detecta si `requirements.txt` cambió e instala paquetes nuevos automáticamente:
-
-```
-1. Guardar requirements.txt viejo (hash o contenido)
-2. git fetch + git pull
-3. Comparar requirements.txt viejo vs nuevo
-4. Si hay paquetes nuevos:
-   a. Intentar: python3 -m pip install --user <paquetes_nuevos>
-   b. Si falla (permisos): mostrar toast con instrucciones
-5. Si yt-dlp no está disponible en runtime:
-   a. Toast no-bloqueante: "Necesitás instalar yt-dlp: pip install --break-system-packages yt-dlp"
-   b. Vista V7 Web muestra en pantalla las instrucciones de instalación
-```
-
-### Detección en runtime
-```python
-# player/web.py
-def is_available() -> bool:
-    try:
-        import yt_dlp
-        return True
-    except ImportError:
-        return False
-```
-
-### Vista V7 cuando yt-dlp no está instalada
-```
-┌─────────────────────────────────────┐
-│              Web                    │
-│                                     │
-│   yt-dlp no está instalado.         │
-│                                     │
-│   Ejecutá en tu terminal:           │
-│   pip install --break-system-packages yt-dlp
-│                                     │
-│   Luego reiniciá tplay.             │
-│                                     │
-└─────────────────────────────────────┘
-```
-
-## Registry de plataformas
-
-### Archivo: `~/.config/tplay/data/platforms.json`
-
-```json
-[
-  {
-    "name": "YouTube",
-    "url": "https://www.youtube.com",
-    "download_pattern": "/watch?v={id}",
-    "search_pattern": "/results?search_query={query}",
-    "search_prefix": "ytsearch",
-    "downloads": 0
-  }
-]
-```
-
-### Campos
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `name` | str | Nombre legible |
-| `url` | str | URL base del sitio |
-| `download_pattern` | str | Patrón de URL de video (`{id}` se reemplaza) |
-| `search_pattern` | str | Patrón de URL de búsqueda (`{query}` se reemplaza) |
-| `search_prefix` | str | Prefijo yt-dlp para búsqueda nativa |
-| `downloads` | int | Contador de descargas (se incrementa al play) |
-
-### Plataformas soportadas (yt-dlp search)
-| Prefijo | Plataforma |
-|---------|------------|
-| `ytsearch` | YouTube |
-| `dmsearch` | Dailymotion |
-| `scsearch` | SoundCloud |
-| `vpsearch` | Vimeo |
-
-### Agregar nueva plataforma
-1. Agregar entrada en `platforms.json` con los campos correctos
-2. El `search_prefix` debe coincidir con el soportado por yt-dlp
-3. No requiere cambio de código — se carga dinámicamente
-
-### Módulo: `player/platforms.py`
-- `load_platforms()` → carga desde archivo o crea defaults
-- `save_platforms()` → guarda a archivo
-- `get_search_prefix(platforms, name)` → retorna prefijo de búsqueda
-- `increment_downloads(platforms, name)` → incrementa contador
-
-## Arquitectura
-
-```
-Vista V7 "Web"
-  → Prompt de búsqueda (estilo filter mode)
-  → yt-dlp.extract_info("ytsearch5:query", download=False)
-  → Lista de resultados (título, duración, canal, URL)
-  → Enter → Streaming: URL → VLC MediaPlayer
-  → Return a Listen con stream activo
-```
-
-## Datos
-
-### WebResult (dataclass)
-```python
-@dataclass
-class WebResult:
-    title: str          # Título del video
-    url: str            # URL de streaming (directa a VLC)
-    duration: int       # Duración en segundos
-    channel: str        # Nombre del canal
-    webpage_url: str    # URL original de YouTube
-    platform: str       # "youtube", "dailymotion", etc.
-```
+### Archivos
+| Archivo | Función |
+|---------|---------|
+| `player/platforms.py` | Registry de plataformas (Platform dataclass) |
+| `player/web.py` | Wrapper yt-dlp (search, download, WebResult) |
+| `player/handlers/webexplorer.py` | Handler V7 (3 modos: normal/search/motor) |
+| `player/views.py` | UI V7 (draw_web, motor_editor, download_config) |
 
 ### Platform Registry
 ```python
-# Lazy loading — se agrega plataforma al detectar
-PLATFORMS: dict[str, str] = {
-    "youtube": "YouTube",
-    "dailymotion": "Dailymotion",
-    "soundcloud": "SoundCloud",
-    # Se expande automáticamente
-}
+@dataclass
+class Platform:
+    name: str                    # "YouTube"
+    url: str                     # "https://youtube.com"
+    search_pattern: str          # "/results?search_query={query}"
+    download_pattern: str        # "/watch?v={id}"
+    search_prefix: str           # "ytsearch" (vacío = sin búsqueda nativa)
+    downloads: int = 0
+    is_default: bool = False     # protege de eliminación
 ```
 
-## Config (pestaña "Online")
+### Plataformas default (6)
+| Platform | search_prefix | Búsqueda nativa |
+|----------|---------------|-----------------|
+| YouTube | `ytsearch` | ✅ |
+| SoundCloud | `scsearch` | ✅ |
+| Vimeo | `vpsearch` | ✅ |
+| Dailymotion | `dmsearch` | ✅ |
+| Twitch | `twsearch` | ✅ |
+| Niconico | `nicosearch` | ✅ |
 
-### Defaults
+### Funciones de platforms.py
+- `load_platforms()` → carga desde archivo o crea defaults
+- `save_platforms()` → guarda a archivo
+- `get_search_prefix(platforms, name)` → retorna prefijo
+- `increment_downloads(platforms, name)` → incrementa contador
+- `can_delete(platforms, name)` → True si no es default
+
+## UI V7 — Web Explorer
+
+### Layout
+```
+┌─ Web ─────────────────────────────────┐
+│ [← YouTube →]  buscar: beethoven     │  ← Motor + Prompt
+│──────────────────────────────────────│  ← Divider
+│ [✓] Symphony No. 5 - 7:12           │
+│ [►] Moonlight Sonata - 15:03         │  ← Lista con estados
+│ [-] Für Elise - 3:02                 │
+│ ...                                  │
+└───────────────────────────────────────┘
+```
+
+### Estados de resultado
+| Símbolo | Estado |
+|---------|--------|
+| `[-]` | Sin acción |
+| `[►]` | Reproduciendo |
+| `[D]` | Descargando |
+| `[P]` | Pausado |
+| `[Q]` | En cola |
+| `[✓]` | Descargado |
+| `[X]` | Cancelado |
+| `[!]` | Error |
+
+### Teclas
+| Tecla | Acción |
+|-------|--------|
+| `/` | Buscar |
+| `Tab` | Cambiar motor/prompt |
+| `j/k` | Navegar |
+| `g/G` | Inicio/Fin |
+| `Enter` | Reproducir |
+| `D` | Descarga directa |
+| `d` | Descarga con config |
+| `A/a` | Añadir a pila |
+| `x` | Limpiar resultados |
+| `Esc` | Volver a Escucha |
+
+### Motor mode (Tab)
+| Tecla | Acción |
+|-------|--------|
+| `j/k` | Navegar plataformas |
+| `a` | Agregar plataforma |
+| `e` | Editar plataforma |
+| `d` | Eliminar (no-default) |
+| `Enter` | Seleccionar motor |
+
+## Config
 ```python
-"online_max_results": 5,        # Cantidad de resultados por búsqueda
-"online_audio_quality": "128",  # Calidad de descarga (kbps) — Fase 2
-"online_search_history": [],    # Últimas 10 búsquedas
+"online_platform": "YouTube",
+"online_download_format": "audio",    # "audio" | "video"
+"online_download_quality": "480p",    # "480p" | "720p" | "1080p" | "best"
+"online_download_stream": "fastest",
+"online_download_max": 3,             # max descargas simultáneas (1-10)
+"online_max_results": 5,
+"online_search_history": [],
 ```
 
-### Config tab Online (Fase 2)
-| Key | Tipo | Default | Descripción |
-|-----|------|---------|-------------|
-| `online_max_results` | int | 5 | Resultados por búsqueda (1-20) |
-| `online_audio_quality` | str | "128" | Calidad descarga: 128/192/320 |
-| `online_download_dir` | str | music_dir | Directorio de descargas |
-| `online_search_history` | list | [] | Historial de búsquedas (max 10) |
-
-## Flujo de búsqueda
-
+## Plataformas sin búsqueda nativa
+Si `search_prefix` está vacío, el prompt acepta URL completa:
 ```
-1. Usuario presiona 7 → V_WEB
-2. Prompt: "Buscar: " (cursor parpadeando)
-3. Usuario escribe query
-4. Enter → yt-dlp extrae info (~2s)
-   - extract_info("ytsearch5:query", download=False)
-   - Para cada entry: extraer stream URL
-   - Si no hay URL directa, buscar mejor formato de audio
-5. Lista de resultados aparece
-6. j/k navegar, Enter reproduce
+[← Custom →]  https://example.com/video/12345
 ```
-
-## Flujo de streaming
-
-```
-1. Enter en resultado → _play_web_result()
-2. StackItem(path=stream_url, name=title)
-3. app.stack.items = [item]
-4. app.audio.play_file(stream_url)
-5. VLC reproduce stream HTTP directamente
-6. Cambia a V_LISTEN
-```
-
-## Errores manejados
-
-| Error | Mensaje | Acción |
-|-------|---------|--------|
-| yt-dlp no instalado | "Instalar: pip install yt-dlp" | Toast |
-| Sin resultados | "Sin resultados: query" | Toast |
-| Error de red | "Error de red — verificar conexión" | Toast |
-| URL stream inválida | VLC maneja internamente | Fallback |
-
-## Fases de implementación
-
-### Fase 1: Streaming (MVP)
-- [ ] 1.1 Wrapper `player/web.py`
-- [ ] 1.2 Handler `player/handlers/webexplorer.py`
-- [ ] 1.3 Drawer `draw_web()` en `views.py`
-- [ ] 1.4 Integración `app.py` (V_WEB, dispatch)
-- [ ] 1.5 Nav bar + Help tab en `ui.py`
-- [ ] 1.6 Config defaults en `config.py`
-- [ ] 1.7 Historial de búsquedas
-
-### Fase 2: Descarga
-- [ ] 2.1 Key `D` en Listen para descargar
-- [ ] 2.2 Prompt de opciones (formato, calidad)
-- [ ] 2.3 Progress bar curses
-- [ ] 2.4 Pestaña Config "Online"
-- [ ] 2.5 Guardar en music_dir
-
-### Fase 3: Multi-plataforma
-- [ ] 3.1 Detectar plataforma desde URL
-- [ ] 3.2 Soporte Dailymotion, SoundCloud
-- [ ] 3.3 Platform registry lazy
-- [ ] 3.4 UI indicador de plataforma
-
-## Plataformas soportadas (yt-dlp)
-
-| Plataforma | Dominio | Estado |
-|------------|---------|--------|
-| YouTube | youtube.com, youtu.be | MVP |
-| Dailymotion | dailymotion.com | Fase 3 |
-| SoundCloud | soundcloud.com | Fase 3 |
-| Vimeo | vimeo.com | Fase 3 |
-| Twitch | twitch.tv | Fase 3 |
-| Bandcamp | bandcamp.com | Fase 3 |
-| +900 más | varías | yt-dlp nativo |
