@@ -367,6 +367,19 @@ class DownloadManager:
     def add_callback(self, cb: Callable[[], None]) -> None:
         self._callbacks.append(cb)
 
+    @property
+    def items(self) -> list[DownloadItem]:
+        with self._lock:
+            return list(self._items)
+
+    @property
+    def max_concurrent(self) -> int:
+        return self._max_concurrent
+
+    @max_concurrent.setter
+    def max_concurrent(self, val: int) -> None:
+        self._max_concurrent = val
+
     def _notify(self) -> None:
         for cb in self._callbacks:
             try:
@@ -443,6 +456,14 @@ class DownloadManager:
             item.progress = 0
         self._notify()
         return True
+
+    def find_by_url(self, url: str) -> DownloadItem | None:
+        """Busca un item por URL (match exacto o webpage_url)."""
+        with self._lock:
+            for item in reversed(self._items):
+                if item.url == url:
+                    return item
+            return None
 
     def get_items(self) -> list[DownloadItem]:
         with self._lock:
@@ -552,6 +573,37 @@ class DownloadManager:
             for item in self._items:
                 if item.state in (DownloadState.DOWNLOADING, DownloadState.PAUSED):
                     self.stop_item(item.id)
+
+
+def item_status_str(item: DownloadItem) -> str:
+    """Convierte estado de DownloadItem a string de display."""
+    if item.state == DownloadState.QUEUED:
+        return "[Q]"
+    if item.state == DownloadState.DOWNLOADING:
+        return f"[{int(item.progress):2d}%]"
+    if item.state == DownloadState.PAUSED:
+        return "[P]"
+    if item.state == DownloadState.COMPLETED:
+        return "[✓]"
+    if item.state == DownloadState.FAILED:
+        return "[!]"
+    if item.state == DownloadState.STOPPED:
+        return "[C]"
+    return "[-]"
+
+
+def get_result_status(
+    results: list[WebResult], idx: int, playing_idx: int,
+) -> str:
+    """Retorna string de display para un resultado de búsqueda."""
+    if idx == playing_idx:
+        return "[►]"
+    dm = get_download_manager()
+    r = results[idx]
+    dl_item = dm.find_by_url(r.webpage_url)
+    if dl_item:
+        return item_status_str(dl_item)
+    return "[-]"
 
 
 def _cleanup_single_file(path: str) -> None:

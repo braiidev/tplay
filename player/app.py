@@ -155,11 +155,6 @@ class PlayerApp:
         self.web_download_idx: int = 0
         self.web_download_cursor: int = 0
         self.web_download_fields: dict[str, str] = {}
-        self.web_download_queue: list[Any] = []
-        self.web_download_max: int = self.config.get("online_download_max", 3)
-        self.web_download_cancel: dict[int, threading.Event] = {}
-        self.web_download_paused: dict[int, tuple[str, str, str]] = {}
-        self.web_result_status: list[str] = []
         self.web_playing_idx: int = -1
         self.web_platforms: list[Any] = []
         self._load_web_platforms()
@@ -270,7 +265,6 @@ class PlayerApp:
     def _load_web_platforms(self) -> None:
         from .platforms import load_platforms
         self.web_platforms = load_platforms()
-        self.web_download_max = self.config.get("online_download_max", 3)
 
     def _save_session(self) -> None:
         pos = 0
@@ -522,8 +516,6 @@ class PlayerApp:
         if not self.audio.is_ended():
             return
         if self.web_playing_idx >= 0:
-            if self.web_playing_idx < len(self.web_result_status):
-                self.web_result_status[self.web_playing_idx] = "[-]"
             self.web_playing_idx = -1
         if self.stack.is_empty:
             return
@@ -873,7 +865,9 @@ class PlayerApp:
             curses.flushinp()
             return True
         if key == ord("q"):
-            active = len(self.web_download_queue) + len(self.web_download_paused)
+            from .web import get_download_manager
+            dm = get_download_manager()
+            active = len(dm.items)
             if active > 0:
                 self.toast_msg = f"Hay {active} descarga/s en curso. Presiona q de nuevo para salir"
                 self.toast_ticks = 80

@@ -160,7 +160,8 @@ def _config_int_inc(app: PlayerApp, key_name: str) -> None:
     elif key_name == "online_download_max":
         val = app.config.get("online_download_max", 3)
         app.config["online_download_max"] = min(val + 1, 10)
-        app.web_download_max = app.config["online_download_max"]
+        from ..web import get_download_manager
+        get_download_manager().max_concurrent = app.config["online_download_max"]
     _save_config(app.config)
 
 
@@ -174,7 +175,8 @@ def _config_int_dec(app: PlayerApp, key_name: str) -> None:
     elif key_name == "online_download_max":
         val = app.config.get("online_download_max", 3)
         app.config["online_download_max"] = max(val - 1, 1)
-        app.web_download_max = app.config["online_download_max"]
+        from ..web import get_download_manager
+        get_download_manager().max_concurrent = app.config["online_download_max"]
     _save_config(app.config)
 
 

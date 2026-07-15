@@ -997,9 +997,7 @@ def _draw_web_main(app: PlayerApp, h: int, w: int, p_name: str) -> None:
         is_cur = i == app.web_cursor
         dur = _web.format_duration(r.duration)
 
-        status = "[-]"
-        if i < len(app.web_result_status):
-            status = app.web_result_status[i]
+        status = _web.get_result_status(app.web_results, i, app.web_playing_idx)
 
         title_w = w - 19
         title = r.title[:title_w]

@@ -372,7 +372,6 @@ def _do_search(app: PlayerApp, query: str) -> None:
         app.web_results = results
         app.web_cursor = 0
         app.web_scroll = 0
-        app.web_result_status = ["[-]"] * len(results)
         app.web_loading = False
         if not results:
             _toast(app, f"Sin resultados: {query}")
@@ -395,7 +394,6 @@ def _handle_url_input(app: PlayerApp, url: str, platform: Platform) -> None:
         app.web_results = results
         app.web_cursor = 0
         app.web_scroll = 0
-        app.web_result_status = ["[-]"] * len(results)
     else:
         _toast(app, "No se pudo obtener contenido de la URL")
 
@@ -406,17 +404,13 @@ def _play_web_result(app: PlayerApp) -> None:
         return
     result = app.web_results[app.web_cursor]
 
-    if app.web_playing_idx >= 0 and app.web_playing_idx < len(app.web_result_status):
-        app.web_result_status[app.web_playing_idx] = "[-]"
     app.web_playing_idx = app.web_cursor
-    app.web_result_status[app.web_cursor] = "[►]"
 
     from .. import web
 
     def _run() -> None:
         stream_url = web.get_stream_url(result.webpage_url)
         if not stream_url:
-            app.web_result_status[app.web_cursor] = "[!]"
             app.web_playing_idx = -1
             _toast(app, "No se puede reproducir — video restringido o no disponible")
             return
@@ -438,26 +432,22 @@ def _handle_download_key(app: PlayerApp, with_config: bool) -> None:
     if app.web_cursor >= len(app.web_results):
         return
 
-    idx = app.web_cursor
-    status = app.web_result_status[idx] if idx < len(app.web_result_status) else "[-]"
+    from .. import web
+    dm = web.get_download_manager()
+    result = app.web_results[app.web_cursor]
+    dl_item = dm.find_by_url(result.webpage_url)
 
-    if idx in app.web_download_paused:
-        _resume_download(app, idx)
-        return
-
-    if len(app.web_download_queue) > 0:
-        if status in ("[D]", "[PP]") or _is_downloading_pct(status):
-            _pause_download(app, idx)
+    if dl_item:
+        if dl_item.state == web.DownloadState.DOWNLOADING:
+            dm.pause_item(dl_item.id)
+            _toast(app, "Descarga pausada (d/D para reanudar)")
             return
-        if status == "[P]":
-            _resume_download(app, idx)
+        if dl_item.state == web.DownloadState.PAUSED:
+            dm.resume_item(dl_item.id)
+            _toast(app, f"Reanudando: {result.title}")
             return
-
-    if len(app.web_download_queue) >= app.web_download_max:
-        result = app.web_results[app.web_cursor]
-        app.web_result_status[app.web_cursor] = "[Q]"
-        _toast(app, f"Cola llena: {result.title} en espera")
-        return
+        if dl_item.state in (web.DownloadState.QUEUED, web.DownloadState.FAILED, web.DownloadState.STOPPED):
+            pass
 
     if with_config:
         app.web_download_mode = True
@@ -470,15 +460,11 @@ def _handle_download_key(app: PlayerApp, with_config: bool) -> None:
         }
         return
 
-    _do_download_direct(app)
-
-
-def _is_downloading_pct(status: str) -> bool:
-    """Verifica si el estado es un porcentaje de descarga [XX%]."""
-    if not status.startswith("[") or not status.endswith("%]"):
-        return False
-    inner = status[1:-2]
-    return inner.strip().isdigit()
+    cfg = app.config
+    fmt = cfg.get("online_download_format", "audio")
+    quality = cfg.get("online_download_quality", "480p")
+    dm.add_download(result.webpage_url, result.title, fmt, quality)
+    _toast(app, f"Encolado: {result.title}")
 
 
 def _do_download_direct(app: PlayerApp) -> None:
@@ -487,12 +473,14 @@ def _do_download_direct(app: PlayerApp) -> None:
     if idx >= len(app.web_results):
         return
 
+    from .. import web
+    dm = web.get_download_manager()
     result = app.web_results[idx]
     cfg = app.config
     fmt = cfg.get("online_download_format", "audio")
     quality = cfg.get("online_download_quality", "480p")
-
-    _start_download(app, result, fmt, quality, idx=idx)
+    dm.add_download(result.webpage_url, result.title, fmt, quality)
+    _toast(app, f"Encolado: {result.title}")
 
 
 def _do_download(app: PlayerApp) -> None:
@@ -501,73 +489,13 @@ def _do_download(app: PlayerApp) -> None:
     if idx >= len(app.web_results):
         return
 
+    from .. import web
+    dm = web.get_download_manager()
     result = app.web_results[idx]
     fmt = app.web_download_fields.get("format", "audio")
     quality = app.web_download_fields.get("quality", "480p")
-
-    _start_download(app, result, fmt, quality, idx=idx)
-
-
-def _start_download(
-    app: PlayerApp, result: Any, fmt: str, quality: str,
-    resume: bool = False, idx: int | None = None,
-) -> None:
-    """Inicia una descarga en background thread."""
-    from .. import web
-    from ..config import load as _load_config
-    from ..file_utils import list_dir as _list_dir
-
-    cfg = _load_config()
-    music_dir = cfg.get("music_dir", os.path.expanduser("~/Music"))
-
-    if not os.path.exists(music_dir):
-        os.makedirs(music_dir, exist_ok=True)
-
-    dl_idx = idx if idx is not None else app.web_cursor
-    cancel_event = threading.Event()
-    app.web_download_cancel[dl_idx] = cancel_event
-    app.web_result_status[dl_idx] = "[D]"
-    app.web_download_queue.append(result)
-
-    def _progress(d: dict[str, Any]) -> None:
-        if dl_idx >= len(app.web_result_status):
-            return
-        if d.get("status") == "downloading":
-            total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
-            current = d.get("downloaded_bytes") or 0
-            if total > 0:
-                pct = int(current * 100 / total)
-                app.web_result_status[dl_idx] = f"[{pct:2d}%]"
-        elif d.get("status") in ("finished", "postprocessor"):
-            app.web_result_status[dl_idx] = "[PP]"
-
-    def _run() -> None:
-        success, msg = web.download(
-            result.webpage_url, music_dir, fmt, quality,
-            progress_hook=_progress, resume=resume,
-            cancel_event=cancel_event,
-        )
-
-        app.web_download_cancel.pop(dl_idx, None)
-
-        if dl_idx < len(app.web_result_status):
-            was_paused = dl_idx in app.web_download_paused
-            if success:
-                app.web_result_status[dl_idx] = "[✓]"
-                _toast(app, f"Descargado: {msg}")
-                app.entries = _list_dir(app.current_dir)
-            elif msg == "Cancelado por usuario":
-                if not was_paused:
-                    app.web_result_status[dl_idx] = "[C]"
-            else:
-                app.web_result_status[dl_idx] = "[!]"
-                _toast(app, f"Error: {msg}")
-
-        if result in app.web_download_queue:
-            app.web_download_queue.remove(result)
-
-    t = threading.Thread(target=_run, daemon=True)
-    t.start()
+    dm.add_download(result.webpage_url, result.title, fmt, quality)
+    _toast(app, f"Encolado: {result.title}")
 
 
 def _add_to_queue(app: PlayerApp) -> None:
@@ -598,65 +526,24 @@ def _clear_results(app: PlayerApp) -> None:
     app.web_results = []
     app.web_cursor = 0
     app.web_scroll = 0
-    app.web_result_status = []
     _toast(app, "Lista limpiada")
 
 
 def _cancel_download(app: PlayerApp) -> None:
-    """Cancela la descarga activa del item actual y limpia todo estado."""
-    idx = app.web_cursor
-    status = app.web_result_status[idx] if idx < len(app.web_result_status) else "[-]"
-
-    is_active = (
-        status in ("[D]", "[PP]")
-        or _is_downloading_pct(status)
-        or idx in app.web_download_paused
-    )
-
-    if not is_active:
-        return
-
-    if idx in app.web_download_cancel:
-        app.web_download_cancel[idx].set()
-    app.web_download_paused.pop(idx, None)
-    if idx < len(app.web_result_status):
-        app.web_result_status[idx] = "[-]"
-
+    """Cancela la descarga del item actual."""
     from .. import web
-    from ..config import load as _load_config
-    cfg = _load_config()
-    music_dir = cfg.get("music_dir", os.path.expanduser("~/Music"))
-    web._cleanup_part_files(music_dir)
+    dm = web.get_download_manager()
 
-    _toast(app, "Descarga cancelada")
-
-
-def _pause_download(app: PlayerApp, idx: int) -> None:
-    """Pausa la descarga del item idx."""
-    if idx in app.web_download_cancel:
-        app.web_download_cancel[idx].set()
-    if idx < len(app.web_results):
-        result = app.web_results[idx]
-        fmt = app.config.get("online_download_format", "audio")
-        quality = app.config.get("online_download_quality", "480p")
-        app.web_download_paused[idx] = (result.webpage_url, fmt, quality)
-        app.web_result_status[idx] = "[P]"
-    _toast(app, "Descarga pausada (d/D para reanudar)")
-
-
-def _resume_download(app: PlayerApp, idx: int) -> None:
-    """Reanuda una descarga pausada."""
-    if idx not in app.web_download_paused:
-        return
-    if len(app.web_download_queue) >= app.web_download_max:
-        _toast(app, "Cola llena, espera a que termine otra descarga")
+    if app.web_cursor >= len(app.web_results):
         return
 
-    result = app.web_results[idx]
-    _, fmt, quality = app.web_download_paused.pop(idx)
-    app.web_result_status[idx] = "[D]"
-    _start_download(app, result, fmt, quality, resume=True)
-    _toast(app, f"Reanudando: {result.title}")
+    result = app.web_results[app.web_cursor]
+    dl_item = dm.find_by_url(result.webpage_url)
+    if not dl_item:
+        return
+
+    if dm.stop_item(dl_item.id):
+        _toast(app, "Descarga cancelada")
 
 
 def _add_to_history(app: PlayerApp, query: str) -> None:
