@@ -1,5 +1,8 @@
 # CHANGELOG — tplay
 
+## v1.5.69
+- fix: B32 — toast reposicionado a h-2 (borde inferior del box)
+
 ## v1.5.68
 - fix: B31 — yt-dlp output redirect a /dev/null (no corrompe curses)
 - fix: B30 — download config: Esc cancela, aesthetic `[val] ←→`
