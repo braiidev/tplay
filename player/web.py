@@ -30,6 +30,24 @@ def is_available() -> bool:
         return False
 
 
+def _classify_error(e: Exception) -> str:
+    """Clasifica errores de yt-dlp en mensajes amigables."""
+    msg = str(e).lower()
+    if "sign in to confirm" in msg or "bot" in msg:
+        return "YouTube requiere autenticación — no se puede descargar"
+    if "http error 403" in msg:
+        return "Acceso denegado (403) — video restringido"
+    if "http error 429" in msg:
+        return "Demasiadas solicitudes — esperá un momento"
+    if "unavailable" in msg or "no longer available" in msg:
+        return "Video no disponible"
+    if "requested format" in msg or "no video" in msg:
+        return "Formato no disponible para este video"
+    if "network" in msg or "connection" in msg or "timeout" in msg:
+        return "Error de conexión — verificá tu red"
+    return f"Error: {e}"
+
+
 def search(
     query: str, max_results: int = 5, search_prefix: str = "ytsearch"
 ) -> list[WebResult]:
@@ -63,8 +81,8 @@ def search(
             if not info or "entries" not in info:
                 return results
             entries = list(info["entries"])
-    except Exception:
-        return results
+    except Exception as e:
+        raise RuntimeError(_classify_error(e)) from e
 
     for entry in entries:
         if entry is None:
@@ -86,14 +104,18 @@ def search(
     return results
 
 
-def get_stream_url(webpage_url: str) -> str:
-    """Extrae la stream URL desde una webpage URL (on-demand)."""
+def get_stream_url(webpage_url: str) -> str | None:
+    """Extrae la stream URL desde una webpage URL (on-demand).
+
+    Returns:
+        Stream URL o None si falla (el caller debe manejar el error).
+    """
     if not is_available():
-        return webpage_url
+        return None
     try:
         import yt_dlp
     except ImportError:
-        return webpage_url
+        return None
 
     opts: dict[str, Any] = {
         "quiet": True,
@@ -105,7 +127,7 @@ def get_stream_url(webpage_url: str) -> str:
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(webpage_url, download=False)
             if not info:
-                return webpage_url
+                return None
             stream = info.get("url", "")
             if not stream and info.get("formats"):
                 audio_fmts = [
@@ -114,9 +136,9 @@ def get_stream_url(webpage_url: str) -> str:
                 if audio_fmts:
                     best = max(audio_fmts, key=lambda f: f.get("abr") or 0)
                     stream = best.get("url", "")
-            return stream or webpage_url
+            return stream or None
     except Exception:
-        return webpage_url
+        return None
 
 
 def _get_download_url(info: dict[str, Any]) -> str:
@@ -247,8 +269,6 @@ def download(
         opts["progress_hooks"] = [progress_hook]
 
     try:
-        # Redirigir stderr a /dev/null para suprimir output de yt-dlp
-        # (curses usa stdout/fd 1, así que no afecta)
         fd_save = os.dup(2)
         with open(os.devnull, "w") as devnull:
             os.dup2(devnull.fileno(), 2)
@@ -267,7 +287,7 @@ def download(
     except yt_dlp.utils.DownloadCancelled:
         return False, "Cancelado"
     except Exception as e:
-        return False, str(e)
+        return False, _classify_error(e)
 
 
 def format_duration(seconds: int) -> str:

@@ -413,6 +413,11 @@ def _play_web_result(app: PlayerApp) -> None:
 
     from .. import web
     stream_url = web.get_stream_url(result.webpage_url)
+    if not stream_url:
+        app.web_result_status[app.web_cursor] = "[!]"
+        app.web_playing_idx = -1
+        _toast(app, "No se puede reproducir — video restringido o no disponible")
+        return
 
     from ..stack import StackItem
     item = StackItem(path=stream_url, name=result.title)
