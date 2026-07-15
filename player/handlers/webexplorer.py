@@ -70,6 +70,7 @@ def _handle_normal_mode(app: PlayerApp, key: int) -> None:
         app.dl_history_scroll = 0
         app.dl_history_filter_mode = False
         app.dl_history_filter = ""
+        app.dl_history_tab = 0
         app.dl_history_filtered = list(range(len(app.download_history)))
         return
 
@@ -423,7 +424,32 @@ def _play_web_result(app: PlayerApp) -> None:
             _toast(app, "No se puede reproducir — video restringido o no disponible")
             return
 
+        from ..downloads import add_entry, save_history, TMP_DIR
         from ..stack import StackItem
+
+        os.makedirs(TMP_DIR, exist_ok=True)
+        entry = add_entry(
+            app.download_history,
+            title=result.title,
+            url=stream_url,
+            webpage_url=result.webpage_url,
+            file_path="",
+            fmt="audio",
+            quality="480p",
+            platform=result.platform,
+            is_temp=True,
+            duration=result.duration,
+            channel=result.channel,
+        )
+        save_history(app.download_history)
+
+        dm = web.get_download_manager()
+        dm.add_download(
+            result.webpage_url, result.title,
+            "audio", "480p", result.platform,
+            output_dir=TMP_DIR,
+        )
+
         item = StackItem(path=stream_url, name=result.title)
         app.stack.items = [item]
         app.stack.playhead = 0

@@ -38,6 +38,7 @@ class DownloadItem:
     fmt: str = "audio"
     quality: str = "480p"
     platform: str = ""
+    output_dir: str = ""
     state: DownloadState = DownloadState.QUEUED
     progress: float = 0.0
     file_path: str = ""
@@ -408,10 +409,12 @@ class DownloadManager:
     def add_download(
         self, url: str, title: str, fmt: str = "audio",
         quality: str = "480p", platform: str = "",
+        output_dir: str = "",
     ) -> DownloadItem:
         item = DownloadItem(
             id=_alloc_dl_id(), url=url, title=title,
             fmt=fmt, quality=quality, platform=platform,
+            output_dir=output_dir,
         )
         with self._lock:
             self._items.append(item)
@@ -530,7 +533,7 @@ class DownloadManager:
 
     def _download_worker(self, item: DownloadItem) -> None:
         cfg = _load_config()
-        music_dir = cfg.get("music_dir", os.path.expanduser("~/Music"))
+        music_dir = item.output_dir or cfg.get("music_dir", os.path.expanduser("~/Music"))
         os.makedirs(music_dir, exist_ok=True)
         cmd = _build_download_cmd(item.url, music_dir, item.fmt, item.quality)
         try:

@@ -166,6 +166,7 @@ class PlayerApp:
         self.dl_history_filter_mode: bool = False
         self.dl_history_filter: str = ""
         self.dl_history_filtered: list[int] = list(range(len(self.download_history)))
+        self.dl_history_tab: int = 0  # 0=Descargas, 1=Streams
 
         self._load_web_platforms()
 
@@ -869,6 +870,7 @@ class PlayerApp:
             self.web_motor_edit_mode = False
             self.web_download_mode = False
             self.dl_history_filter_mode = False
+            self.dl_history_tab = 0
             curses.curs_set(0)
             curses.flushinp()
             return True

@@ -620,13 +620,15 @@ def draw_history(app: PlayerApp, h: int, w: int) -> None:
 
 
 def draw_download_history(app: PlayerApp, h: int, w: int) -> None:
-    """Dibuja la vista de historial de descargas."""
-    from .downloads import format_size
+    """Dibuja la vista de historial unificado (descargas + streams)."""
+    from .downloads import format_size, format_duration
     history = app.download_history
     items = app.dl_history_filtered
     total = len(items)
+    is_streams = app.dl_history_tab == 1
+    tab_label = "Streams" if is_streams else "Descargas"
     pos = f" ({app.dl_history_cursor + 1}/{total})" if total > 0 else ""
-    title = f"Descargas{pos}"
+    title = f"Historial — {tab_label}{pos}"
     if app.dl_history_filter_mode:
         title += f"  /{app.dl_history_filter}"
     draw_box(app.stdscr, h, w, title)
@@ -634,11 +636,26 @@ def draw_download_history(app: PlayerApp, h: int, w: int) -> None:
     destacar = curses.color_pair(PAIR_DESTACAR)
     nav = curses.color_pair(PAIR_NAV)
 
+    # Tab bar
+    tab_y = 1
+    tab_x = 4
+    for i, name in enumerate(["Descargas", "Streams"]):
+        is_active = i == app.dl_history_tab
+        label = f"[{name}]" if is_active else f" {name} "
+        attr = (destacar | curses.A_REVERSE) if is_active else nav
+        safe_addstr(app.stdscr, tab_y, tab_x, label, attr, h, w)
+        tab_x += len(name) + 3
+
     if not history:
-        safe_addstr(app.stdscr, h // 2, 2, "  Sin historial de descargas", texto, h, w)
+        msg = "Sin streams" if is_streams else "Sin historial de descargas"
+        safe_addstr(app.stdscr, h // 2, 2, f"  {msg}", texto, h, w)
         return
 
-    list_h = h - 4
+    if not items:
+        safe_addstr(app.stdscr, h // 2, 2, "  Sin resultados", texto, h, w)
+        return
+
+    list_h = h - 5
     start = max(0, min(app.dl_history_scroll, total - list_h))
     visible = items[start:start + list_h]
 
@@ -648,15 +665,27 @@ def draw_download_history(app: PlayerApp, h: int, w: int) -> None:
         is_cur = idx == items[app.dl_history_cursor] if app.dl_history_cursor < len(items) else False
         exists = entry.exists
 
-        status = "✓" if exists else "✗"
-        size = format_size(entry.file_size_bytes)
-        title_w = w - 25
-        entry_title = entry.title[:title_w]
-
-        line = f" {status} {entry_title}"
-        if size:
-            line += f"  {size:>6}"
-        line += f"  {entry.platform[:8]:>8}"
+        if is_streams:
+            icon = "♪" if exists else "✗"
+            dur = format_duration(entry.duration)
+            count = f"{entry.play_count}x" if entry.play_count > 1 else ""
+            title_w = w - 30
+            entry_title = entry.title[:title_w]
+            line = f" {icon} {entry_title}"
+            if dur:
+                line += f"  {dur:>6}"
+            if count:
+                line += f"  {count:>4}"
+            line += f"  {entry.platform[:8]:>8}"
+        else:
+            status = "✓" if exists else "✗"
+            size = format_size(entry.file_size_bytes)
+            title_w = w - 25
+            entry_title = entry.title[:title_w]
+            line = f" {status} {entry_title}"
+            if size:
+                line += f"  {size:>6}"
+            line += f"  {entry.platform[:8]:>8}"
 
         attr = destacar | curses.A_REVERSE if is_cur else texto
         if not exists:
@@ -665,9 +694,7 @@ def draw_download_history(app: PlayerApp, h: int, w: int) -> None:
 
     draw_list_indicators(app.stdscr, h, w, start, total, list_h)
 
-    hints = (
-        f"j/k:navegar  d/D:re-descargar  c:quitar  x:borrar  /:filtrar  Esc:volver"
-    )
+    hints = "[/]:tab  j/k:navegar  Enter:play  d:buscar/re-descargar  c:quitar  x:borrar  X:limpiar  /:filtrar  Esc:volver"
     safe_addstr(app.stdscr, h - 2, 2, hints[:w - 4], nav, h, w)
 
 

@@ -625,19 +625,21 @@ HELP_TABS: list[HelpTab] = [
         ]
     },
     {
-        "name": "Descargas",
+        "name": "Historial",
         "lines": [
             ("", None),
-            ("  DESCARGAS", PAIR_NAV),
+            ("  HISTORIAL UNIFICADO", PAIR_NAV),
             ("", None),
             ("    H         Abrir historial", PAIR_TEXTO),
-            ("    j/k       Navegar historial", PAIR_TEXTO),
+            ("    [/]       Cambiar tab (Descargas/Streams)", PAIR_TEXTO),
+            ("    j/k       Navegar", PAIR_TEXTO),
             ("    g/G       Inicio / Fin", PAIR_TEXTO),
+            ("    Enter     Reproducir", PAIR_TEXTO),
+            ("    d         Re-buscar (stream) / Re-descargar", PAIR_TEXTO),
             ("    /         Filtrar", PAIR_TEXTO),
-            ("    Enter     Re-descargar", PAIR_TEXTO),
-            ("    d         Borrar archivo + entrada", PAIR_TEXTO),
-            ("    D         Borrar solo entrada", PAIR_TEXTO),
-            ("    x         Limpiar filtrados", PAIR_TEXTO),
+            ("    c         Quitar entrada", PAIR_TEXTO),
+            ("    x         Borrar archivo + entrada", PAIR_TEXTO),
+            ("    X         Limpiar tab activo", PAIR_TEXTO),
             ("    Esc       Volver a Web Explorer", PAIR_TEXTO),
         ]
     },
