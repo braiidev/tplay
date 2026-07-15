@@ -37,6 +37,7 @@ class DownloadItem:
     title: str
     fmt: str = "audio"
     quality: str = "480p"
+    platform: str = ""
     state: DownloadState = DownloadState.QUEUED
     progress: float = 0.0
     file_path: str = ""
@@ -406,11 +407,11 @@ class DownloadManager:
 
     def add_download(
         self, url: str, title: str, fmt: str = "audio",
-        quality: str = "480p",
+        quality: str = "480p", platform: str = "",
     ) -> DownloadItem:
         item = DownloadItem(
             id=_alloc_dl_id(), url=url, title=title,
-            fmt=fmt, quality=quality,
+            fmt=fmt, quality=quality, platform=platform,
         )
         with self._lock:
             self._items.append(item)

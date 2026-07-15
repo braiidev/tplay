@@ -64,6 +64,14 @@ def _handle_normal_mode(app: PlayerApp, key: int) -> None:
     elif key == ord("l"):
         _cycle_platform(app, 1)
         return
+    elif key == ord("H"):
+        app.current_view = app.V_DL_HISTORY
+        app.dl_history_cursor = 0
+        app.dl_history_scroll = 0
+        app.dl_history_filter_mode = False
+        app.dl_history_filter = ""
+        app.dl_history_filtered = list(range(len(app.download_history)))
+        return
 
     if key == ord("e"):
         _enter_motor_edit(app, is_new=False)
@@ -463,7 +471,7 @@ def _handle_download_key(app: PlayerApp, with_config: bool) -> None:
     cfg = app.config
     fmt = cfg.get("online_download_format", "audio")
     quality = cfg.get("online_download_quality", "480p")
-    dm.add_download(result.webpage_url, result.title, fmt, quality)
+    dm.add_download(result.webpage_url, result.title, fmt, quality, result.platform)
     _toast(app, f"Encolado: {result.title}")
 
 
@@ -479,7 +487,7 @@ def _do_download_direct(app: PlayerApp) -> None:
     cfg = app.config
     fmt = cfg.get("online_download_format", "audio")
     quality = cfg.get("online_download_quality", "480p")
-    dm.add_download(result.webpage_url, result.title, fmt, quality)
+    dm.add_download(result.webpage_url, result.title, fmt, quality, result.platform)
     _toast(app, f"Encolado: {result.title}")
 
 
@@ -494,7 +502,7 @@ def _do_download(app: PlayerApp) -> None:
     result = app.web_results[idx]
     fmt = app.web_download_fields.get("format", "audio")
     quality = app.web_download_fields.get("quality", "480p")
-    dm.add_download(result.webpage_url, result.title, fmt, quality)
+    dm.add_download(result.webpage_url, result.title, fmt, quality, result.platform)
     _toast(app, f"Encolado: {result.title}")
 
 

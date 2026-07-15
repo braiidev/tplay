@@ -619,6 +619,58 @@ def draw_history(app: PlayerApp, h: int, w: int) -> None:
     draw_list_indicators(app.stdscr, h, w, start, len(app.history), list_h)
 
 
+def draw_download_history(app: PlayerApp, h: int, w: int) -> None:
+    """Dibuja la vista de historial de descargas."""
+    from .downloads import format_size
+    history = app.download_history
+    items = app.dl_history_filtered
+    total = len(items)
+    pos = f" ({app.dl_history_cursor + 1}/{total})" if total > 0 else ""
+    title = f"Descargas{pos}"
+    if app.dl_history_filter_mode:
+        title += f"  /{app.dl_history_filter}"
+    draw_box(app.stdscr, h, w, title)
+    texto = curses.color_pair(PAIR_TEXTO)
+    destacar = curses.color_pair(PAIR_DESTACAR)
+    nav = curses.color_pair(PAIR_NAV)
+
+    if not history:
+        safe_addstr(app.stdscr, h // 2, 2, "  Sin historial de descargas", texto, h, w)
+        return
+
+    list_h = h - 4
+    start = max(0, min(app.dl_history_scroll, total - list_h))
+    visible = items[start:start + list_h]
+
+    for i, idx in enumerate(visible):
+        y = 3 + i
+        entry = history[idx]
+        is_cur = idx == items[app.dl_history_cursor] if app.dl_history_cursor < len(items) else False
+        exists = entry.exists
+
+        status = "✓" if exists else "✗"
+        size = format_size(entry.file_size_bytes)
+        title_w = w - 25
+        entry_title = entry.title[:title_w]
+
+        line = f" {status} {entry_title}"
+        if size:
+            line += f"  {size:>6}"
+        line += f"  {entry.platform[:8]:>8}"
+
+        attr = destacar | curses.A_REVERSE if is_cur else texto
+        if not exists:
+            attr = curses.color_pair(PAIR_NAV) if is_cur else curses.A_DIM
+        safe_addstr(app.stdscr, y, 2, line[:w - 4], attr, h, w)
+
+    draw_list_indicators(app.stdscr, h, w, start, total, list_h)
+
+    hints = (
+        f"j/k:navegar  d/D:re-descargar  c:quitar  x:borrar  /:filtrar  Esc:volver"
+    )
+    safe_addstr(app.stdscr, h - 2, 2, hints[:w - 4], nav, h, w)
+
+
 def draw_config(app: PlayerApp, h: int, w: int) -> None:
     draw_box(app.stdscr, h, w, "")
     texto = curses.color_pair(PAIR_TEXTO)

@@ -43,6 +43,7 @@ class PlayerApp:
     V_RADIO: int = 5
     V_FAVORITES: int = 6
     V_WEB: int = 7
+    V_DL_HISTORY: int = 8
 
     def __init__(self, stdscr: curses.window) -> None:
         self.stdscr: curses.window = stdscr
@@ -157,6 +158,15 @@ class PlayerApp:
         self.web_download_fields: dict[str, str] = {}
         self.web_playing_idx: int = -1
         self.web_platforms: list[Any] = []
+
+        from .downloads import load_history as _load_dl_history
+        self.download_history: list[Any] = _load_dl_history()
+        self.dl_history_cursor: int = 0
+        self.dl_history_scroll: int = 0
+        self.dl_history_filter_mode: bool = False
+        self.dl_history_filter: str = ""
+        self.dl_history_filtered: list[int] = list(range(len(self.download_history)))
+
         self._load_web_platforms()
 
         self.file_op_mode: str | None = None
@@ -200,6 +210,7 @@ class PlayerApp:
             self.V_RADIO: handlers.handle_radio,
             self.V_FAVORITES: handlers.handle_favorites,
             self.V_WEB: handlers.handle_web,
+            self.V_DL_HISTORY: handlers.handle_download_history,
         }
         self._view_drawers = {
             self.V_LISTEN: views.draw_listen,
@@ -210,6 +221,7 @@ class PlayerApp:
             self.V_RADIO: views.draw_radio,
             self.V_FAVORITES: views.draw_favorites,
             self.V_WEB: views.draw_web,
+            self.V_DL_HISTORY: views.draw_download_history,
         }
 
         curses.curs_set(0)
@@ -278,6 +290,19 @@ class PlayerApp:
                 completed.update(new_completed)
                 from .file_utils import list_dir as _list_dir
                 self.entries = _list_dir(self.current_dir)
+                for item in dm.items:
+                    if item.id in new_completed and item.file_path:
+                        from .downloads import add_entry, save_history
+                        add_entry(
+                            self.download_history,
+                            item.title, item.url, item.url,
+                            item.file_path, item.fmt, item.quality,
+                            item.platform,
+                        )
+                        save_history(self.download_history)
+                        self.dl_history_filtered = list(
+                            range(len(self.download_history))
+                        )
 
         dm.add_callback(_on_download_change)
 
@@ -822,7 +847,7 @@ class PlayerApp:
         return False
 
     def _handle_key_view_switch(self, key: int) -> bool:
-        if ord("0") <= key <= ord("7"):
+        if ord("0") <= key <= ord("8"):
             self.current_view = key - ord("0")
             self.cursor = 0
             self.scroll = 0
@@ -843,6 +868,7 @@ class PlayerApp:
             self.web_loading = False
             self.web_motor_edit_mode = False
             self.web_download_mode = False
+            self.dl_history_filter_mode = False
             curses.curs_set(0)
             curses.flushinp()
             return True

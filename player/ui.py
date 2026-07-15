@@ -336,7 +336,7 @@ HELP_TABS: list[HelpTab] = [
             ("", None),
             ("  GENERAL", PAIR_NAV),
             ("", None),
-            ("    0-5       Cambiar vista", PAIR_TEXTO),
+            ("    0-8       Cambiar vista", PAIR_TEXTO),
             ("    ? / F1    Abrir ayuda", PAIR_TEXTO),
             ("    q         Salir (guarda todo)", PAIR_TEXTO),
             ("    Esc       Cancelar / cerrar", PAIR_TEXTO),
@@ -621,11 +621,29 @@ HELP_TABS: list[HelpTab] = [
             ("    d         Eliminar (no-default)", PAIR_TEXTO),
             ("    Enter     Seleccionar motor", PAIR_TEXTO),
             ("    Tab       Volver a prompt", PAIR_TEXTO),
+            ("    H         Ver historial descargas", PAIR_TEXTO),
+        ]
+    },
+    {
+        "name": "Descargas",
+        "lines": [
+            ("", None),
+            ("  DESCARGAS", PAIR_NAV),
+            ("", None),
+            ("    H         Abrir historial", PAIR_TEXTO),
+            ("    j/k       Navegar historial", PAIR_TEXTO),
+            ("    g/G       Inicio / Fin", PAIR_TEXTO),
+            ("    /         Filtrar", PAIR_TEXTO),
+            ("    Enter     Re-descargar", PAIR_TEXTO),
+            ("    d         Borrar archivo + entrada", PAIR_TEXTO),
+            ("    D         Borrar solo entrada", PAIR_TEXTO),
+            ("    x         Limpiar filtrados", PAIR_TEXTO),
+            ("    Esc       Volver a Web Explorer", PAIR_TEXTO),
         ]
     },
 ]
 
-VIEW_TO_HELP_TAB: dict[int, int] = {1: 1, 2: 2, 3: 3, 4: 4, 0: 5, 5: 6, 6: 7, 7: 8}
+VIEW_TO_HELP_TAB: dict[int, int] = {1: 1, 2: 2, 3: 3, 4: 4, 0: 5, 5: 6, 6: 7, 7: 8, 8: 9}
 
 
 def draw_help(win: curses.window, h: int, w: int, scroll: int = 0, tab: int = 0) -> None:
