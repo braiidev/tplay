@@ -6,7 +6,6 @@ import shutil
 import subprocess
 import threading
 import time
-import copy
 from typing import Any, Callable
 
 from .audio import AudioEngine
@@ -641,13 +640,10 @@ class PlayerApp:
         self._play_next()
 
     def _add_history(self, path: str, name: str | None = None) -> None:
-        existing: dict[str, Any] | None = None
-        for h in self.history:
-            if h.get("path") == path:
-                existing = h
-                break
+        existing = next((h for h in self.history if h.get("path") == path), None)
         count = (existing.get("count", 0) + 1) if existing else 1
-        self.history = [h for h in self.history if h.get("path") != path]
+        if existing:
+            self.history.remove(existing)
         entry_name = name if name else os.path.basename(path)
         self.history.insert(0, {"name": entry_name, "path": path, "count": count})
         if len(self.history) > 100:
@@ -1063,9 +1059,9 @@ class PlayerApp:
 
     def _snapshot_state(self) -> dict[str, Any]:
         return {
-            "playlist_data": copy.deepcopy(self.playlist_data),
+            "playlist_data": {k: list(v) for k, v in self.playlist_data.items()},
             "active_name": self.active_name,
-            "stack_items": copy.deepcopy(self.stack.items),
+            "stack_items": list(self.stack.items),
             "stack_playhead": self.stack.playhead,
             "stack_shuffle": self.stack.shuffle,
             "stack_repeat": self.stack.repeat,

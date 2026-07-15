@@ -91,16 +91,37 @@ PAIR_OVERLAY: int = 5
 MONO_BOLD: bool = False
 
 
+_cache: dict[str, Any] | None = None
+_cache_mtime: float = 0.0
+
+
 def load() -> dict[str, Any]:
+    global _cache, _cache_mtime
+    try:
+        mtime = os.path.getmtime(CONFIG_FILE)
+    except OSError:
+        mtime = 0.0
+    if _cache is not None and mtime == _cache_mtime:
+        return _cache
     try:
         with open(CONFIG_FILE) as f:
             cfg: dict[str, Any] = json.load(f)
             for k in DEFAULT_CONFIG:
                 cfg.setdefault(k, DEFAULT_CONFIG[k])
+            _cache = cfg
+            _cache_mtime = mtime
             return cfg
     except (FileNotFoundError, json.JSONDecodeError):
         fallback: dict[str, Any] = copy.deepcopy(DEFAULT_CONFIG)
+        _cache = fallback
+        _cache_mtime = 0.0
         return fallback
+
+
+def invalidate_cache() -> None:
+    global _cache, _cache_mtime
+    _cache = None
+    _cache_mtime = 0.0
 
 
 def save(cfg: dict[str, Any]) -> None:
@@ -108,6 +129,7 @@ def save(cfg: dict[str, Any]) -> None:
         os.makedirs(CONFIG_DIR, exist_ok=True)
         with open(CONFIG_FILE, "w") as f:
             json.dump(cfg, f, indent=2)
+        invalidate_cache()
     except OSError:
         pass
 
