@@ -1,5 +1,11 @@
 # CHANGELOG — tplay
 
+## v1.5.72
+- fix: B36 — Explorer refresca siempre al completar descarga
+- fix: B37 — redirect fd 2 (stderr) a /dev/null, suprime output yt-dlp sin cortar curses
+- fix: B38 — d/D toggle inicia/pausa/reanuda, c cancela con [C], d/D reinicia despues de cancel
+- fix: B39 — Estados validados: [-][D][##%][PP][P][C][✓][!][Q][►]
+
 ## v1.5.71
 - fix: yt-dlp progress=False → noprogress=True (param correcto, progress no existía)
 - fix: eliminado os.dup2 redirect (cortaba stdout de curses, por eso no se veía [%])

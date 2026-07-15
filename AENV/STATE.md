@@ -7,7 +7,7 @@
 - **Docs**: Sincronizados con v1.5.71
 
 ## Último commit
-- `fix - 1.5.71 - yt-dlp noprogress fix, cancel/pause descargas, [P] pausa [PP] postprocessing`
+- `fix - 1.5.72 - B36-B39: Explorer refresh, stderr redirect, d/D toggle, estados`
 
 ## Bugs fixeados post-implementación
 - B22: abr None comparison → search vacío

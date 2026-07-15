@@ -2,7 +2,31 @@
 
 ## Activos
 
-_(ninguno)_
+### B36 — Explorer no refresca post-download
+- **Archivo**: `player/handlers/webexplorer.py`
+- **Descripción**: Al completarse una descarga, la vista Explorer (vista 1) no muestra el archivo nuevo.
+- **Causa**: `app.entries` solo se actualiza si `app.current_dir == music_dir`.
+- **Fix**: Siempre refrescar `app.entries` al completar.
+- **Estado**: Resuelto en v1.5.71
+
+### B37 — yt-dlp escribe en terminal pisando contenido de curses
+- **Archivo**: `player/web.py`
+- **Descripción**: yt-dlp escribe `[download] XX%...` a stderr, pisando hints/status bar de curses.
+- **Causa**: `quiet=True` redirige a stderr pero sigue imprimiendo. `progress=False` no existe.
+- **Fix**: `noprogress=True` + redirect fd 2 (stderr) a /dev/null. Cursors usa fd 1 (stdout), no afectado.
+- **Estado**: Resuelto en v1.5.71
+
+### B38 — d/D toggle pause/resume, c cancela con [C]
+- **Archivo**: `player/handlers/webexplorer.py`
+- **Descripción**: d/D deben toggle pause/resume sin importar como se inicio. c cancela con [C].
+- **Causa**: Logica separada d/config y D/directo sin considerar estado.
+- **Fix**: `_handle_download_key` con toggle: [D]/[PP]/[%] → pause, [P] → resume, [C]/[-] → inicia.
+- **Estado**: Resuelto en v1.5.71
+
+### B39 — Estados del ciclo de vida
+- **Archivo**: `player/handlers/webexplorer.py`
+- **Estados confirmados**: `[-]` idle, `[►]` playing, `[D]` download start, `[##%]` progress, `[PP]` postprocessing, `[P]` paused, `[C]` cancelled, `[✓]` completed, `[!]` error, `[Q]` queued.
+- **Estado**: Validado
 
 ## Resueltos
 
