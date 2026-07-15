@@ -1,5 +1,13 @@
 # CHANGELOG — tplay
 
+## v1.5.71
+- fix: yt-dlp progress=False → noprogress=True (param correcto, progress no existía)
+- fix: eliminado os.dup2 redirect (cortaba stdout de curses, por eso no se veía [%])
+- feat: cancel descarga con c — DownloadCancelled + threading.Event
+- feat: pause descarga con P — cancel +保存 config para resume con continuedl
+- fix: estado [PP] post-processing (100% → [PP] → [✓])
+- fix: estado [P] pausa (doc一致)
+
 ## v1.5.70
 - fix: B33 — yt-dlp progress=False + eliminadas opciones falsas stdout/stddev (corrompía curses)
 - fix: B34 — _get_download_url quality_map: worst/144p/240p

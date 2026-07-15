@@ -1,13 +1,13 @@
 # STATE — tplay
 
 ## Estado actual
-- **Version**: v1.5.70
+- **Version**: v1.5.71
 - **Plan activo**: F10 yt-dlp Web Explorer v2 — **COMPLETADO**
 - **Bugs abiertos**: 0
-- **Docs**: Sincronizados con v1.5.70
+- **Docs**: Sincronizados con v1.5.71
 
 ## Último commit
-- `fix - 1.5.70 - B33: yt-dlp progress=False, B34: quality_map, B35: download_max int handler`
+- `fix - 1.5.71 - yt-dlp noprogress fix, cancel/pause descargas, [P] pausa [PP] postprocessing`
 
 ## Bugs fixeados post-implementación
 - B22: abr None comparison → search vacío
