@@ -1158,13 +1158,12 @@ def _draw_download_config(app: PlayerApp, h: int, w: int) -> None:
         y0 = 3
     else:
         safe_addstr(app.stdscr, 2, pad_x,
-                    "↑/↓: navegar  ←/→: cambiar  Enter: descargar  [q] cancelar",
+                    "↑/↓: navegar  ←/→: cambiar  Enter: descargar  Esc: cancelar",
                     texto, h, w)
         y0 = 4
 
     fields_order = ["format", "quality"]
     labels = {"format": "Formato", "quality": "Calidad"}
-    arrows = {"format": ("◄ audio", "video ►"), "quality": ("◄ 480p", "best ►")}
 
     total = len(fields_order)
     cur = app.web_download_cursor
@@ -1173,8 +1172,7 @@ def _draw_download_config(app: PlayerApp, h: int, w: int) -> None:
         row = y0 + i
         label = labels.get(field, field)
         val = app.web_download_fields.get(field, "")
-        left, right = arrows.get(field, ("", ""))
-        line = f"  {label}: {left}  [{val}]  {right}"
+        line = f"  {label}: [{val}] ←→"
         attr = destacar if i == cur else texto
         if i == cur:
             safe_addstr(app.stdscr, row, pad_x, line, attr | curses.A_REVERSE, h, w)
@@ -1183,7 +1181,7 @@ def _draw_download_config(app: PlayerApp, h: int, w: int) -> None:
 
     status_row = y0 + total
     if not compact and status_row < h - 1:
-        safe_addstr(app.stdscr, status_row + 1, pad_x, "  Enter: descargar  q: cancelar", nav, h, w)
+        safe_addstr(app.stdscr, status_row + 1, pad_x, "  Enter: descargar  Esc: cancelar", nav, h, w)
 
 
 def draw_favorites(app: PlayerApp, h: int, w: int) -> None:

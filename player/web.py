@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass
 from typing import Any
 
@@ -186,8 +187,20 @@ def download(
         return False, "yt-dlp no disponible"
 
     cfg = _load_config()
+    outtmpl = os.path.join(output_path, "%(title)s.%(ext)s")
+    devnull = open(os.devnull, "w")
+
+    quality_map: dict[str, str] = {
+        "worst": "worst",
+        "144p": "bestvideo[height<=144]+bestaudio/best[height<=144]",
+        "240p": "bestvideo[height<=240]+bestaudio/best[height<=240]",
+        "480p": "bestvideo[height<=480]+bestaudio/best[height<=480]",
+        "720p": "bestvideo[height<=720]+bestaudio/best[height<=720]",
+        "1080p": "bestvideo[height<=1080]+bestaudio/best[height<=1080]",
+        "best": "bestvideo+bestaudio/best",
+    }
+
     if fmt == "audio":
-        outtmpl = os.path.join(output_path, "%(title)s.%(ext)s")
         opts: dict[str, Any] = {
             "quiet": True,
             "no_warnings": True,
@@ -200,22 +213,19 @@ def download(
                 }
             ],
             "outtmpl": outtmpl,
+            "stdout": devnull,
+            "stderr": devnull,
         }
     else:
-        quality_map: dict[str, str] = {
-            "480p": "bestvideo[height<=480]+bestaudio/best[height<=480]",
-            "720p": "bestvideo[height<=720]+bestaudio/best[height<=720]",
-            "1080p": "bestvideo[height<=1080]+bestaudio/best[height<=1080]",
-            "best": "bestvideo+bestaudio/best",
-        }
         fmt_selector = quality_map.get(quality, quality_map["480p"])
-        outtmpl = os.path.join(output_path, "%(title)s.%(ext)s")
         opts = {
             "quiet": True,
             "no_warnings": True,
             "format": fmt_selector,
             "merge_output_format": "mp4",
             "outtmpl": outtmpl,
+            "stdout": devnull,
+            "stderr": devnull,
         }
 
     if progress_hook is not None:
@@ -232,6 +242,8 @@ def download(
             return False, "No se pudo obtener info del video"
     except Exception as e:
         return False, str(e)
+    finally:
+        devnull.close()
 
 
 def format_duration(seconds: int) -> str:

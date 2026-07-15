@@ -301,10 +301,10 @@ def _handle_download_mode(app: PlayerApp, key: int) -> None:
     fields_order = ["format", "quality"]
     options: dict[str, list[str]] = {
         "format": ["audio", "video"],
-        "quality": ["480p", "720p", "1080p", "best"],
+        "quality": ["worst", "144p", "240p", "480p", "720p", "1080p", "best"],
     }
 
-    if key in (ord("q"), 27):
+    if key == 27:
         app.web_download_mode = False
     elif key in (ord("j"), curses.KEY_DOWN):
         app.web_download_cursor = min(

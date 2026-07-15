@@ -53,7 +53,7 @@ def handle_config(app: PlayerApp, key: int) -> None:
             if key_name == "eq_preset":
                 _cycle_eq_preset(app, 1)
             else:
-                _cycle_theme(app, 1)
+                _cycle_choice(app, key_name, 1)
         elif ctype == "bool":
             _toggle_bool(app, key_name)
         elif ctype == "color":
@@ -80,7 +80,7 @@ def handle_config(app: PlayerApp, key: int) -> None:
             if key_name == "eq_preset":
                 _cycle_eq_preset(app, -1)
             else:
-                _cycle_theme(app, -1)
+                _cycle_choice(app, key_name, -1)
         elif ctype == "bool":
             _toggle_bool(app, key_name)
         elif ctype == "color":
@@ -98,6 +98,28 @@ def handle_config(app: PlayerApp, key: int) -> None:
     h, _ = app.stdscr.getmaxyx()
     list_h = h - 5 if h < COMPACT_THRESHOLD else h - 6
     app.config_scroll = _clamp_scroll(app.config_cursor, app.config_scroll, list_h)
+
+
+def _cycle_choice(app: PlayerApp, key_name: str, direction: int) -> None:
+    """Cicla opciones para cualquier choice item."""
+    from ..config import save as _save_config
+
+    options_map: dict[str, list[str]] = {
+        "theme": ["default", "custom"],
+        "online_download_format": ["audio", "video"],
+        "online_download_quality": ["worst", "144p", "240p", "480p", "720p", "1080p", "best"],
+    }
+    opts = options_map.get(key_name)
+    if not opts:
+        _cycle_theme(app, direction)
+        return
+    cur_val = app.config.get(key_name, opts[0])
+    try:
+        idx = opts.index(cur_val)
+    except ValueError:
+        idx = 0
+    app.config[key_name] = opts[(idx + direction) % len(opts)]
+    _save_config(app.config)
 
 
 def _cycle_theme(app: PlayerApp, direction: int) -> None:

@@ -470,6 +470,9 @@ class PlayerApp:
             {
                 "name": "Sistema",
                 "items": [
+                    ("online_download_format", "Formato descarga", "choice"),
+                    ("online_download_quality", "Calidad descarga", "choice"),
+                    ("online_download_max", "Descargas máximas", "int"),
                     ("keybindings", "Keybindings", "action"),
                     ("update", "Actualizar tplay", "action"),
                 ],
