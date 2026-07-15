@@ -637,6 +637,9 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
         "theme": f"Tema: {app.config.get('theme', 'clasico')}",
         "sleep_timer_minutes": f"Sleep timer: {app.config.get('sleep_timer_minutes', 30)} min",
         "eq_preset": f"Preset: {app.config.get('eq_preset', 'Flat')}",
+        "online_download_format": f"Formato descarga: {app.config.get('online_download_format', 'audio')}",
+        "online_download_quality": f"Calidad descarga: {app.config.get('online_download_quality', '480p')}",
+        "online_download_max": f"Descargas máximas: {app.config.get('online_download_max', 3)}",
     }
     cc = app.config.get("custom_colors", {})
 
