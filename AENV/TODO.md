@@ -6,6 +6,7 @@
 - **Archivo propuesto**: `~/.config/tplay/data/downloads.json`
 - **Tecla**: `H` en Web Explorer → lista de descargas
 - **Funciones**: Lista de descargas, re-descargar, eliminar de historial
+- **Estado**: Core files creados, app.py parcialmente actualizado
 
 ### #5: Stream Replay
 - **Archivo propuesto**: `~/.config/tplay/data/streams.json`

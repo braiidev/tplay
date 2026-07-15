@@ -96,3 +96,18 @@
 - `yt-dlp[default]` instala `yt-dlp-ejs` (challenge solver)
 
 **Estado**: v1.5.79, mypy strict pasa, B60 resuelto, 0 bugs activos
+
+---
+
+## Entrada 12 — 2025-07-15 — #4 Download History (parcial)
+- `downloads.py`: DownloadEntry dataclass, load_history, save_history, add_entry, remove_entry, format_size
+- `handlers/download_history.py`: handle_download_history con j/k/g/G/d/D/c/x// keys
+- `views.py`: draw_download_history() con layout consistente con Historial/Playlist
+- `web.py`: DownloadItem + campo `platform`, add_download acepta platform param
+- `handlers/webexplorer.py`: 3 llamadas a add_download ahora pasan result.platform
+- `app.py`: V_DL_HISTORY=8, state vars, handler/drawer mappings, callback auto-save completed downloads
+- `handlers/__init__.py`: expose handle_download_history
+- `ui.py`: Help tab "Descargas" + H key hint en Web tab
+- `app.py`: View switch 0-8 range + H key en Web Explorer → V_DL_HISTORY
+
+**Estado**: v1.5.79, mypy strict pasa (28 archivos), archivos compilan OK

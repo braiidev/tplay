@@ -1,6 +1,10 @@
 # CHANGELOG — tplay
 
 ## v1.5.79
+- feat: #4 Download History — downloads.py (CRUD), handlers/download_history.py, views.py
+- feat: DownloadItem + campo `platform`, add_download acepta platform param
+- feat: Help tab "Descargas" + H key hint en Web tab
+- feat: View switch 0-8 range + H key en Web Explorer → V_DL_HISTORY
 - fix: B60 — DownloadManager integrado completamente en handler/views/app
 - fix: B60 — Eliminadas variables viejas (web_download_queue, web_download_cancel, web_download_paused, web_result_status)
 - fix: B60 — Views leen de get_result_status() (combina playing + download state)

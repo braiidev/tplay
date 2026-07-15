@@ -2,7 +2,7 @@
 
 ## Estado actual
 - **Version**: v1.5.79
-- **Plan activo**: F10 yt-dlp Web Explorer v2 — **DownloadManager COMPLETO**
+- **Plan activo**: F10 yt-dlp Web Explorer v2 — **Download History en progreso**
 - **Bugs abiertos**: 0
 - **Docs**: Sincronizados con v1.5.79
 
@@ -16,9 +16,9 @@
 | 1.5.76 | B55-B58: pause/resume fix, vista7 slowness, temp .part cleanup |
 | 1.5.77 | B59: pause/resume restart — `--continue` flag |
 | 1.5.78 | `DownloadManager` class: worker loop, cola, concurrencia, SIGSTOP/SIGCONT |
-| 1.5.79 | B60: Integración completa + YouTube bot detection + .part cleanup on exit |
+| 1.5.79 | B60-B61: Integración completa + .part cleanup + download history (parcial) |
 
 ## Pendiente para próxima sesión
-- [ ] #4: Download history (trackear descargas en downloads.json)
+- [ ] #4: Download history — **completar**: H key, help hints, tests
 - [ ] #5: Stream replay (persistir info de streams)
 - [ ] #6: Cache management (limpiar preloads)
