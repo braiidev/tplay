@@ -2,6 +2,27 @@
 
 ## Activos
 
+### B50 — Motor editor hint dice q pero q cierra app
+- **Archivo**: `player/handlers/webexplorer.py`
+- **Descripción**: Hint del editor de motor mostraba `q` para cancelar, pero `q` cierra la app globalmente.
+- **Causa**: `_handle_motor_edit` aceptaba `q` y `27` para salir.
+- **Fix**: Solo `Esc` (27) sale del editor. Hint actualizado.
+- **Estado**: Resuelto en v1.5.74
+
+### B51 — Motor indicator formato incorrecto
+- **Archivo**: `player/views.py`
+- **Descripción**: Indicador de motor mostraba `[h← MOTOR →l]` en vez de `← [MOTOR] →`.
+- **Causa**: String de formato incorrecto.
+- **Fix**: `← [{p_name}] →` cuando hay múltiples plataformas.
+- **Estado**: Resuelto en v1.5.74
+
+### B52 — Búsqueda siempre retorna Sin Resultados
+- **Archivo**: `player/web.py`
+- **Descripción**: `search()` retornaba 0 resultados siempre para YouTube.
+- **Causa**: 2da extracción (`extract_flat=False`) por-entry era bloqueada por bot detection de YouTube.
+- **Fix**: Eliminada 2da extracción. `search()` solo usa `extract_flat=True`. Stream URL se obtiene on-demand con `get_stream_url()` al play/download.
+- **Estado**: Resuelto en v1.5.74
+
 ### B44 — ESC en download/motor config no vuelve a V7
 - **Archivo**: `player/app.py`
 - **Descripción**: ESC en modo config descarga o editor de motor no cambiaba a V7.

@@ -502,3 +502,26 @@
 - Event por-ítem permite pausar/reanudar descargas individuales
 
 **Estado**: v1.5.74, mypy --strict pasa.
+
+---
+
+## Entrada 16 — 2025-07-15 — B50-B52: Search fix, motor editor, indicator
+
+**Tarea**: Corregir 3 bugs reportados post-B44-B49
+
+**Archivos modificados**:
+- `player/web.py` — eliminada 2da extracción por-entry, nueva función `get_stream_url()` on-demand
+- `player/handlers/webexplorer.py` — `_play_web_result` usa `get_stream_url()`, motor editor solo `Esc`
+- `player/views.py` — motor indicator `← [MOTOR] →`
+
+**Bugs corregidos**:
+- B50: Motor editor `q` → `Esc` (q cierra app globalmente)
+- B51: Motor indicator formato `← [MOTOR] →`
+- B52: Búsqueda Sin Resultados — YouTube bloqueaba 2da extracción; fix: extracción plana + stream on-demand
+
+**Decisión**:
+- `search()` solo hace `extract_flat=True` (rápido, sin bot detection)
+- `get_stream_url()` extrae stream URL on-demand al play
+- `download()` sigue recibiendo webpage URL (yt-dlp maneja internamente)
+
+**Estado**: v1.5.74, mypy --strict pasa.

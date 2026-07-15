@@ -7,6 +7,9 @@
 - fix: B47 — c cancela y limpia estado (web_download_paused.pop, status → [-])
 - fix: B48 — q global verifica queue + paused antes de cerrar
 - refactor: B49 — Motor cíclico hl sin vista exclusiva, a/e/d gestión inline, eliminar _handle_motor_mode/_draw_motor_list
+- fix: B50 — Motor editor: solo Esc para cancelar (q cierra app)
+- fix: B51 — Motor indicator formato ← [MOTOR] →
+- fix: B52 — Búsqueda Sin Resultados: eliminada 2da extracción, stream URL on-demand con get_stream_url()
 
 ## v1.5.73
 - fix: B40 — d/D toggle pause/resume: verifica queue + status, no solo status
