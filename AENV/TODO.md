@@ -33,11 +33,11 @@
 
 ### Fase 5: App & Config
 - [x] 5.1 Agregar estados web en `player/app.py` (motor_mode, download_queue, etc.) ✅
-- [ ] 5.2 Agregar defaults downloads en `player/config.py`
-- [ ] 5.3 Actualizar nav bar y help tab en `player/ui.py`
+- [x] 5.2 Agregar defaults downloads en `player/config.py` ✅
+- [x] 5.3 Actualizar nav bar y help tab en `player/ui.py` ✅
 
 ### Fase 6: Polish
-- [ ] 6.1 mypy --strict
+- [x] 6.1 mypy --strict ✅
 - [ ] 6.2 Tests manuales completos
 - [ ] 6.3 Commit code + docs
 

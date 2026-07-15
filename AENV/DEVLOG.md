@@ -432,3 +432,23 @@
 - Status display: 3 chars fijos + título truncado + duración
 
 **Estado**: v1.5.64, mypy strict pasa.
+
+---
+
+## Entrada 21 — 2026-07-15 — F10: actualizar config.py + ui.py
+
+**Tarea**: Fase 5 del Web Explorer v2 — defaults downloads + help tab
+
+**Archivos modificados**:
+- `player/config.py` — defaults downloads
+- `player/ui.py` — help tab Web actualizado
+
+**Cambios**:
+- config.py: online_platform, online_download_format, online_download_quality, online_download_stream, online_download_max
+- ui.py: help tab Web con todas las teclas nuevas (Tab, g/G, D, d, A/a, x, motor keys)
+
+**Decisión**:
+- Defaults: audio, 480p, fastest, max 3
+- Help tab: 3 secciones (Web Explorer, Búsqueda, Motor)
+
+**Estado**: v1.5.65, mypy strict pasa.

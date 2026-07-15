@@ -27,6 +27,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "online_max_results": 5,
     "online_audio_quality": "128",
     "online_search_history": [],
+    "online_platform": "YouTube",
+    "online_download_format": "audio",
+    "online_download_quality": "480p",
+    "online_download_stream": "fastest",
+    "online_download_max": 3,
 }
 
 EQ_PRESETS: dict[str, list[float]] = {
