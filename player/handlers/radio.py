@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from ..stack import StackItem
 from ..radios import save_radios
-from .shared import _prompt, _toast, _confirm, _clamp_scroll, _toggle_favorite
+from .shared import _prompt, _toast, _confirm, _clamp_scroll, _toggle_favorite, _navigate_cursor
 from ..ui import COMPACT_THRESHOLD
 
 if TYPE_CHECKING:
@@ -127,17 +127,17 @@ def handle_radio(app: PlayerApp, key: int) -> None:
     if not app.radios:
         return
     if key == curses.KEY_DOWN:
-        app.radio_cursor = min(app.radio_cursor + 1, len(app.radios) - 1)
+        app.radio_cursor = _navigate_cursor(app.radio_cursor, key, len(app.radios), _get_radio_page(app))
     elif key == curses.KEY_UP:
-        app.radio_cursor = max(app.radio_cursor - 1, 0)
+        app.radio_cursor = _navigate_cursor(app.radio_cursor, key, len(app.radios), _get_radio_page(app))
     elif key == curses.KEY_NPAGE:
-        app.radio_cursor = min(app.radio_cursor + _get_radio_page(app), len(app.radios) - 1)
+        app.radio_cursor = _navigate_cursor(app.radio_cursor, key, len(app.radios), _get_radio_page(app))
     elif key == curses.KEY_PPAGE:
-        app.radio_cursor = max(app.radio_cursor - _get_radio_page(app), 0)
+        app.radio_cursor = _navigate_cursor(app.radio_cursor, key, len(app.radios), _get_radio_page(app))
     elif key == ord("g"):
-        app.radio_cursor = 0
+        app.radio_cursor = _navigate_cursor(app.radio_cursor, key, len(app.radios), _get_radio_page(app))
     elif key == ord("G"):
-        app.radio_cursor = len(app.radios) - 1
+        app.radio_cursor = _navigate_cursor(app.radio_cursor, key, len(app.radios), _get_radio_page(app))
 
     h, _ = app.stdscr.getmaxyx()
     app.radio_scroll = _clamp_scroll(app.radio_cursor, app.radio_scroll, h - app.LIST_H - (0 if h < COMPACT_THRESHOLD else 1))

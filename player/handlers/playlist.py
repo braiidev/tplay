@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from ..stack import StackItem
 from .shared import _prompt, _toast, _confirm, _clamp_scroll
 from .shared import _open_tag_editor, _rename_file, _prompt_export_m3u, _toggle_favorite
+from .shared import _navigate_cursor
 from ..ui import COMPACT_THRESHOLD
 
 if TYPE_CHECKING:
@@ -36,25 +37,22 @@ def handle_playlist(app: PlayerApp, key: int) -> None:
         app.playlist_cursor = 0
         app.playlist_scroll = 0
         return
+    h, _ = app.stdscr.getmaxyx()
     if key == curses.KEY_DOWN:
         if app.playlist:
-            app.playlist_cursor = min(app.playlist_cursor + 1, len(app.playlist) - 1)
+            app.playlist_cursor = _navigate_cursor(app.playlist_cursor, key, len(app.playlist), h - app.LIST_H)
     elif key == curses.KEY_UP:
-        app.playlist_cursor = max(app.playlist_cursor - 1, 0)
+        app.playlist_cursor = _navigate_cursor(app.playlist_cursor, key, len(app.playlist), h - app.LIST_H)
     elif key in (curses.KEY_NPAGE,):
         if app.playlist:
-            h, _ = app.stdscr.getmaxyx()
-            page = h - app.LIST_H
-            app.playlist_cursor = min(app.playlist_cursor + page, len(app.playlist) - 1)
+            app.playlist_cursor = _navigate_cursor(app.playlist_cursor, key, len(app.playlist), h - app.LIST_H)
     elif key in (curses.KEY_PPAGE,):
         if app.playlist:
-            h, _ = app.stdscr.getmaxyx()
-            page = h - app.LIST_H
-            app.playlist_cursor = max(app.playlist_cursor - page, 0)
+            app.playlist_cursor = _navigate_cursor(app.playlist_cursor, key, len(app.playlist), h - app.LIST_H)
     elif key == ord("g"):
-        app.playlist_cursor = 0
+        app.playlist_cursor = _navigate_cursor(app.playlist_cursor, key, len(app.playlist), h - app.LIST_H)
     elif key == ord("G"):
-        app.playlist_cursor = len(app.playlist) - 1
+        app.playlist_cursor = _navigate_cursor(app.playlist_cursor, key, len(app.playlist), h - app.LIST_H)
     elif key in (10, 13):
         if app.playlist:
             _play_playlist_enter(app)

@@ -38,6 +38,23 @@ def _clamp_scroll(cursor: int, scroll: int, list_h: int) -> int:
     return scroll
 
 
+def _navigate_cursor(cursor: int, key: int, total: int, page_h: int) -> int:
+    """Navega cursor con down/up/pgup/pgdn/g/G. Retorna nuevo cursor."""
+    if key == curses.KEY_DOWN:
+        return min(cursor + 1, total - 1)
+    elif key == curses.KEY_UP:
+        return max(cursor - 1, 0)
+    elif key == curses.KEY_NPAGE:
+        return min(cursor + page_h, total - 1)
+    elif key == curses.KEY_PPAGE:
+        return max(cursor - page_h, 0)
+    elif key == ord("g"):
+        return 0
+    elif key == ord("G"):
+        return max(0, total - 1)
+    return cursor
+
+
 def _page_size(app: PlayerApp) -> int:
     h, _ = app.stdscr.getmaxyx()
     return int(max(1, h - app.LIST_H))

@@ -5,7 +5,7 @@ import curses
 import os
 from typing import TYPE_CHECKING
 
-from .shared import _toast, _clamp_scroll, _page_size
+from .shared import _toast, _clamp_scroll, _page_size, _navigate_cursor
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -47,21 +47,17 @@ def handle_download_history(app: PlayerApp, key: int) -> None:
         return
 
     if key == curses.KEY_DOWN:
-        app.dl_history_cursor = min(app.dl_history_cursor + 1, total - 1)
+        app.dl_history_cursor = _navigate_cursor(app.dl_history_cursor, key, total, _page_size(app))
     elif key == curses.KEY_UP:
-        app.dl_history_cursor = max(app.dl_history_cursor - 1, 0)
+        app.dl_history_cursor = _navigate_cursor(app.dl_history_cursor, key, total, _page_size(app))
     elif key == curses.KEY_NPAGE:
-        app.dl_history_cursor = min(
-            app.dl_history_cursor + _page_size(app), total - 1
-        )
+        app.dl_history_cursor = _navigate_cursor(app.dl_history_cursor, key, total, _page_size(app))
     elif key == curses.KEY_PPAGE:
-        app.dl_history_cursor = max(
-            app.dl_history_cursor - _page_size(app), 0
-        )
+        app.dl_history_cursor = _navigate_cursor(app.dl_history_cursor, key, total, _page_size(app))
     elif key == ord("g"):
-        app.dl_history_cursor = 0
+        app.dl_history_cursor = _navigate_cursor(app.dl_history_cursor, key, total, _page_size(app))
     elif key == ord("G"):
-        app.dl_history_cursor = max(0, total - 1)
+        app.dl_history_cursor = _navigate_cursor(app.dl_history_cursor, key, total, _page_size(app))
     elif key == ord("Enter") or key == 10 or key == 13:
         _play_entry(app)
     elif key == ord("d"):

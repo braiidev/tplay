@@ -4,7 +4,7 @@ import curses
 import os
 from typing import TYPE_CHECKING, Any
 
-from ..config import THEME_NAMES, COLORS, EQ_PRESETS, EQ_PRESET_NAMES
+from ..config import THEME_NAMES, COLORS, EQ_PRESETS, EQ_PRESET_NAMES, save as _save_config
 from .. import keybindings as kb
 from .shared import _toast, _clamp_scroll
 from ..ui import COMPACT_THRESHOLD
@@ -102,7 +102,7 @@ def handle_config(app: PlayerApp, key: int) -> None:
 
 def _cycle_choice(app: PlayerApp, key_name: str, direction: int) -> None:
     """Cicla opciones para cualquier choice item."""
-    from ..config import save as _save_config
+
 
     options_map: dict[str, list[str]] = {
         "theme": ["default", "custom"],
@@ -133,7 +133,7 @@ def _cycle_theme(app: PlayerApp, direction: int) -> None:
     app._build_config_tabs()
     app.config_cursor = max(0, min(app.config_cursor, len(app.config_items) - 1))
     app._apply_theme()
-    from ..config import save as _save_config
+
     _save_config(app.config)
 
 
@@ -147,12 +147,12 @@ def _cycle_color(app: PlayerApp, key_name: str, direction: int) -> None:
         idx = 0
     cc[key_name] = colors[(idx + direction) % len(colors)]
     app._apply_theme()
-    from ..config import save as _save_config
+
     _save_config(app.config)
 
 
 def _config_int_inc(app: PlayerApp, key_name: str) -> None:
-    from ..config import save as _save_config
+
     if key_name == "volume":
         app.audio.set_volume(app.audio.volume + 5)
     elif key_name == "sleep_timer_minutes":
@@ -167,7 +167,7 @@ def _config_int_inc(app: PlayerApp, key_name: str) -> None:
 
 
 def _config_int_dec(app: PlayerApp, key_name: str) -> None:
-    from ..config import save as _save_config
+
     if key_name == "volume":
         app.audio.set_volume(app.audio.volume - 5)
     elif key_name == "sleep_timer_minutes":
@@ -188,7 +188,7 @@ def _toggle_bool(app: PlayerApp, key_name: str) -> None:
             _reapply_eq(app)
         else:
             app.audio.disable_equalizer()
-    from ..config import save as _save_config
+
     _save_config(app.config)
 
 
@@ -213,7 +213,7 @@ def _cycle_eq_preset(app: PlayerApp, direction: int) -> None:
     if app.config.get("eq_enabled", False):
         preamp = app.config.get("eq_preamp", 0.0)
         app.audio.set_equalizer(app.config.get("eq_bands", [0.0] * 10), preamp)
-    from ..config import save as _save_config
+
     _save_config(app.config)
 
 
@@ -222,7 +222,7 @@ def _eq_preamp_inc(app: PlayerApp) -> None:
     app.config["eq_preamp"] = min(20.0, round(val + 0.5, 1))
     if app.config.get("eq_enabled", False):
         _reapply_eq(app)
-    from ..config import save as _save_config
+
     _save_config(app.config)
 
 
@@ -231,7 +231,7 @@ def _eq_preamp_dec(app: PlayerApp) -> None:
     app.config["eq_preamp"] = max(-20.0, round(val - 0.5, 1))
     if app.config.get("eq_enabled", False):
         _reapply_eq(app)
-    from ..config import save as _save_config
+
     _save_config(app.config)
 
 
@@ -242,7 +242,7 @@ def _eq_band_inc(app: PlayerApp, key_name: str) -> None:
     app.config["eq_bands"] = bands
     if app.config.get("eq_enabled", False):
         _reapply_eq(app)
-    from ..config import save as _save_config
+
     _save_config(app.config)
 
 
@@ -253,7 +253,7 @@ def _eq_band_dec(app: PlayerApp, key_name: str) -> None:
     app.config["eq_bands"] = bands
     if app.config.get("eq_enabled", False):
         _reapply_eq(app)
-    from ..config import save as _save_config
+
     _save_config(app.config)
 
 
@@ -366,7 +366,7 @@ def _build_bindings_from_current(app: PlayerApp) -> dict[str, int]:
 
 
 def _save_keybindings(app: PlayerApp) -> None:
-    from ..config import save as _save_config
+
     app.config["keybinding_mode"] = app.keybinding_mode
     _save_config(app.config)
 
@@ -402,7 +402,7 @@ def handle_dir_picker(app: PlayerApp, key: int) -> None:
         if total > 0 and app.dir_picker_cursor < total:
             _, _, full = app.dir_picker_entries[app.dir_picker_cursor]
             app.config[app.dir_picker_config_key] = full
-            from ..config import save as _save_config
+        
             _save_config(app.config)
             _toast(app, f"Directorio: {full}")
         app.dir_picker_mode = False

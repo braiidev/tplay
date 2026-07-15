@@ -9,7 +9,7 @@ from ..file_utils import list_dir as _list_dir
 from ..file_utils import is_playlist_file as _is_playlist_file
 from ..stack import StackItem
 from .shared import _prompt, _toast, _confirm, _clamp_scroll
-from .shared import _page_size, _play_file_direct, _rename_file
+from .shared import _page_size, _play_file_direct, _rename_file, _navigate_cursor
 from .shared import _open_tag_editor, _parse_m3u, _parse_pls, _toggle_favorite
 from ..ui import COMPACT_THRESHOLD
 
@@ -74,17 +74,17 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
         return
 
     if key == curses.KEY_DOWN:
-        app.cursor = min(app.cursor + 1, len(app.entries) - 1)
+        app.cursor = _navigate_cursor(app.cursor, key, len(app.entries), _page_size(app))
     elif key == curses.KEY_UP:
-        app.cursor = max(app.cursor - 1, 0)
+        app.cursor = _navigate_cursor(app.cursor, key, len(app.entries), _page_size(app))
     elif key == curses.KEY_NPAGE:
-        app.cursor = min(app.cursor + _page_size(app), len(app.entries) - 1)
+        app.cursor = _navigate_cursor(app.cursor, key, len(app.entries), _page_size(app))
     elif key == curses.KEY_PPAGE:
-        app.cursor = max(app.cursor - _page_size(app), 0)
+        app.cursor = _navigate_cursor(app.cursor, key, len(app.entries), _page_size(app))
     elif key == ord("g"):
-        app.cursor = 0
+        app.cursor = _navigate_cursor(app.cursor, key, len(app.entries), _page_size(app))
     elif key == ord("G"):
-        app.cursor = len(app.entries) - 1
+        app.cursor = _navigate_cursor(app.cursor, key, len(app.entries), _page_size(app))
     elif key == ord("\t"):
         idx = app.cursor
         if idx in app.explorer_marked:

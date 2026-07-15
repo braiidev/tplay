@@ -4,7 +4,7 @@ import curses
 import os
 from typing import TYPE_CHECKING
 
-from .shared import _toast, _clamp_scroll, _toggle_favorite
+from .shared import _toast, _clamp_scroll, _toggle_favorite, _navigate_cursor
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -22,22 +22,20 @@ def handle_favorites(app: PlayerApp, key: int) -> None:
             _toast(app, "Sin favoritos")
         return
 
+    h, _ = app.stdscr.getmaxyx()
+
     if key == curses.KEY_DOWN:
-        app.favorites_cursor = min(app.favorites_cursor + 1, len(app.favorites) - 1)
+        app.favorites_cursor = _navigate_cursor(app.favorites_cursor, key, len(app.favorites), h - 4)
     elif key == curses.KEY_UP:
-        app.favorites_cursor = max(app.favorites_cursor - 1, 0)
+        app.favorites_cursor = _navigate_cursor(app.favorites_cursor, key, len(app.favorites), h - 4)
     elif key == curses.KEY_NPAGE:
-        h, _ = app.stdscr.getmaxyx()
-        page = h - 4
-        app.favorites_cursor = min(app.favorites_cursor + page, len(app.favorites) - 1)
+        app.favorites_cursor = _navigate_cursor(app.favorites_cursor, key, len(app.favorites), h - 4)
     elif key == curses.KEY_PPAGE:
-        h, _ = app.stdscr.getmaxyx()
-        page = h - 4
-        app.favorites_cursor = max(app.favorites_cursor - page, 0)
+        app.favorites_cursor = _navigate_cursor(app.favorites_cursor, key, len(app.favorites), h - 4)
     elif key == ord("g"):
-        app.favorites_cursor = 0
+        app.favorites_cursor = _navigate_cursor(app.favorites_cursor, key, len(app.favorites), h - 4)
     elif key == ord("G"):
-        app.favorites_cursor = len(app.favorites) - 1
+        app.favorites_cursor = _navigate_cursor(app.favorites_cursor, key, len(app.favorites), h - 4)
     elif key in (10, 13):
         entry = app.favorites[app.favorites_cursor]
         path = entry["path"]
