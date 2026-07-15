@@ -598,3 +598,23 @@
 - B58: yt-dlp deja `.part` al ser kill -9
 
 **Estado**: v1.5.76, mypy pasa.
+
+---
+
+## Entrada 20 — 2025-07-15 — Fix pause/resume restart from 0%
+
+**Tarea**: Pause/resume reiniciaba descarga desde 0% en vez de continuar
+
+**Problema**: Al pausar, `proc.kill()` deja archivo `.part`. Al reanudar, nuevo subprocess sin `--continue` empieza de 0.
+
+**Solución**:
+- Agregado `--continue` a `_build_download_cmd()`
+- `_cleanup_part_files()` movido de `download()` a `_cancel_download()` (solo cancel explícito)
+- Pause: `.part` se mantiene, `--continue` lo retoma
+- Cancel: `.part` se limpia
+
+**Archivos modificados**:
+- `player/web.py` — `--continue` en cmd, removido cleanup del download loop
+- `player/handlers/webexplorer.py` — `_cancel_download()` llama `_cleanup_part_files()`
+
+**Estado**: v1.5.77, mypy pasa.

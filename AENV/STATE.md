@@ -1,13 +1,13 @@
 # STATE — tplay
 
 ## Estado actual
-- **Version**: v1.5.76
+- **Version**: v1.5.77
 - **Plan activo**: F10 yt-dlp Web Explorer v2 — **COMPLETADO**
 - **Bugs abiertos**: 0
-- **Docs**: Sincronizados con v1.5.76
+- **Docs**: Sincronizados con v1.5.77
 
 ## Último commit
-- `fix - 1.5.76 - B55-B58: pause/resume, cancel reset, vista7 lenta, temp files`
+- `fix - 1.5.77 - B59: pause/resume restart from 0% — add --continue flag`
 
 ## Bugs fixeados post-implementación
 - B22: abr None comparison → search vacío
@@ -35,6 +35,7 @@
 - B56: Cancel no resetea progreso — mensaje inconsistente "Cancelado" vs "Cancelado por usuario"
 - B57: Vista 7 hiper lenta — is_available() ejecutaba subprocess en cada frame
 - B58: Temp files .part no se limpiaban al cancelar descarga
+- B59: Pause/resume reiniciaba desde 0% — falta flag --continue + cleanup solo en cancel
 
 ## Pendiente para próxima sesión
 - [ ] #4: Download history (trackear descargas en downloads.json)

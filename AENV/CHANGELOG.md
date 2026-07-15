@@ -1,5 +1,8 @@
 # CHANGELOG — tplay
 
+## v1.5.77
+- fix: B59 — Pause/resume: agregado --continue al cmd de descarga, _cleanup_part_files solo en cancel explícito
+
 ## v1.5.76
 - fix: B55 — Pause/Resume: _run() verifica web_download_paused antes de sobreescribir estado
 - fix: B56 — Cancel: web.py retorna "Cancelado por usuario" (consistente con handler)
