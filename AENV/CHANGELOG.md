@@ -1,5 +1,10 @@
 # CHANGELOG — tplay
 
+## v1.5.67
+- fix: B26 — download config cíclico (←→/hl para format y quality)
+- fix: B27 — estado play preciso con web_playing_idx
+- fix: B28 — toast reposicionado arriba de status bar
+
 ## v1.5.66
 - fix: B25 — download no bloqueante (thread + progress % en lista)
 - fix: B25 — nombre archivo usa título (page URL en vez de stream URL)

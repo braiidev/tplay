@@ -6,6 +6,27 @@ _(ninguno)_
 
 ## Resueltos
 
+### B28 — Toast tapa status bar en Web Explorer
+- **Archivo**: `player/app.py`
+- **Descripción**: Toast de descarga se dibuja en `h-3` (misma posición que status bar).
+- **Causa**: Ambos usaban `h-3`.
+- **Fix**: Toast ahora en `h - STATUS_ROW - 1` (arriba de status).
+- **Estado**: Resuelto en v1.5.67
+
+### B27 — Estado play persiste indebidamente en Web Explorer
+- **Archivo**: `player/app.py`, `player/handlers/webexplorer.py`
+- **Descripción**: Al play un resultado, [►] queda en el item aunque se cambie de vista.
+- **Causa**: No había tracking de cuál item está reproduciendo.
+- **Fix**: `web_playing_idx` + reset en `_check_playback_end`.
+- **Estado**: Resuelto en v1.5.67
+
+### B26 — Download config no permite cambiar valores
+- **Archivo**: `player/handlers/webexplorer.py`, `player/views.py`
+- **Descripción**: Editor de descarga pide Enter pero no hay opciones visibles para cambiar.
+- **Causa**: Era un editor de texto, no selector cíclico.
+- **Fix**: ←→/hl para ciclar opciones (format: audio/video, quality: 480p/720p/1080p/best).
+- **Estado**: Resuelto en v1.5.67
+
 ### B25 — Descarga bloqueante + sin nombre correcto
 - **Archivo**: `player/handlers/webexplorer.py`, `player/web.py`
 - **Descripción**: Download bloquea UI, archivo se guarda como "videoplayback.ext", Explorer no refresca.
