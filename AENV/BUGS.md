@@ -6,6 +6,13 @@ _(ninguno)_
 
 ## Resueltos
 
+### B32 — Toast borra borde inferior del box
+- **Archivo**: `player/app.py`
+- **Descripción**: Toast en `h-4` sobreescribe `│` del borde; al desaparecer no se restaura.
+- **Causa**: Posición `h - STATUS_ROW - 1` estaba dentro del área del box.
+- **Fix**: Toast ahora en `h-2` (borde inferior) con color `PAIR_NAV`.
+- **Estado**: Resuelto en v1.5.69
+
 ### B31 — yt-dlp corrompe curses (status bar desaparece)
 - **Archivo**: `player/web.py`
 - **Descripción**: Output de yt-dlp se dibuja encima de status bar, borra `│` de marcos.
