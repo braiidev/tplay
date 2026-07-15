@@ -36,8 +36,8 @@ def search(
     """
     Busca en la plataforma indicada.
 
-    1. extract_flat=True → obtiene lista de entries (rápido, sin stream URLs)
-    2. Para cada entry → extract_info para obtener stream URL
+    Usa extract_flat=True para obtener la lista rápida (sin extraer streams).
+    El stream URL se obtiene on-demand al play/download.
     """
     if not is_available():
         raise RuntimeError(
@@ -66,49 +66,57 @@ def search(
     except Exception:
         return results
 
-    extract_opts: dict[str, Any] = {
-        "quiet": True,
-        "no_warnings": True,
-        "extract_flat": False,
-        "skip_download": True,
-    }
     for entry in entries:
         if entry is None:
             continue
         entry_url = entry.get("url") or entry.get("webpage_url", "")
         if not entry_url:
             continue
-        try:
-            with yt_dlp.YoutubeDL(extract_opts) as ydl:
-                detail = ydl.extract_info(entry_url, download=False)
-                if not detail:
-                    continue
-                stream_url = detail.get("url", "")
-                if not stream_url and detail.get("formats"):
-                    audio_fmts = [
-                        f for f in detail["formats"] if f.get("acodec") != "none"
-                    ]
-                    if audio_fmts:
-                        best = max(audio_fmts, key=lambda f: f.get("abr") or 0)
-                        stream_url = best.get("url", "")
-                if not stream_url:
-                    continue
-                download_url = _get_download_url(detail)
-                results.append(
-                    WebResult(
-                        title=detail.get("title", entry.get("title", "Sin título")),
-                        url=stream_url,
-                        duration=int(detail.get("duration") or 0),
-                        channel=detail.get("channel", detail.get("uploader", "")),
-                        webpage_url=detail.get("webpage_url", entry_url),
-                        platform=detail.get("extractor", "unknown"),
-                        download_url=download_url,
-                    )
-                )
-        except Exception:
-            continue
+        results.append(
+            WebResult(
+                title=entry.get("title", "Sin título"),
+                url=entry_url,
+                duration=int(entry.get("duration") or 0),
+                channel=entry.get("channel", entry.get("uploader", "")),
+                webpage_url=entry.get("webpage_url", entry_url),
+                platform=info.get("extractor", "unknown"),
+            )
+        )
 
     return results
+
+
+def get_stream_url(webpage_url: str) -> str:
+    """Extrae la stream URL desde una webpage URL (on-demand)."""
+    if not is_available():
+        return webpage_url
+    try:
+        import yt_dlp
+    except ImportError:
+        return webpage_url
+
+    opts: dict[str, Any] = {
+        "quiet": True,
+        "no_warnings": True,
+        "extract_flat": False,
+        "skip_download": True,
+    }
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(webpage_url, download=False)
+            if not info:
+                return webpage_url
+            stream = info.get("url", "")
+            if not stream and info.get("formats"):
+                audio_fmts = [
+                    f for f in info["formats"] if f.get("acodec") != "none"
+                ]
+                if audio_fmts:
+                    best = max(audio_fmts, key=lambda f: f.get("abr") or 0)
+                    stream = best.get("url", "")
+            return stream or webpage_url
+    except Exception:
+        return webpage_url
 
 
 def _get_download_url(info: dict[str, Any]) -> str:

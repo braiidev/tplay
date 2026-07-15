@@ -234,7 +234,7 @@ def _handle_motor_edit(app: PlayerApp, key: int) -> None:
             app.web_motor_edit_cursor_pos = cur + 1
         return
 
-    if key in (ord("q"), 27):
+    if key == 27:
         app.web_motor_edit_mode = False
     elif key == ord("s"):
         _save_motor_edit(app)
@@ -411,11 +411,14 @@ def _play_web_result(app: PlayerApp) -> None:
     app.web_playing_idx = app.web_cursor
     app.web_result_status[app.web_cursor] = "[►]"
 
+    from .. import web
+    stream_url = web.get_stream_url(result.webpage_url)
+
     from ..stack import StackItem
-    item = StackItem(path=result.url, name=result.title)
+    item = StackItem(path=stream_url, name=result.title)
     app.stack.items = [item]
     app.stack.playhead = 0
-    app.audio.play_file(result.url)
+    app.audio.play_file(stream_url)
     app.current_view = app.V_LISTEN
     _toast(app, f"▶ {result.title}")
 

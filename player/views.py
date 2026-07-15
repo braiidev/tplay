@@ -953,7 +953,7 @@ def _draw_web_main(app: PlayerApp, h: int, w: int, p_name: str) -> None:
     nav = curses.color_pair(PAIR_NAV)
 
     multi = len(app.web_platforms) > 1
-    motor_str = f"[h← {p_name} →l]" if multi else f"[{p_name}]"
+    motor_str = f"← [{p_name}] →" if multi else f"[{p_name}]"
     if app.web_search_mode:
         prompt_str = f"buscar: {app.web_search_buf}"
         motor_attr = nav
