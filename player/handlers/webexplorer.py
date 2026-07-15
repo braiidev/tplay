@@ -309,6 +309,7 @@ def _handle_download_mode(app: PlayerApp, key: int) -> None:
 
     if key == 27:
         app.web_download_mode = False
+        app.current_view = app.V_WEB
     elif key in (ord("j"), curses.KEY_DOWN):
         app.web_download_cursor = min(
             app.web_download_cursor + 1, len(fields_order) - 1
@@ -425,13 +426,17 @@ def _handle_download_key(app: PlayerApp, with_config: bool) -> None:
     idx = app.web_cursor
     status = app.web_result_status[idx] if idx < len(app.web_result_status) else "[-]"
 
-    if status in ("[D]", "[PP]") or _is_downloading_pct(status):
-        _pause_download(app, idx)
-        return
-
     if idx in app.web_download_paused:
         _resume_download(app, idx)
         return
+
+    if len(app.web_download_queue) > 0:
+        if status in ("[D]", "[PP]") or _is_downloading_pct(status):
+            _pause_download(app, idx)
+            return
+        if status == "[P]":
+            _resume_download(app, idx)
+            return
 
     if len(app.web_download_queue) >= app.web_download_max:
         result = app.web_results[app.web_cursor]
@@ -530,10 +535,11 @@ def _start_download(
                 app.web_result_status[idx] = "[✓]"
                 _toast(app, f"Descargado: {msg}")
                 app.entries = _list_dir(app.current_dir)
+            elif msg == "Cancelado por usuario":
+                app.web_result_status[idx] = "[C]"
             else:
-                app.web_result_status[idx] = "[-]"
-                if msg != "Cancelado por usuario":
-                    _toast(app, f"Error: {msg}")
+                app.web_result_status[idx] = "[!]"
+                _toast(app, f"Error: {msg}")
 
         if result in app.web_download_queue:
             app.web_download_queue.remove(result)

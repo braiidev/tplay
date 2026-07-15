@@ -874,6 +874,14 @@ class PlayerApp:
             curses.flushinp()
             return True
         if key == ord("q"):
+            active = len(self.web_download_queue)
+            if active > 0:
+                self.toast_msg = f"Hay {active} descarga/s en curso. Presiona q de nuevo para salir"
+                self.toast_ticks = 80
+                self._q_pending = getattr(self, "_q_pending", 0) + 1
+                if self._q_pending < 2:
+                    return True
+            self._q_pending = 0
             self._save_session()
             save_history(self.history)
             self.config["volume"] = self.audio.volume
