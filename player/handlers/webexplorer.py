@@ -69,10 +69,10 @@ def _handle_normal_mode(app: PlayerApp, key: int) -> None:
         _play_web_result(app)
         return
     elif key == ord("D") and total > 0:
-        _download_web_result(app, with_config=False)
+        _handle_download_key(app, with_config=False)
         return
     elif key == ord("d") and total > 0:
-        _download_web_result(app, with_config=True)
+        _handle_download_key(app, with_config=True)
         return
     elif key in (ord("A"), ord("a")) and total > 0:
         _add_to_queue(app)
@@ -80,11 +80,8 @@ def _handle_normal_mode(app: PlayerApp, key: int) -> None:
     elif key == ord("x"):
         _clear_results(app)
         return
-    elif key == ord("c") and _has_active_download(app):
+    elif key == ord("c"):
         _cancel_download(app)
-        return
-    elif key == ord("P") and _has_active_download(app):
-        _pause_download(app)
         return
     elif key == 27:
         app.current_view = app.V_LISTEN
@@ -420,12 +417,18 @@ def _play_web_result(app: PlayerApp) -> None:
     _toast(app, f"▶ {result.title}")
 
 
-def _download_web_result(app: PlayerApp, with_config: bool) -> None:
-    """Descarga un resultado de la lista."""
+def _handle_download_key(app: PlayerApp, with_config: bool) -> None:
+    """d/D toggle: inicia, pausa o reanuda segun estado del item."""
     if app.web_cursor >= len(app.web_results):
         return
 
     idx = app.web_cursor
+    status = app.web_result_status[idx] if idx < len(app.web_result_status) else "[-]"
+
+    if status in ("[D]", "[PP]") or _is_downloading_pct(status):
+        _pause_download(app, idx)
+        return
+
     if idx in app.web_download_paused:
         _resume_download(app, idx)
         return
@@ -449,8 +452,16 @@ def _download_web_result(app: PlayerApp, with_config: bool) -> None:
     _do_download_direct(app)
 
 
+def _is_downloading_pct(status: str) -> bool:
+    """Verifica si el estado es un porcentaje de descarga [XX%]."""
+    if not status.startswith("[") or not status.endswith("%]"):
+        return False
+    inner = status[1:-2]
+    return inner.strip().isdigit()
+
+
 def _do_download_direct(app: PlayerApp) -> None:
-    """Ejecuta descarga directa con configuración guardada."""
+    """Ejecuta descarga directa con configuracion guardada."""
     if app.web_cursor >= len(app.web_results):
         return
 
@@ -463,7 +474,7 @@ def _do_download_direct(app: PlayerApp) -> None:
 
 
 def _do_download(app: PlayerApp) -> None:
-    """Ejecuta descarga con configuración del editor."""
+    """Ejecuta descarga con configuracion del editor."""
     if app.web_cursor >= len(app.web_results):
         return
 
@@ -518,8 +529,7 @@ def _start_download(
             if success:
                 app.web_result_status[idx] = "[✓]"
                 _toast(app, f"Descargado: {msg}")
-                if app.current_dir == os.path.realpath(music_dir):
-                    app.entries = _list_dir(app.current_dir)
+                app.entries = _list_dir(app.current_dir)
             else:
                 app.web_result_status[idx] = "[-]"
                 if msg != "Cancelado por usuario":
@@ -552,24 +562,28 @@ def _clear_results(app: PlayerApp) -> None:
     _toast(app, "Lista limpiada")
 
 
-def _has_active_download(app: PlayerApp) -> bool:
-    """Verifica si hay una descarga en curso."""
-    return len(app.web_download_queue) > 0
-
-
 def _cancel_download(app: PlayerApp) -> None:
-    """Cancela la descarga activa."""
-    if not app.web_download_queue:
+    """Cancela la descarga activa del item actual."""
+    idx = app.web_cursor
+    status = app.web_result_status[idx] if idx < len(app.web_result_status) else "[-]"
+
+    if status not in ("[D]", "[PP]") and not _is_downloading_pct(status):
+        if idx in app.web_download_paused:
+            del app.web_download_paused[idx]
+            app.web_result_status[idx] = "[C]"
+            _toast(app, "Descarga cancelada")
         return
+
     app.web_download_cancel.set()
+    if idx < len(app.web_result_status):
+        app.web_result_status[idx] = "[C]"
     _toast(app, "Cancelando descarga...")
 
 
-def _pause_download(app: PlayerApp) -> None:
-    """Pausa la descarga activa (cancel + guardar para resume)."""
-    if not app.web_download_queue:
+def _pause_download(app: PlayerApp, idx: int) -> None:
+    """Pausa la descarga del item idx."""
+    if len(app.web_download_queue) == 0:
         return
-    idx = app.web_cursor
     if idx < len(app.web_results):
         result = app.web_results[idx]
         fmt = app.config.get("online_download_format", "audio")
@@ -577,7 +591,7 @@ def _pause_download(app: PlayerApp) -> None:
         app.web_download_paused[idx] = (result.webpage_url, fmt, quality)
         app.web_result_status[idx] = "[P]"
     app.web_download_cancel.set()
-    _toast(app, "Descarga pausada (presiona D para reanudar)")
+    _toast(app, "Descarga pausada (d/D para reanudar)")
 
 
 def _resume_download(app: PlayerApp, idx: int) -> None:

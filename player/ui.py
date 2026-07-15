@@ -603,7 +603,6 @@ HELP_TABS: list[HelpTab] = [
             ("    A/a       Anadir a pila", PAIR_TEXTO),
             ("    x         Limpiar resultados", PAIR_TEXTO),
             ("    c         Cancelar descarga", PAIR_TEXTO),
-            ("    P         Pausar descarga", PAIR_TEXTO),
             ("    Esc       Volver a Escucha", PAIR_TEXTO),
             ("", None),
             ("  BUSQUEDA", PAIR_NAV),

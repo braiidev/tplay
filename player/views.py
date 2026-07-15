@@ -1033,7 +1033,7 @@ def _draw_web_hints(app: PlayerApp, h: int, w: int) -> None:
         hints = _build_hints([
             ("j/k", "navegar"), ("g/G", "inicio/fin"), ("Enter", "play"),
             ("D", "descargar"), ("d", "config descarga"), ("A", "anadir"),
-            ("c", "cancelar"), ("P", "pausar"), ("x", "limpiar"),
+            ("c", "cancelar"), ("x", "limpiar"),
             ("/", "buscar"), ("Tab", "motor"), ("Esc", "volver"),
         ], w)
     if hints:

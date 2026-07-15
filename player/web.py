@@ -239,14 +239,23 @@ def download(
         opts["progress_hooks"] = [progress_hook]
 
     try:
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            if info:
-                title = info.get("title", "download")
-                ext = "mp3" if fmt == "audio" else "mp4"
-                filename = f"{title}.{ext}"
-                return True, filename
-            return False, "No se pudo obtener info del video"
+        # Redirigir stderr a /dev/null para suprimir output de yt-dlp
+        # (curses usa stdout/fd 1, así que no afecta)
+        fd_save = os.dup(2)
+        with open(os.devnull, "w") as devnull:
+            os.dup2(devnull.fileno(), 2)
+            try:
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    info = ydl.extract_info(url, download=True)
+                    if info:
+                        title = info.get("title", "download")
+                        ext = "mp3" if fmt == "audio" else "mp4"
+                        filename = f"{title}.{ext}"
+                        return True, filename
+                    return False, "No se pudo obtener info del video"
+            finally:
+                os.dup2(fd_save, 2)
+                os.close(fd_save)
     except yt_dlp.utils.DownloadCancelled:
         return False, "Cancelado"
     except Exception as e:
