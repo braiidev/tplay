@@ -1,5 +1,15 @@
 # CHANGELOG — tplay
 
+## v1.5.80
+- feat: #4+#5 Historial unificado (descargas+streams) con tabs [Descargas] [Streams]
+- feat: DownloadEntry campos `is_temp`, `duration`, `channel`, `play_count`
+- feat: `get_downloads()`, `get_streams()`, `clean_old_temps()`, `format_duration()`
+- feat: DownloadItem.output_dir + add_download(output_dir=) para streams temporales
+- feat: Tabs con `[/]`, `X` limpia tab activo, `d` re-busca stream / re-descarga download
+- feat: Auto-save stream en `_play_web_result()` → historial + DownloadManager a TMP_DIR
+- feat: Help tab "Historial" unificado
+- fix: View switch 0-8 range + dl_history_tab reset
+
 ## v1.5.79
 - feat: #4 Download History — downloads.py (CRUD), handlers/download_history.py, views.py
 - feat: DownloadItem + campo `platform`, add_download acepta platform param

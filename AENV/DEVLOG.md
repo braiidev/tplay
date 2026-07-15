@@ -111,3 +111,16 @@
 - `app.py`: View switch 0-8 range + H key en Web Explorer → V_DL_HISTORY
 
 **Estado**: v1.5.79, mypy strict pasa (28 archivos), archivos compilan OK
+
+---
+
+## Entrada 13 — 2025-07-15 — #4+#5 Historial Unificado
+- `downloads.py`: campos `is_temp`, `duration`, `channel`, `play_count` + `get_downloads()`, `get_streams()`, `clean_old_temps()`, `format_duration()`
+- `web.py`: `DownloadItem.output_dir` + `add_download(output_dir=)` para streams temporales
+- `handlers/download_history.py`: tabs `[`/`]`, `_switch_tab()`, `_get_current_items()`, `_play_entry()`, `_re_download()` (re-busca stream / re-descarga download), `_clear_tab()` (X key)
+- `views.py`: `draw_download_history()` con tab bar, streams muestran `♪ duración Nx`, downloads muestran `✓ tamaño`
+- `handlers/webexplorer.py`: `_play_web_result()` auto-save stream a historial + DownloadManager a TMP_DIR
+- `app.py`: `dl_history_tab` state var, reset en view switch
+- `ui.py`: Help tab "Historial" unificado
+
+**Estado**: v1.5.80, mypy strict pasa (28 archivos), archivos compilan OK
