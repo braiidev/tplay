@@ -640,6 +640,7 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
         "online_download_format": f"Formato descarga: {app.config.get('online_download_format', 'audio')}",
         "online_download_quality": f"Calidad descarga: {app.config.get('online_download_quality', '480p')}",
         "online_download_max": f"Descargas máximas: {app.config.get('online_download_max', 3)}",
+        "online_cookies": f"Cookies yt-dlp: {app.config.get('online_cookies', 'none')}",
     }
     cc = app.config.get("custom_colors", {})
 
@@ -1004,6 +1005,14 @@ def _draw_web_main(app: PlayerApp, h: int, w: int, p_name: str) -> None:
         line = f" {status} {title:<{title_w}}{dur:>7}"
         attr = destacar | curses.A_REVERSE if is_cur else texto
         safe_addstr(app.stdscr, y, 2, line[:w - 4], attr, h, w)
+
+    if app.web_cursor < len(app.web_results):
+        dm = _web.get_download_manager()
+        cur_result = app.web_results[app.web_cursor]
+        dl_item = dm.find_by_url(cur_result.webpage_url)
+        if dl_item and dl_item.state == _web.DownloadState.FAILED and dl_item.error:
+            err_line = f" Error: {dl_item.error}"
+            safe_addstr(app.stdscr, 3, 2, err_line[:w - 4], curses.color_pair(PAIR_NAV), h, w)
 
     draw_list_indicators(app.stdscr, h, w, app.web_scroll, len(app.web_results), list_h)
     _draw_web_hints(app, h, w)

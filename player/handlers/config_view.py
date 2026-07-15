@@ -108,6 +108,7 @@ def _cycle_choice(app: PlayerApp, key_name: str, direction: int) -> None:
         "theme": ["default", "custom"],
         "online_download_format": ["audio", "video"],
         "online_download_quality": ["worst", "144p", "240p", "480p", "720p", "1080p", "best"],
+        "online_cookies": ["none", "firefox", "brave", "chromium"],
     }
     opts = options_map.get(key_name)
     if not opts:

@@ -102,13 +102,22 @@ def _build_search_cmd(
     cmd.append(f"{search_prefix}{max_results}:{query}")
     return cmd
 
-
 def _build_stream_cmd(
-    webpage_url: str, platform_name: str | None = None,
+    webpage_url: str,
+    platform_name: str | None = None,
 ) -> list[str]:
     """Construye comando para obtener stream URL."""
     cmd = list(_YTDLP_COMMON)
     cmd.extend(["--get-url", "-f", "bestaudio/best"])
+    cmd.extend(["--js-runtime", "node"])
+
+    cfg = _load_config()
+    cookies = cfg.get("online_cookies", "none")
+    if cookies and cookies != "none":
+        if cookies.startswith("file:"):
+            cmd.extend(["--cookies", cookies[5:]])
+        else:
+            cmd.extend(["--cookies-from-browser", cookies])
 
     cmd.append(webpage_url)
     return cmd
@@ -119,11 +128,19 @@ def _build_download_cmd(
     output_path: str,
     fmt: str = "audio",
     quality: str = "480p",
-    platform_name: str | None = None,
 ) -> list[str]:
     """Construye comando para descarga."""
+    cfg = _load_config()
     cmd = list(_YTDLP_COMMON)
     cmd.append("--continue")
+    cmd.extend(["--js-runtime", "node"])
+
+    cookies = cfg.get("online_cookies", "none")
+    if cookies and cookies != "none":
+        if cookies.startswith("file:"):
+            cmd.extend(["--cookies", cookies[5:]])
+        else:
+            cmd.extend(["--cookies-from-browser", cookies])
 
     outtmpl = os.path.join(output_path, "%(title)s.%(ext)s")
 
@@ -517,19 +534,21 @@ class DownloadManager:
         cmd = _build_download_cmd(item.url, music_dir, item.fmt, item.quality)
         try:
             proc = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 text=True, bufsize=1,
             )
             item._process = proc
             item.state = DownloadState.DOWNLOADING
             self._notify()
             filename = ""
+            all_output: list[str] = []
             for line in proc.stdout or []:
                 if item._cancel_event.is_set():
                     proc.kill()
                     proc.wait()
                     return
                 line = line.strip()
+                all_output.append(line)
                 if not line:
                     continue
                 if "[download]" in line:
@@ -548,6 +567,7 @@ class DownloadManager:
                     pass
                 elif "ERROR" in line or "error" in line.lower():
                     item.error = line
+            stderr_out = proc.stderr.read() if proc.stderr else ""
             proc.wait()
             if item._cancel_event.is_set():
                 return
@@ -557,7 +577,8 @@ class DownloadManager:
                 item.file_path = filename
             else:
                 item.state = DownloadState.FAILED
-                item.error = item.error or "Error desconocido"
+                err_msg = item.error or stderr_out.strip() or "Error desconocido"
+                item.error = _classify_error(err_msg)
         except Exception as e:
             item.state = DownloadState.FAILED
             item.error = str(e)

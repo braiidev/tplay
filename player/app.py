@@ -469,6 +469,7 @@ class PlayerApp:
                     ("online_download_format", "Formato descarga", "choice"),
                     ("online_download_quality", "Calidad descarga", "choice"),
                     ("online_download_max", "Descargas máximas", "int"),
+                    ("online_cookies", "Cookies yt-dlp", "choice"),
                     ("keybindings", "Keybindings", "action"),
                     ("update", "Actualizar tplay", "action"),
                 ],

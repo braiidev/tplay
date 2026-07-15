@@ -32,6 +32,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "online_download_quality": "480p",
     "online_download_stream": "fastest",
     "online_download_max": 3,
+    "online_cookies": "none",
 }
 
 EQ_PRESETS: dict[str, list[float]] = {
