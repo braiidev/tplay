@@ -1,388 +1,283 @@
 # WEB_EXPLORER_PLAN — tplay
 
-> Plan detallado de implementación del yt-dlp Web Explorer (Fase 1: Streaming MVP).
+> Plan completo de implementación del yt-dlp Web Explorer v2.
 
 ## Resumen
-Nueva vista V7 "Web" que permite buscar en YouTube via `yt-dlp`, navegar resultados y reproducir streaming directo (audio-only, sin descargar).
+Vista V7 "Web" con motor de búsqueda multi-plataforma, gestión de plataformas, descarga directa y estados de descarga en lista.
 
-## Stack nuevo
+## Stack
 - `yt-dlp` (pip) — librería Python, no subprocess
 - Sin dependencias de sistema
 
 ---
 
-## Estado actual (v1.5.60)
+## Arquitectura actual (v1.5.60)
 
-### Lo que ya está implementado
-- `player/web.py` — wrapper yt-dlp (search, WebResult, format_duration)
+### Lo que existe
+- `player/web.py` — wrapper yt-dlp (WebResult, search, format_duration) — **ROTO** (B22)
 - `player/handlers/webexplorer.py` — handler V7 (search input, nav, playback)
-- `player/views.py` — draw_web()
-- `player/app.py` — V_WEB=7, handler/drawer, dispatch, web_search_mode intercept
+- `player/views.py` — draw_web() básico
+- `player/app.py` — V_WEB=7, handler/drawer, dispatch
 - `player/ui.py` — nav bar 7:Web, help tab Web
-- `player/config.py` — defaults online
+- `player/config.py` — defaults online básicos
 - `player/__init__.py` — auto-install deps en --update
 - `requirements.txt` — yt-dlp
 
-### Bugs fixeados
-- B20: web_search_mode interceptado en _handle_key_mode_specific
-- B21: web_search_mode reset en view switch
-
-### Bug pendiente: B22 — search() siempre devuelve "Sin resultados"
-
-**Causa raíz**: `extract_flat=False` con yt-dlp search retorna entries pero `entry.get("url", "")` es string vacío. yt-dlp search solo retorna metadata básica (title, id, webpage_url) sin extraer stream URL.
-
-**Test que confirma**:
-```python
-import yt_dlp
-with yt_dlp.YoutubeDL(opts) as ydl:
-    info = ydl.extract_info("ytsearch3:beethoven", download=False)
-    for e in info["entries"]:
-        print(e.get("url"))  # → "" (vacío siempre)
-```
-
-**Solución**: Usar `extract_flat=True` para obtener la lista (rápido), luego extraer stream URL de cada entry individualmente con `extract_info(entry["url"], download=False)`.
+### Bugs conocidos
+- **B22**: `search()` siempre retorna "Sin resultados" (extract_flat=False no retorna stream URLs)
 
 ---
 
-## Cambio de diseño: Registry de plataformas
+## Nueva arquitectura v2
 
-### Problema
-El approach actual usa `ytsearch5:query` hardcodeado. No soporta otras plataformas ni tiene tracking de uso.
+### 1. `player/platforms.py` — NUEVO
 
-### Solución: Base de datos de plataformas
-Estructura JSON en `~/.config/tplay/data/platforms.json`:
-
-```json
-[
-  {
-    "name": "YouTube",
-    "url": "https://www.youtube.com",
-    "download_pattern": "/watch?v={id}",
-    "search_pattern": "/results?search_query={query}",
-    "search_prefix": "ytsearch",
-    "downloads": 0
-  },
-  {
-    "name": "Dailymotion",
-    "url": "https://www.dailymotion.com",
-    "download_pattern": "/video/{id}",
-    "search_pattern": "/search/{query}/videos",
-    "search_prefix": "dmsearch",
-    "downloads": 0
-  }
-]
-```
-
-### Campos
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `name` | str | Nombre legible (YouTube, Dailymotion) |
-| `url` | str | URL base del sitio |
-| `download_pattern` | str | Patrón de URL de video, `{id}` se reemplaza |
-| `search_pattern` | str | Patrón de URL de búsqueda, `{query}` se reemplaza |
-| `search_prefix` | str | Prefijo yt-dlp para búsqueda nativa (`ytsearch`, `dmsearch`) |
-| `downloads` | int | Contador de descargas realizadas |
-
-### Por qué `search_prefix` es clave
-yt-dlp soporta búsqueda nativa en muchas plataformas:
-- `ytsearch5:query` → YouTube
-- `dmsearch5:query` → Dailymotion
-- `scsearch5:query` → SoundCloud
-- `vpsearch5:query` → Vimeo
-
-El `search_prefix` permite construir la query de búsqueda sin parsear URLs.
-
----
-
-## Plan de implementación
-
-### Paso 2.1: Crear `player/platforms.py` (nuevo)
-
-Módulo que maneja el registry de plataformas.
+Registry de plataformas soportadas.
 
 ```python
-"""Registry de plataformas soportadas para Web Explorer."""
-from __future__ import annotations
-import json
-import os
-from dataclasses import dataclass, field, asdict
-
-PLATFORMS_FILE = os.path.expanduser("~/.config/tplay/data/platforms.json")
-
-DEFAULT_PLATFORMS = [
-    {
-        "name": "YouTube",
-        "url": "https://www.youtube.com",
-        "download_pattern": "/watch?v={id}",
-        "search_pattern": "/results?search_query={query}",
-        "search_prefix": "ytsearch",
-        "downloads": 0,
-    },
-]
-
-
 @dataclass
 class Platform:
-    name: str
-    url: str
-    download_pattern: str
-    search_pattern: str
-    search_prefix: str
+    name: str                    # "YouTube"
+    url: str                     # "https://youtube.com"
+    search_pattern: str          # "/results?search_query={query}" (vacío = sin búsqueda)
+    download_pattern: str        # "/watch?v={id}"
+    search_prefix: str           # "ytsearch" (vacío = sin búsqueda nativa)
     downloads: int = 0
-
-
-def load_platforms() -> list[Platform]:
-    """Carga plataformas desde archivo o crea defaults."""
-    try:
-        with open(PLATFORMS_FILE) as f:
-            data = json.load(f)
-        return [Platform(**p) for p in data]
-    except (FileNotFoundError, json.JSONDecodeError, TypeError):
-        return [Platform(**p) for p in DEFAULT_PLATFORMS]
-
-
-def save_platforms(platforms: list[Platform]) -> None:
-    """Guarda plataformas a archivo."""
-    try:
-        os.makedirs(os.path.dirname(PLATFORMS_FILE), exist_ok=True)
-        with open(PLATFORMS_FILE, "w") as f:
-            json.dump([asdict(p) for p in platforms], f, indent=2)
-    except OSError:
-        pass
-
-
-def get_search_prefix(platforms: list[Platform], name: str) -> str:
-    """Retorna el search_prefix para una plataforma."""
-    for p in platforms:
-        if p.name.lower() == name.lower():
-            return p.search_prefix
-    return "ytsearch"  # fallback
-
-
-def increment_downloads(platforms: list[Platform], name: str) -> None:
-    """Incrementa el contador de descargas de una plataforma."""
-    for p in platforms:
-        if p.name.lower() == name.lower():
-            p.downloads += 1
-            break
+    is_default: bool = False     # protege de eliminación
 ```
 
-### Archivos afectados
-- **Nuevo**: `player/platforms.py`
-- **Nuevo**: `~/.config/tplay/data/platforms.json` (se crea automáticamente)
+**DEFAULT_PLATFORMS (6):**
+| Platform | search_prefix | Búsqueda nativa |
+|----------|---------------|-----------------|
+| YouTube | `ytsearch` | ✅ |
+| SoundCloud | `scsearch` | ✅ |
+| Vimeo | `vpsearch` | ✅ |
+| Dailymotion | `dmsearch` | ✅ |
+| Twitch | `twsearch` | ✅ |
+| Niconico | `nicosearch` | ✅ |
+
+**Funciones:**
+- `load_platforms() → list[Platform]`
+- `save_platforms(list[Platform])`
+- `get_search_prefix(platforms, name) → str`
+- `increment_downloads(platforms, name)`
+
+**Almacenamiento:** `~/.config/tplay/data/platforms.json`
+
+**Plataformas sin búsqueda nativa:** El usuario puede agregarlas manualmente. Si `search_prefix` está vacío, el prompt acepta URL completa.
 
 ---
 
-### Paso 2.2: Rediseñar `player/web.py`
+### 2. `player/web.py` — REESCRIBIR
 
-Cambios principales:
-1. Usar `extract_flat=True` para listar resultados (rápido)
-2. Extraer stream URL individualmente por cada entry
-3. Recibir `search_prefix` como parámetro
-4. Incrementar contador de descargas al hacer play
-
+**WebResult (existente, modificar):**
 ```python
-def search(query: str, max_results: int = 5, 
-           search_prefix: str = "ytsearch") -> list[WebResult]:
-    """
-    Busca en la plataforma indicada.
-    1. extract_flat=True → obtiene lista de entries (rápido, sin stream URLs)
-    2. Para cada entry → extract_info para obtener stream URL
-    """
-    if not is_available():
-        raise RuntimeError("yt-dlp no instalado: pip install --break-system-packages yt-dlp")
-    
-    results: list[WebResult] = []
-    try:
-        import yt_dlp
-    except ImportError:
-        return results
-    
-    # Paso 1: listar resultados (rápido)
-    list_opts: dict[str, object] = {
-        "quiet": True,
-        "no_warnings": True,
-        "extract_flat": True,  # No extraer URLs aún
-    }
-    try:
-        with yt_dlp.YoutubeDL(list_opts) as ydl:
-            info = ydl.extract_info(f"{search_prefix}{max_results}:{query}", download=False)
-            if not info or "entries" not in info:
-                return results
-            entries = list(info["entries"])
-    except Exception:
-        return results
-    
-    # Paso 2: extraer stream URL de cada entry
-    extract_opts: dict[str, object] = {
-        "quiet": True,
-        "no_warnings": True,
-        "extract_flat": False,
-        "skip_download": True,
-    }
-    for entry in entries:
-        if entry is None:
-            continue
-        entry_url = entry.get("url") or entry.get("webpage_url", "")
-        if not entry_url:
-            continue
-        try:
-            with yt_dlp.YoutubeDL(extract_opts) as ydl:
-                detail = ydl.extract_info(entry_url, download=False)
-                if not detail:
-                    continue
-                stream_url = detail.get("url", "")
-                if not stream_url and detail.get("formats"):
-                    audio_fmts = [f for f in detail["formats"]
-                                  if f.get("acodec") != "none"]
-                    if audio_fmts:
-                        best = max(audio_fmts, key=lambda f: f.get("abr", 0))
-                        stream_url = best.get("url", "")
-                if not stream_url:
-                    continue
-                results.append(WebResult(
-                    title=detail.get("title", entry.get("title", "Sin título")),
-                    url=stream_url,
-                    duration=int(detail.get("duration") or 0),
-                    channel=detail.get("channel", detail.get("uploader", "")),
-                    webpage_url=detail.get("webpage_url", entry_url),
-                    platform=detail.get("extractor", "unknown"),
-                ))
-        except Exception:
-            continue
-    
-    return results
+@dataclass
+class WebResult:
+    title: str
+    url: str              # stream URL para playback
+    duration: int
+    channel: str
+    webpage_url: str
+    platform: str
+    download_url: str     # NUEVO: URL para descarga
 ```
 
-### Notas
-- `extract_flat=True` → la búsqueda lista rápido (~1s)
-- `extract_info(entry_url)` por cada resultado → extrae stream URL (~2-3s cada uno)
-- Total para 5 resultados: ~10-15s (aceptable, con toast de progreso opcional)
-- `skip_download=True` asegura que no descargue nada
+**Funciones:**
+- `search(query, max_results, search_prefix) → list[WebResult]` — REESCRIBIR con extract_flat=True
+- `download(url, output_path, fmt, quality) → bool` — NUEVO
+- `is_available() → bool` — sin cambios
+- `format_duration() → str` — sin cambios
 
-### Archivos afectados
-- **Modificar**: `player/web.py` (reemplazar search())
+**Formatos:**
+- Audio: `.mp3` (mejor compatibilidad)
+- Video: `.mp4` (mejor compatibilidad)
 
 ---
 
-### Paso 2.3: Modificar `player/handlers/webexplorer.py`
+### 3. `player/handlers/webexplorer.py` — REESCRIBIR
 
-Cambios:
-1. `_do_search()` lee `search_prefix` de la plataforma activa
-2. `_play_web_result()` incrementa contador de descargas
+**3 modos de operación:**
 
+```
+┌─ web_search_mode (prompt de búsqueda)
+│    Tab → web_motor_mode
+│    Enter → buscar (si search_prefix existe)
+│           → URL directa (si search_prefix vacío)
+│    Esc → volver a lista
+│
+├─ web_motor_mode (gestionar plataformas)
+│    ← → → ciclar motores
+│    a → _add_platform() → web_motor_edit_mode
+│    e → _edit_platform() → web_motor_edit_mode
+│    d → _delete_platform() (no-defaults)
+│    Tab → web_search_mode
+│    Enter → seleccionar motor activo
+│
+└─ Normal (navegar lista)
+     / → web_search_mode
+     j/k, g/G, PgUp/PgDn → navegar
+     Enter → play (sin resetear lista)
+     D → descarga directa (sin config)
+     d → descarga con config
+     A/a → add to queue (reproducción)
+     x → clear list
+     Esc → volver a Listen
+```
+
+**Funciones nuevas:**
+- `_handle_motor_input(app, key)` — gestión de plataformas
+- `_add_platform(app)` — agregar plataforma
+- `_edit_platform(app)` — editar plataforma
+- `_delete_platform(app)` — eliminar plataforma (no-defaults)
+- `_download_web_result(app, with_config)` — descarga directa o con config
+
+---
+
+### 4. `player/views.py` — MODIFICAR
+
+**Nuevo layout de draw_web():**
+
+```
+┌─ Web ─────────────────────────────────┐
+│ [← YouTube →]  buscar: beethoven     │  ← Línea 1: Motor + Prompt
+│──────────────────────────────────────│  ← Divider
+│ [✓] Symphony No. 5 - 7:12           │
+│ [►] Moonlight Sonata - 15:03         │  ← Lista con estados
+│ [-] Für Elise - 3:02                 │
+│ [Q] Hungarian Dances - 10:00         │
+│ ...                                  │
+└───────────────────────────────────────┘
+```
+
+**Estados de cada resultado:**
+| Símbolo | Estado |
+|---------|--------|
+| `[-]` | Sin acción asignada |
+| `[►]` | Reproduciendo |
+| `[D]` | Descargando |
+| `[P]` | Pausado |
+| `[Q]` | En cola de descarga |
+| `[✓]` | Descargado |
+| `[X]` | Cancelado |
+| `[!]` | Error en descarga |
+
+**Funciones nuevas:**
+- `draw_motor_editor(app, win, h, w)` — patrón idéntico a draw_meta_editor()
+- `draw_download_config(app, win, h, w)` — patrón idéntico a draw_meta_editor()
+
+---
+
+### 5. `player/app.py` — MODIFICAR
+
+**Estados web (actuales + nuevos):**
 ```python
-def _do_search(app: PlayerApp, query: str) -> None:
-    from .. import web
-    from ..platforms import load_platforms, get_search_prefix
-    from ..config import load as _load_config
-    
-    platforms = load_platforms()
-    cfg = _load_config()
-    max_results = cfg.get("online_max_results", 5)
-    prefix = get_search_prefix(platforms, "YouTube")  # plataforma activa (futuro: configurable)
-    
-    try:
-        results = web.search(query, max_results, search_prefix=prefix)
-    except RuntimeError as e:
-        _toast(app, str(e))
-        return
-    
-    app.web_results = results
-    app.web_cursor = 0
-    app.web_scroll = 0
-    if not results:
-        _toast(app, f"Sin resultados: {query}")
-
-
-def _play_web_result(app: PlayerApp) -> None:
-    if app.web_cursor >= len(app.web_results):
-        return
-    result = app.web_results[app.web_cursor]
-    
-    # Incrementar contador de descargas
-    from ..platforms import load_platforms, save_platforms, increment_downloads
-    platforms = load_platforms()
-    increment_downloads(platforms, result.platform)
-    save_platforms(platforms)
-    
-    from ..stack import StackItem
-    item = StackItem(path=result.url, name=result.title)
-    app.stack.items = [item]
-    app.stack.playhead = 0
-    app.audio.play_file(result.url)
-    app.current_view = app.V_LISTEN
-    _toast(app, f"▶ {result.title}")
+web_results: list[WebResult]          # existente
+web_cursor: int                       # existente
+web_scroll: int                       # existente
+web_search_mode: bool                 # existente
+web_search_buf: str                   # existente
+web_motor_mode: bool                  # NUEVO
+web_active_platform: int              # NUEVO (índice)
+web_motor_edit_mode: bool             # NUEVO
+web_download_mode: bool               # NUEVO
+web_platforms: list[Platform]         # NUEVO
+web_download_queue: list[WebResult]   # NUEVO (max 3)
+web_download_max: int                 # NUEVO (configurable hasta 10)
 ```
-
-### Archivos afectados
-- **Modificar**: `player/handlers/webexplorer.py`
 
 ---
 
-### Paso 2.4: Actualizar `player/config.py`
+### 6. `player/config.py` — MODIFICAR
 
-Agregar plataforma activa:
+**Defaults nuevos:**
 ```python
-"online_platform": "YouTube",  # plataforma activa para búsqueda
+"online_platform": "YouTube",
+"online_download_format": "audio",    # "audio" | "video"
+"online_download_quality": "480p",    # "480p" | "720p" | "1080p" | "best"
+"online_download_stream": "fastest",
+"online_download_max": 3,             # max descargas simultáneas (1-10)
 ```
-
-### Archivos afectados
-- **Modificar**: `player/config.py`
 
 ---
 
-### Paso 2.5: Actualizar `AENV/docs/ONLINE.md`
+## Flujo completo
 
-Documentar:
-- Estructura de `platforms.json`
-- Cómo agregar nuevas plataformas
-- Flujo de búsqueda con `extract_flat`
+### Búsqueda
+```
+V7 → Tab motor → ← → YouTube → Tab prompt → "beethoven" → Enter
+  → extract_flat=True → lista → Enter en resultado → Play en Listen
+```
 
-### Archivos afectados
-- **Modificar**: `AENV/docs/ONLINE.md`
+### Descarga directa (D)
+```
+V7 → Enter en resultado → estado [►] → D → descarga directa → estado [D]
+  → completado → estado [✓] → toast "Descargado en music_dir/"
+```
+
+### Descarga con config (d)
+```
+V7 → d en resultado → draw_download_config → configurar → Enter → descarga → estado [D]
+```
+
+### Gestión de plataformas
+```
+V7 → Tab motor → a → draw_motor_editor →填写 campos → Enter → nueva plataforma guardada
+V7 → Tab motor → e → draw_motor_editor → editar → Enter → plataforma actualizada
+V7 → Tab motor → d → eliminar (no-defaults) → toast confirmación
+```
+
+### Plataforma sin búsqueda nativa
+```
+V7 → Tab motor → seleccionar plataforma sin search_prefix
+  → Tab prompt → ingresar URL completa → Enter → resultado único
+```
 
 ---
 
-## Flujo completo de búsqueda (post-fix)
+## Escenarios cubiertos
 
-```
-1. Usuario presiona 7 → V_WEB
-2. Presiona / → prompt de búsqueda
-3. Escribe "beethoven" + Enter
-4. _do_search("beethoven")
-   a. load_platforms() → obtiene prefix "ytsearch"
-   b. web.search("beethoven", 5, "ytsearch")
-      b1. extract_flat=True → lista de 5 entries (~1s)
-      b2. Para cada entry → extract_info → stream URL (~2-3s c/u)
-      b3. Retorna 5 WebResult con stream URLs
-5. draw_web() muestra resultados con títulos y duración
-6. Usuario presiona Enter → _play_web_result()
-   a. Incrementa downloads en platforms.json
-   b. Crea StackItem con URL de streaming
-   c. VLC reproduce stream HTTP directamente
-7. Cambia a V_LISTEN
-```
+| Escenario | Comportamiento |
+|-----------|----------------|
+| `Enter` en resultado | Play en Listen, estado → `[►]` |
+| `D` en resultado | Descarga directa, estado → `[D]` o `[Q]` si cola llena |
+| `d` en resultado | Muestra config, luego descarga |
+| Ya descargado mismo formato | Toast "Ya descargado en music_dir/" |
+| Ya descargado otro formato | Re-descargar con nuevo formato |
+| Cola llena (3) | Siguiente `D` → estado `[Q]`, espera |
+| `A` en resultado | Add to queue (reproducción) |
+| `x` limpia lista | Limpia resultados y estados |
+| `g` / `G` | Primer / último resultado |
+| Plataforma sin búsqueda | Prompt acepta URL completa |
+| Error en descarga | Toast error, estado `[!]` |
+| Descarga cancelada | Estado `[X]` |
+
+---
 
 ## Archivos modificados (resumen total)
 
 | Archivo | Acción | Estado |
 |---------|--------|--------|
 | `player/platforms.py` | CREAR | Pendiente |
-| `player/web.py` | REESCRIBIR search() | Pendiente |
-| `player/handlers/webexplorer.py` | MODIFICAR _do_search, _play_web_result | Pendiente |
-| `player/config.py` | AGREGAR online_platform | Pendiente |
-| `AENV/docs/ONLINE.md` | ACTUALIZAR | Pendiente |
+| `player/web.py` | REESCRIBIR search() + download() | Pendiente |
+| `player/handlers/webexplorer.py` | REESCRIBIR 3 modos + gestión | Pendiente |
+| `player/views.py` | MODIFICAR draw_web() + nuevos draws | Pendiente |
+| `player/app.py` | MODIFICAR nuevos estados | Pendiente |
+| `player/config.py` | MODIFICAR defaults downloads | Pendiente |
 | `player/__init__.py` | Ya hecho (auto-install) | ✅ |
-| `player/app.py` | Ya hecho (V_WEB, dispatch) | ✅ |
 | `player/ui.py` | Ya hecho (nav, help) | ✅ |
 | `player/handlers/__init__.py` | Ya hecho (export) | ✅ |
 | `requirements.txt` | Ya hecho (+yt-dlp) | ✅ |
 
+---
+
 ## Verificación post-implementación
 
 1. `python3 -m mypy --strict player/` → sin errores
-2. `tplay → 7 → / → "beethoven" → Enter` → 5 resultados con títulos
+2. `tplay → 7 → Tab motor → ← → YouTube → Tab prompt → "beethoven" → Enter` → 5 resultados
 3. `Enter` en resultado → streaming en Listen
-4. `~/.config/tplay/data/platforms.json` → YouTube downloads incrementado
-5. `tplay --update` → auto-install si hay deps nuevas
+4. `D` en resultado → descarga directa → archivo en music_dir/
+5. `g/G` → navega primer/último resultado
+6. `Tab` alterna motor/prompt
+7. `a` en motor → editor de plataformas
+8. `~/.config/tplay/data/platforms.json` → plataformas guardadas

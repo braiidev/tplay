@@ -1,29 +1,45 @@
 # TODO — tplay
 
-## F10: yt-dlp Web Explorer (ACTIVO)
+## F10: yt-dlp Web Explorer v2 (ACTIVO)
 
-### Fase 1: Streaming MVP
-- [ ] 1.1 Wrapper `player/web.py` — WebResult dataclass, search(), is_available()
-- [ ] 1.2 Handler `player/handlers/webexplorer.py` — handle_web, search input, playback
-- [ ] 1.3 Drawer `draw_web()` en `player/views.py`
-- [ ] 1.4 Integración `app.py` — V_WEB=7, register handler/drawer, view switch
-- [ ] 1.5 Nav bar + Help tab en `ui.py`
-- [ ] 1.6 Config defaults en `config.py` — online_max_results, online_audio_quality, online_search_history
-- [ ] 1.7 Historial de búsquedas (últimas 10)
-- [ ] 1.8 requirements.txt — agregar yt-dlp
+### Fase 1: Platform Registry
+- [x] 1.1 Crear `player/platforms.py` — Platform dataclass, load/save, DEFAULT_PLATFORMS (6) ✅
+- [x] 1.2 Crear `~/.config/tplay/data/platforms.json` — archivo de plataformas (se crea automáticamente)
+- [x] 1.3 Agregar `is_default` para proteger platforms de eliminación ✅
 
-### Fase 2: Descarga
-- [ ] 2.1 Key `D` en Listen para descargar
-- [ ] 2.2 Prompt de opciones (formato, calidad)
-- [ ] 2.3 Progress bar curses
-- [ ] 2.4 Pestaña Config "Online"
-- [ ] 2.5 Guardar en music_dir
+### Fase 2: Wrapper yt-dlp
+- [ ] 2.1 Reescribir `player/web.py` — search() con extract_flat=True + por-entry extraction
+- [ ] 2.2 Agregar `download()` — descarga con yt-dlp (fmt: audio/video, quality, stream)
+- [ ] 2.3 Agregar `download_url` a WebResult
+- [ ] 2.4 Fix B22: search() retorna resultados reales
 
-### Fase 3: Multi-plataforma
-- [ ] 3.1 Detectar plataforma desde URL
-- [ ] 3.2 Soporte Dailymotion, SoundCloud
-- [ ] 3.3 Platform registry lazy
-- [ ] 3.4 UI indicador de plataforma
+### Fase 3: Handler V7
+- [ ] 3.1 Reescribir `player/handlers/webexplorer.py` — 3 modos (normal/search/motor)
+- [ ] 3.2 Implementar `web_motor_mode` — gestión de plataformas (a/e/d)
+- [ ] 3.3 Implementar `web_motor_edit_mode` — editor de plataformas (patrón meta_editor)
+- [ ] 3.4 Implementar `web_download_mode` — configuración de descarga
+- [ ] 3.5 Agregar g/G navegación (primer/último resultado)
+- [ ] 3.6 Agregar D (descarga directa) y d (descarga con config)
+- [ ] 3.7 Agregar cola de descarga (max 3, configurable hasta 10)
+- [ ] 3.8 Check de re-descarga (mismo formato = no, otro formato = sí)
+- [ ] 3.9 Plataformas sin búsqueda: aceptar URL completa en prompt
+
+### Fase 4: Views V7
+- [ ] 4.1 Reescribir `draw_web()` — layout motor+prompt+divider+lista
+- [ ] 4.2 Agregar estados en lista: [-] [►] [D] [P] [Q] [✓] [X] [!]
+- [ ] 4.3 Crear `draw_motor_editor()` — patrón draw_meta_editor()
+- [ ] 4.4 Crear `draw_download_config()` — patrón draw_meta_editor()
+- [ ] 4.5 Truncado de texto en lista
+
+### Fase 5: App & Config
+- [ ] 5.1 Agregar estados web en `player/app.py` (motor_mode, download_queue, etc.)
+- [ ] 5.2 Agregar defaults downloads en `player/config.py`
+- [ ] 5.3 Actualizar nav bar y help tab en `player/ui.py`
+
+### Fase 6: Polish
+- [ ] 6.1 mypy --strict
+- [ ] 6.2 Tests manuales completos
+- [ ] 6.3 Commit code + docs
 
 ## Completado
 - [x] v1.5.59 — EQ custom bands, configuración, hints, help, radio

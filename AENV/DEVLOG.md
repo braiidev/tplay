@@ -326,3 +326,26 @@
 - `player/views.py` — eliminado hint `(r, reset)` de Config/Audio
 
 **Estado**: v1.5.59, mypy strict pasa, 0 bugs activos.
+
+---
+
+## Entrada 17 — 2026-07-15 — F10: crear player/platforms.py
+
+**Tarea**: Fase 1 del Web Explorer v2 — crear registry de plataformas
+
+**Archivos creados**:
+- `player/platforms.py` — Platform dataclass + load/save + 6 defaults
+
+**Cambios**:
+- Platform dataclass: name, url, search_pattern, download_pattern, search_prefix, downloads, is_default
+- 6 plataformas default con búsqueda nativa: YouTube, SoundCloud, Vimeo, Dailymotion, Twitch, Niconico
+- Funciones: load_platforms, save_platforms, get_search_prefix, get_platform, increment_downloads, can_delete
+- Helper _dict_to_platform para conversión segura de dicts
+- Property has_search para verificar soporte de búsqueda
+
+**Decisión**:
+- `is_default=True` protege de eliminación (can_delete retorna False)
+- search_prefix vacío = plataforma sin búsqueda nativa (solo URL directa)
+- Almacenamiento en `~/.config/tplay/data/platforms.json`
+
+**Estado**: v1.5.61, mypy strict pasa.
