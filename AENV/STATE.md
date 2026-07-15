@@ -1,13 +1,13 @@
 # STATE — tplay
 
 ## Estado actual
-- **Version**: v1.5.75
+- **Version**: v1.5.76
 - **Plan activo**: F10 yt-dlp Web Explorer v2 — **COMPLETADO**
 - **Bugs abiertos**: 0
-- **Docs**: Sincronizados con v1.5.75
+- **Docs**: Sincronizados con v1.5.76
 
 ## Último commit
-- `feat - 1.5.75 - web.py: migrar yt-dlp de Python API a subprocess (evita bot detection)`
+- `fix - 1.5.76 - B55-B58: pause/resume, cancel reset, vista7 lenta, temp files`
 
 ## Bugs fixeados post-implementación
 - B22: abr None comparison → search vacío
@@ -31,6 +31,10 @@
 - B48: q no verifica descargas pausadas
 - B49: Motor requería vista exclusiva
 - B54: YouTube bot detection — migrado a subprocess (web.py)
+- B55: Pause/Resume muestra [!] en vez de mantener [P] — handler sobreescribía estado
+- B56: Cancel no resetea progreso — mensaje inconsistente "Cancelado" vs "Cancelado por usuario"
+- B57: Vista 7 hiper lenta — is_available() ejecutaba subprocess en cada frame
+- B58: Temp files .part no se limpiaban al cancelar descarga
 
 ## Pendiente para próxima sesión
 - [ ] #4: Download history (trackear descargas en downloads.json)

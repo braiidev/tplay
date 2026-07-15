@@ -1,5 +1,12 @@
 # CHANGELOG — tplay
 
+## v1.5.76
+- fix: B55 — Pause/Resume: _run() verifica web_download_paused antes de sobreescribir estado
+- fix: B56 — Cancel: web.py retorna "Cancelado por usuario" (consistente con handler)
+- fix: B57 — Vista 7 lenta: is_available() cacheada con variable global (1 sola ejecución)
+- fix: B58 — Temp files: _cleanup_part_files() elimina *.part al cancelar
+- feat: _play_web_result() async (get_stream_url en thread, no bloquea UI)
+
 ## v1.5.75
 - feat: B54 — web.py migrado de Python API (yt_dlp.YoutubeDL) a subprocess (evita bot detection YouTube)
 - feat: search() usa subprocess + --flat-playlist --dump-json (parse JSON lines)

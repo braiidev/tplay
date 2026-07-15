@@ -575,3 +575,26 @@
 - `_build_*_cmd()` helpers para construir comandos
 
 **Estado**: v1.5.75, test manual exitoso (search + stream + download). mypy pasa.
+
+---
+
+## Entrada 19 — 2025-07-15 — Fix 4 bugs Web Explorer post-migración
+
+**Tarea**: Corregir 4 bugs introducidos por la migración a subprocess
+
+**Bugs**:
+- B55: Pause/Resume mostraba [!] en vez de mantener [P]
+- B56: Cancel no reseteaba progreso (mensaje inconsistente)
+- B57: Vista 7 hiper lenta (is_available() en cada frame)
+- B58: Temp files .part no se limpiaban
+
+**Archivos modificados**:
+- `player/web.py` — cache is_available(), mensaje cancel consistente, cleanup .part
+- `player/handlers/webexplorer.py` — _run() verifica paused antes de overwrite, _play_web_result async
+
+**Causa raíz**:
+- B55/B56: `web.py` retornaba `"Cancelado"` pero handler buscaba `"Cancelado por usuario"`
+- B57: `is_available()` ejecutaba `subprocess.run(["yt-dlp","--version"])` en cada frame de render (~20fps = 20 subprocess/s)
+- B58: yt-dlp deja `.part` al ser kill -9
+
+**Estado**: v1.5.76, mypy pasa.
