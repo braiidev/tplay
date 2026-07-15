@@ -2,6 +2,13 @@
 
 ## Activos
 
+### B53 — Errores de descarga/play sin mensajes claros
+- **Archivo**: `player/web.py`, `player/handlers/webexplorer.py`
+- **Descripción**: Errores de yt-dlp (bot detection, 403, 429, unavailable) se mostraban como strings crudos o se silenciaban.
+- **Causa**: `search()` retornaba lista vacía sin error; `get_stream_url()` retornaba webpage URL sin aviso; `download()` pasaba str(e) crudo.
+- **Fix**: `_classify_error()` traduce errores a mensajes amigables. `search()` lanza `RuntimeError`. `get_stream_url()` retorna `None`. `_play_web_result` maneja `None` con `[!]` + toast.
+- **Estado**: Resuelto en v1.5.74
+
 ### B50 — Motor editor hint dice q pero q cierra app
 - **Archivo**: `player/handlers/webexplorer.py`
 - **Descripción**: Hint del editor de motor mostraba `q` para cancelar, pero `q` cierra la app globalmente.

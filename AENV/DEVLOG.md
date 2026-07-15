@@ -525,3 +525,23 @@
 - `download()` sigue recibiendo webpage URL (yt-dlp maneja internamente)
 
 **Estado**: v1.5.74, mypy --strict pasa.
+
+---
+
+## Entrada 17 — 2025-07-15 — B53: Error handling para descarga/play
+
+**Tarea**: Mejorar manejo de errores de yt-dlp (bot detection, 403, 429, unavailable)
+
+**Archivos modificados**:
+- `player/web.py` — `_classify_error()`, `search()` lanza RuntimeError, `get_stream_url()` retorna None, `download()` usa classify
+- `player/handlers/webexplorer.py` — `_play_web_result` maneja None con [!] + toast
+
+**Bugs corregidos**:
+- B53: Errores crudos de yt-dlp → mensajes amigables en español
+
+**Decisión**:
+- Sin browser/cookies — si falla, toast + [!] y nada más
+- `_classify_error()` mapea: bot detection, 403, 429, unavailable, format, network
+- `get_stream_url()` retorna None (no fallback silencioso)
+
+**Estado**: v1.5.74, mypy --strict pasa.

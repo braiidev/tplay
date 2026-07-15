@@ -10,6 +10,7 @@
 - fix: B50 — Motor editor: solo Esc para cancelar (q cierra app)
 - fix: B51 — Motor indicator formato ← [MOTOR] →
 - fix: B52 — Búsqueda Sin Resultados: eliminada 2da extracción, stream URL on-demand con get_stream_url()
+- fix: B53 — Errores de descarga/play: _classify_error() traduce yt-dlp errors a mensajes amigables, get_stream_url() retorna None en error
 
 ## v1.5.73
 - fix: B40 — d/D toggle pause/resume: verifica queue + status, no solo status
