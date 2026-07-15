@@ -913,7 +913,9 @@ def draw_dir_picker(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
 
 
 def draw_web(app: PlayerApp, h: int, w: int) -> None:
+    """V7 Web Explorer con motor + prompt + divider + lista."""
     from . import web as _web
+    from .ui import _build_hints
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
     nav = curses.color_pair(PAIR_NAV)
@@ -927,38 +929,264 @@ def draw_web(app: PlayerApp, h: int, w: int) -> None:
         safe_addstr(app.stdscr, 8, 2, "Luego reiniciá tplay.", texto, h, w)
         return
 
-    if app.web_search_mode:
-        prompt = f"  Buscar: {app.web_search_buf}"
-        safe_addstr(app.stdscr, 3, 2, prompt[:w - 4], texto | curses.A_UNDERLINE, h, w)
-        safe_addstr(app.stdscr, 5, 2, "  Escribe tu búsqueda y presiona Enter", nav, h, w)
+    if app.web_motor_edit_mode:
+        _draw_motor_editor(app, h, w)
         return
+
+    if app.web_download_mode:
+        _draw_download_config(app, h, w)
+        return
+
+    platforms = app.web_platforms
+    p_name = platforms[app.web_active_platform].name if platforms else "Ninguna"
+
+    if app.web_motor_mode:
+        _draw_motor_list(app, h, w, platforms, p_name)
+        return
+
+    _draw_web_main(app, h, w, p_name)
+
+
+def _draw_web_main(app: PlayerApp, h: int, w: int, p_name: str) -> None:
+    """Layout principal: motor + prompt + divider + lista."""
+    from . import web as _web
+    texto = curses.color_pair(PAIR_TEXTO)
+    destacar = curses.color_pair(PAIR_DESTACAR)
+    nav = curses.color_pair(PAIR_NAV)
+
+    motor_str = f"[←{p_name}→]"
+    if app.web_search_mode:
+        prompt_str = f"buscar: {app.web_search_buf}"
+        motor_attr = texto
+        prompt_attr = texto | curses.A_UNDERLINE
+    else:
+        prompt_str = "presiona / para buscar"
+        motor_attr = destacar | curses.A_REVERSE if False else texto
+        prompt_attr = nav
+
+    y_motor = 2
+    motor_w = len(motor_str) + 2
+    safe_addstr(app.stdscr, y_motor, 2, motor_str, motor_attr, h, w)
+    prompt_x = motor_w + 2
+    prompt_w = w - prompt_x - 2
+    safe_addstr(app.stdscr, y_motor, prompt_x, prompt_str[:prompt_w], prompt_attr, h, w)
+
+    y_divider = 3
+    safe_addstr(app.stdscr, y_divider, 2, "─" * (w - 4), nav, h, w)
 
     if not app.web_results:
-        safe_addstr(app.stdscr, (h - 4) // 2, 2,
-                     "  Presiona / para buscar", nav, h, w)
+        safe_addstr(app.stdscr, (h - 4) // 2, 2, "  Sin resultados", nav, h, w)
+        _draw_web_hints(app, h, w)
         return
 
-    list_h = h - 8
+    list_h = h - 7
     start = app.web_scroll
     end = min(start + list_h, len(app.web_results))
 
     for i in range(start, end):
-        y = 5 + i - start
+        y = 4 + i - start
         r = app.web_results[i]
         is_cur = i == app.web_cursor
         dur = _web.format_duration(r.duration)
-        title = r.title[:w - 16]
-        line = f"  {title:<{w - 16}}{dur:>7}"
+
+        status = "[-]"
+        if i < len(app.web_result_status):
+            status = app.web_result_status[i]
+
+        title_w = w - 19
+        title = r.title[:title_w]
+        line = f" {status} {title:<{title_w}}{dur:>7}"
         attr = destacar | curses.A_REVERSE if is_cur else texto
-        safe_addstr(app.stdscr, y, 2, line, attr, h, w)
+        safe_addstr(app.stdscr, y, 2, line[:w - 4], attr, h, w)
 
     draw_list_indicators(app.stdscr, h, w, app.web_scroll, len(app.web_results), list_h)
+    _draw_web_hints(app, h, w)
+
+
+def _draw_web_hints(app: PlayerApp, h: int, w: int) -> None:
+    """Hints de la vista web."""
+    from .ui import _build_hints
+    nav = curses.color_pair(PAIR_NAV)
+
+    if app.web_search_mode:
+        hints = _build_hints([
+            ("Enter", "buscar"), ("Tab", "motor"), ("Esc", "cancelar"),
+        ], w)
+    elif app.web_motor_mode:
+        hints = _build_hints([
+            ("j/k", "navegar"), ("Enter", "seleccionar"), ("a", "agregar"),
+            ("e", "editar"), ("d", "eliminar"), ("Tab", "prompt"),
+        ], w)
+    else:
+        hints = _build_hints([
+            ("j/k", "navegar"), ("g/G", "inicio/fin"), ("Enter", "play"),
+            ("D", "descargar"), ("d", "config descarga"), ("A", "añadir"),
+            ("/", "buscar"), ("Tab", "motor"), ("Esc", "volver"),
+        ], w)
+    if hints:
+        safe_addstr(app.stdscr, h - 4, 2, hints, nav, h, w)
+
+
+def _draw_motor_list(
+    app: PlayerApp, h: int, w: int, platforms: list[Any], p_name: str
+) -> None:
+    """Lista de plataformas (modo motor)."""
+    texto = curses.color_pair(PAIR_TEXTO)
+    destacar = curses.color_pair(PAIR_DESTACAR)
+    nav = curses.color_pair(PAIR_NAV)
+
+    title = f"Plataformas ({len(platforms)})"
+    draw_box(app.stdscr, h, w, title)
+
+    if not platforms:
+        safe_addstr(app.stdscr, (h - 4) // 2, 2, "  Sin plataformas", nav, h, w)
+        return
+
+    list_h = h - 6
+    start = app.web_scroll
+    end = min(start + list_h, len(platforms))
+
+    for i in range(start, end):
+        y = 3 + i - start
+        p = platforms[i]
+        is_cur = i == app.web_active_platform
+        prefix = p.search_prefix if p.search_prefix else "URL"
+        downloads = f"↓{p.downloads}"
+        default = " [default]" if p.is_default else ""
+        line = f"  {p.name:<16} {prefix:<10} {downloads:>6}{default}"
+        attr = destacar | curses.A_REVERSE if is_cur else texto
+        safe_addstr(app.stdscr, y, 2, line[:w - 4], attr, h, w)
+
+    draw_list_indicators(app.stdscr, h, w, app.web_scroll, len(platforms), list_h)
 
     hints = _build_hints([
-        ("j/k", "navegar"), ("Enter", "play"), ("/", "buscar"), ("Esc", "volver"),
+        ("j/k", "navegar"), ("a", "agregar"), ("e", "editar"),
+        ("d", "eliminar"), ("Enter", "seleccionar"), ("Tab", "prompt"),
     ], w)
     if hints:
         safe_addstr(app.stdscr, h - 4, 2, hints, nav, h, w)
+
+
+def _draw_motor_editor(app: PlayerApp, h: int, w: int) -> None:
+    """Editor de plataformas (patrón draw_meta_editor)."""
+    texto = curses.color_pair(PAIR_TEXTO)
+    destacar = curses.color_pair(PAIR_DESTACAR)
+    compact = h < COMPACT_THRESHOLD
+
+    pad_x = 2
+    title = "Nueva plataforma" if app.web_motor_edit_is_new else "Editar plataforma"
+    draw_box(app.stdscr, h, w, title)
+
+    if compact:
+        safe_addstr(app.stdscr, 2, pad_x, "↑↓ Naveg  Enter Ed  s:Guardar  q:Salir", texto, h, w)
+        y0 = 3
+    else:
+        safe_addstr(app.stdscr, 2, pad_x,
+                    "↑/↓: navegar  Enter: editar  [s] guardar  [q] cancelar",
+                    texto, h, w)
+        y0 = 4
+
+    fields_order = ["name", "url", "search_pattern", "download_pattern", "search_prefix"]
+    labels = {
+        "name": "Nombre",
+        "url": "URL",
+        "search_pattern": "Patrón búsqueda",
+        "download_pattern": "Patrón descarga",
+        "search_prefix": "Search prefix",
+    }
+
+    total = len(fields_order)
+    cur = app.web_motor_edit_cursor
+    list_h = total if not compact else max(2, h - y0 - 1)
+
+    scroll = max(0, min(cur, total - list_h)) if total > list_h else 0
+    visible = fields_order[scroll:scroll + list_h]
+
+    for i, field in enumerate(visible):
+        actual_idx = scroll + i
+        row = y0 + i
+        label = labels.get(field, field)
+        current = app.web_motor_edit_fields.get(field, "")
+        val = current if current else "(vacío)"
+        line = f"  {label}: {val}"
+        attr = destacar if actual_idx == cur else texto
+        if actual_idx == cur and not app.web_motor_edit_editing:
+            safe_addstr(app.stdscr, row, pad_x, line, attr | curses.A_REVERSE, h, w)
+        else:
+            safe_addstr(app.stdscr, row, pad_x, line, attr, h, w)
+        if actual_idx == cur and app.web_motor_edit_editing:
+            buf = app.web_motor_edit_buf
+            cx = pad_x + len(f"  {label}: ")
+            display = buf if buf else ""
+            try:
+                app.stdscr.addstr(row, cx, display[:w - cx - 2], attr)
+            except curses.error:
+                pass
+            cur_in_buf = app.web_motor_edit_cursor_pos
+            if cx + cur_in_buf < w - 1:
+                try:
+                    app.stdscr.chgat(row, cx + cur_in_buf, 1, attr | curses.A_REVERSE)
+                except curses.error:
+                    pass
+
+    status_row = y0 + len(visible)
+    if not compact and status_row < h - 1:
+        safe_addstr(app.stdscr, status_row + 1, pad_x, "  s: guardar  q: cancelar", texto, h, w)
+
+
+def _draw_download_config(app: PlayerApp, h: int, w: int) -> None:
+    """Configuración de descarga (patrón draw_meta_editor)."""
+    texto = curses.color_pair(PAIR_TEXTO)
+    destacar = curses.color_pair(PAIR_DESTACAR)
+    compact = h < COMPACT_THRESHOLD
+
+    pad_x = 2
+    draw_box(app.stdscr, h, w, "Configurar descarga")
+
+    if compact:
+        safe_addstr(app.stdscr, 2, pad_x, "↑↓ Naveg  Enter Ejecutar  q:Salir", texto, h, w)
+        y0 = 3
+    else:
+        safe_addstr(app.stdscr, 2, pad_x,
+                    "↑/↓: navegar  Enter: ejecutar descarga  [q] cancelar",
+                    texto, h, w)
+        y0 = 4
+
+    fields_order = ["format", "quality"]
+    labels = {"format": "Formato", "quality": "Calidad"}
+
+    total = len(fields_order)
+    cur = app.web_download_cursor
+
+    for i, field in enumerate(fields_order):
+        row = y0 + i
+        label = labels.get(field, field)
+        current = app.web_download_fields.get(field, "")
+        val = current if current else "(vacío)"
+        line = f"  {label}: {val}"
+        attr = destacar if i == cur else texto
+        if i == cur and not app.web_download_editing:
+            safe_addstr(app.stdscr, row, pad_x, line, attr | curses.A_REVERSE, h, w)
+        else:
+            safe_addstr(app.stdscr, row, pad_x, line, attr, h, w)
+        if i == cur and app.web_download_editing:
+            buf = app.web_download_buf
+            cx = pad_x + len(f"  {label}: ")
+            display = buf if buf else ""
+            try:
+                app.stdscr.addstr(row, cx, display[:w - cx - 2], attr)
+            except curses.error:
+                pass
+            cur_in_buf = app.web_download_cursor_pos
+            if cx + cur_in_buf < w - 1:
+                try:
+                    app.stdscr.chgat(row, cx + cur_in_buf, 1, attr | curses.A_REVERSE)
+                except curses.error:
+                    pass
+
+    status_row = y0 + total
+    if not compact and status_row < h - 1:
+        safe_addstr(app.stdscr, status_row + 1, pad_x, "  Enter: descargar  q: cancelar", texto, h, w)
 
 
 def draw_favorites(app: PlayerApp, h: int, w: int) -> None:

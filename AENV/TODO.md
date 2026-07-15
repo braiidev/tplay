@@ -25,11 +25,11 @@
 - [x] 3.9 Plataformas sin búsqueda: aceptar URL completa en prompt ✅
 
 ### Fase 4: Views V7
-- [ ] 4.1 Reescribir `draw_web()` — layout motor+prompt+divider+lista
-- [ ] 4.2 Agregar estados en lista: [-] [►] [D] [P] [Q] [✓] [X] [!]
-- [ ] 4.3 Crear `draw_motor_editor()` — patrón draw_meta_editor()
-- [ ] 4.4 Crear `draw_download_config()` — patrón draw_meta_editor()
-- [ ] 4.5 Truncado de texto en lista
+- [x] 4.1 Reescribir `draw_web()` — layout motor+prompt+divider+lista ✅
+- [x] 4.2 Agregar estados en lista: [-] [►] [D] [P] [Q] [✓] [X] [!] ✅
+- [x] 4.3 Crear `draw_motor_editor()` — patrón draw_meta_editor() ✅
+- [x] 4.4 Crear `draw_download_config()` — patrón draw_meta_editor() ✅
+- [x] 4.5 Truncado de texto en lista ✅
 
 ### Fase 5: App & Config
 - [x] 5.1 Agregar estados web en `player/app.py` (motor_mode, download_queue, etc.) ✅

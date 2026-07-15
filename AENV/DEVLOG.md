@@ -405,3 +405,30 @@
 - _load_web_platforms() en __init__ para cargar plataformas al inicio
 
 **Estado**: v1.5.63, mypy strict pasa.
+
+---
+
+## Entrada 20 — 2026-07-15 — F10: reescribir player/views.py
+
+**Tarea**: Fase 4 del Web Explorer v2 — UI con motor+prompt+estados + editors
+
+**Archivos modificados**:
+- `player/views.py` — reescritura de draw_web() + 4 funciones nuevas
+
+**Cambios**:
+- draw_web(): dispatch a sub-funciones según modo
+- _draw_web_main(): layout motor+prompt+divider+lista con estados
+- _draw_motor_list(): lista de plataformas con stats
+- _draw_motor_editor(): editor de plataformas (patrón meta_editor)
+- _draw_download_config(): configuración de descarga
+- _draw_web_hints(): hints contextuales por modo
+- Estados en lista: [-] [►] [D] [P] [Q] [✓] [X] [!]
+- Truncado de texto automático
+
+**Decisión**:
+- Patrón draw_meta_editor para motor_editor y download_config
+- Layout: Línea 1 motor+prompt, línea 2 divider, línea 3+ lista
+- Hints diferentes por modo (search/motor/normal)
+- Status display: 3 chars fijos + título truncado + duración
+
+**Estado**: v1.5.64, mypy strict pasa.
