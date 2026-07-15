@@ -16,7 +16,7 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 | C4 | `web.py:329-337` | **stderr读后wait.** `proc.communicate()` se llama después de `proc.wait()`. Stderr puede estar cerrado. Leer stderr antes de wait. | ⏭️ Dead code (D1) |
 | C5 | `web.py:523-526` | **TOCTOU race en `_active_count`.** Lectura sin lock permite exceder límite de concurrencia. | ✅ v1.6.1 |
 | C6 | `web.py:386-387` | **`_callbacks` list race.** `add_callback` (main thread) hace append mientras `_notify` (worker) itera. `RuntimeError` posible. | ✅ v1.6.1 |
-| C7 | `webexplorer.py:370-389` | **RACE CONDITION: threads mutan `app.web_results`, `web_cursor`, `web_scroll`, `web_loading` sin locks.** Also `_toast` llama curses desde thread no-main (curses no es thread-safe). | 🔜 v1.6.2 |
+| C7 | `webexplorer.py:370-389` | **RACE CONDITION: threads mutan `app.web_results`, `web_cursor`, `web_scroll`, `web_loading` sin locks.** Also `_toast` llama curses desde thread no-main (curses no es thread-safe). | ✅ v1.6.2 |
 | C8 | `webexplorer.py:541-542` | **URL incorrecta en stack.** `_add_to_queue` usa `result.url` (stream URL temporal) en vez de `result.webpage_url` (URL estable). Stack items quedan inválidos cuando expira el stream. | ✅ v1.6.0 |
 
 ---
@@ -148,7 +148,7 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 - [x] C4: Fix stderr-after-wait en web.py ⏭️ Dead code (D1)
 - [x] C5: Fix TOCTOU race en active_count ✅ v1.6.1
 - [x] C6: Fix _callbacks list race ✅ v1.6.1
-- [ ] C7: Fix thread safety en webexplorer (usar queue para comunicación main↔worker) 🔜 v1.6.2
+- [x] C7: Fix thread safety en webexplorer (usar queue para comunicación main↔worker) ✅ v1.6.2
 - [x] C8: Fix URL incorrecta en _add_to_queue ✅ v1.6.0
 
 ### Etapa 2: High Priority Bugs + Dead Code (v1.6.1)

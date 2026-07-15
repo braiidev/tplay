@@ -2,9 +2,6 @@
 
 ## Pendiente para próxima sesión
 
-### Etapa 1: Critical Bugs (restante)
-- [ ] C7: Thread safety en webexplorer (curses not thread-safe, queue para main↔worker)
-
 ### Etapa 2: Bugs menores + Dead Code
 - [ ] A1-A10: Bugs menores del audit (config shallow copy, mono theme, audio rate, etc.)
 - [ ] D1-D12: Dead code cleanup (download() 88 líneas, _do_download_direct, imports muertos)
@@ -14,12 +11,13 @@
 
 ## Completado
 
-### Audit Critical Bugs ✅ (v1.6.0-v1.6.1)
+### Etapa 1: Audit Critical Bugs ✅ (v1.6.0-v1.6.2)
 - C1: Toast double-decrement fix
 - C2: Data race en download callback fix
 - C3: History data loss fix
 - C5: TOCTOU race en active_count fix
 - C6: _callbacks list race fix
+- C7: Thread safety en webexplorer fix
 - C8: URL incorrecta en _add_to_queue fix
 
 ### #4+#5: Historial Unificado ✅ (v1.5.80)

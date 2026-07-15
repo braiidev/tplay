@@ -143,3 +143,13 @@
 - C2: `app.py` — data race en `_on_download_change`. Callback ahora solo setea flag `_download_completed_pending`. Main loop procesa en `_process_download_completions()` (seguro, main thread).
 
 **Estado**: v1.6.1, mypy strict pasa (28 archivos), archivos compilan OK
+
+---
+
+## Entrada 16 — 2025-07-15 — v1.6.2 Audit: Thread Safety (webexplorer)
+- C7: `handlers/webexplorer.py` — `_do_search._run()` y `_play_web_result._run()` mutaban `app.web_results`, `web_cursor`, `web_scroll`, `web_loading`, `stack.items`, `current_view` y llamaban `_toast()` desde threads workers.
+- Fix: Workers ahora solo setean `_web_search_pending`/`_web_search_error` y `_web_play_pending`/`_web_play_error`. Main loop procesa en `_process_web_search()` y `_process_web_play()` (seguro, main thread).
+- Patrón idéntico al C2 (download callback).
+- Etapa 1 Audit COMPLETADA ✅ (C1-C8, C4 skipped dead code).
+
+**Estado**: v1.6.2, mypy strict pasa (28 archivos), archivos compilan OK

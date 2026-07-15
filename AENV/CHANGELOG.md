@@ -1,5 +1,8 @@
 # CHANGELOG — tplay
 
+## v1.6.2
+- fix: C7 — thread safety en webexplorer: search y play usan pending flags (main loop procesa)
+
 ## v1.6.1
 - fix: C2 — data race en _on_download_change: callback setea flag, main loop procesa
 - fix: C5 — TOCTOU race en _active_count: lectura bajo _active_lock
