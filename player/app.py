@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 from .audio import AudioEngine
 from .config import load as load_config, save as save_config, apply_theme
-from .config import PAIR_TEXTO, PAIR_DESTACAR
+from .config import PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV
 from .playlist import load_all as load_all_playlists, save_all as save_playlists
 from .metadata import MetadataCache
 from .file_utils import list_dir as _list_dir
@@ -1174,12 +1174,13 @@ class PlayerApp:
             ):
                 ui.draw_nav(self.stdscr, h, w)
             if self.toast_ticks > 0:
+                toast_y = max(0, h - 2)
                 ui.safe_addstr(
                     self.stdscr,
-                    h - STATUS_ROW - 1,
+                    toast_y,
                     2,
                     self.toast_msg[: w - 4],
-                    curses.color_pair(PAIR_TEXTO),
+                    curses.color_pair(PAIR_NAV),
                     h,
                     w,
                 )
