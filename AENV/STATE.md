@@ -1,13 +1,13 @@
 # STATE — tplay
 
 ## Estado actual
-- **Version**: v1.5.74
+- **Version**: v1.5.75
 - **Plan activo**: F10 yt-dlp Web Explorer v2 — **COMPLETADO**
 - **Bugs abiertos**: 0
-- **Docs**: Sincronizados con v1.5.74
+- **Docs**: Sincronizados con v1.5.75
 
 ## Último commit
-- `fix - 1.5.74 - B44-B49: ESC fix, Enter download, d/D pause, c cancel, q warning, motor ciclico`
+- `feat - 1.5.75 - web.py: migrar yt-dlp de Python API a subprocess (evita bot detection)`
 
 ## Bugs fixeados post-implementación
 - B22: abr None comparison → search vacío
@@ -30,6 +30,7 @@
 - B47: c no limpia estado de descarga
 - B48: q no verifica descargas pausadas
 - B49: Motor requería vista exclusiva
+- B54: YouTube bot detection — migrado a subprocess (web.py)
 
 ## Pendiente para próxima sesión
 - [ ] #4: Download history (trackear descargas en downloads.json)

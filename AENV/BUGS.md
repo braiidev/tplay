@@ -2,6 +2,13 @@
 
 ## Activos
 
+### B54 — YouTube bot detection bloquea todas las operaciones
+- **Archivo**: `player/web.py`
+- **Descripción**: La API de Python (`yt_dlp.YoutubeDL`) es detectada por YouTube y bloqueada ("Sign in to confirm you're not a bot").
+- **Causa**: YouTube detecta el user-agent y patrones de la API de Python.
+- **Fix**: Migrado a subprocess (yt-dlp como CLI). search(), get_stream_url(), download() ahora usan subprocess.
+- **Estado**: Resuelto en v1.5.75
+
 ### B53 — Errores de descarga/play sin mensajes claros
 - **Archivo**: `player/web.py`, `player/handlers/webexplorer.py`
 - **Descripción**: Errores de yt-dlp (bot detection, 403, 429, unavailable) se mostraban como strings crudos o se silenciaban.

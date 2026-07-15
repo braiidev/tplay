@@ -545,3 +545,33 @@
 - `get_stream_url()` retorna None (no fallback silencioso)
 
 **Estado**: v1.5.74, mypy --strict pasa.
+
+---
+
+## Entrada 18 — 2025-07-15 — Migración yt-dlp: Python API → subprocess
+
+**Tarea**: Resolver YouTube bot detection ("Sign in to confirm you're not a bot")
+
+**Problema**: La API de Python (`yt_dlp.YoutubeDL`) es detectada por YouTube y bloqueada. Incluso contenido previamente descargado falla.
+
+**Solución**: Migrar todas las funciones de `web.py` a subprocess (yt-dlp como CLI):
+- `search()`: subprocess + `--flat-playlist --dump-json`, parse JSON lines
+- `get_stream_url()`: subprocess + `--get-url -f bestaudio/best`
+- `download()`: subprocess con `cancel_event` para cancelación
+
+**Archivos modificados**:
+- `player/web.py` — rewrito completo (301→260 líneas)
+- `player/handlers/webexplorer.py` — eliminada dependencia de `yt_dlp.utils.DownloadCancelled`
+
+**Descubrimientos**:
+- `--extractor-args "youtube:player_client=mweb"` causa error de formatos (solo devuelve storyboards)
+- El approach subprocess sin args especiales funciona correctamente
+- Cliente por defecto (`android_vr`) tiene todos los formatos disponibles
+- La detección de bots es específica de la API de Python, no del CLI
+
+**Decisión**:
+- Sin `--extractor-args` — el subprocess approach es suficiente
+- `cancel_event` en `download()` para cancelación (no excepciones)
+- `_build_*_cmd()` helpers para construir comandos
+
+**Estado**: v1.5.75, test manual exitoso (search + stream + download). mypy pasa.

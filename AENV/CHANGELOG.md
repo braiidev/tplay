@@ -1,5 +1,13 @@
 # CHANGELOG — tplay
 
+## v1.5.75
+- feat: B54 — web.py migrado de Python API (yt_dlp.YoutubeDL) a subprocess (evita bot detection YouTube)
+- feat: search() usa subprocess + --flat-playlist --dump-json (parse JSON lines)
+- feat: get_stream_url() usa subprocess + --get-url -f bestaudio/best
+- feat: download() usa subprocess con cancel_event para cancelación
+- refactor: eliminada dependencia de yt_dlp.utils.DownloadCancelled en webexplorer.py
+- fix: is_available() verifica yt-dlp via subprocess --version (no import)
+
 ## v1.5.74
 - fix: B44 — ESC en download/motor config vuelve a V7 (excepciones en _handle_key_global)
 - fix: B45 — Enter descarga desde Calidad (web_download_idx guarda cursor al abrir config)
