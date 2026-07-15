@@ -297,35 +297,12 @@ def _save_motor_edit(app: PlayerApp) -> None:
 
 
 def _handle_download_mode(app: PlayerApp, key: int) -> None:
-    """Modo descarga: configuración de descarga."""
+    """Modo descarga: configuración cíclica con ←→/hl."""
     fields_order = ["format", "quality"]
-    labels = {"format": "Formato", "quality": "Calidad"}
-
-    if app.web_download_editing:
-        cur = app.web_download_cursor_pos
-        buf = app.web_download_buf
-
-        if key == 27:
-            app.web_download_mode = False
-        elif key in (10, 13):
-            field = fields_order[app.web_download_cursor]
-            app.web_download_fields[field] = buf.strip()
-            app.web_download_mode = False
-            _do_download(app)
-        elif key == curses.KEY_LEFT:
-            if cur > 0:
-                app.web_download_cursor_pos = cur - 1
-        elif key == curses.KEY_RIGHT:
-            if cur < len(buf):
-                app.web_download_cursor_pos = cur + 1
-        elif key in (127, curses.KEY_BACKSPACE):
-            if cur > 0:
-                app.web_download_buf = buf[: cur - 1] + buf[cur:]
-                app.web_download_cursor_pos = cur - 1
-        elif 32 <= key <= 126 and len(buf) < 20:
-            app.web_download_buf = buf[:cur] + chr(key) + buf[cur:]
-            app.web_download_cursor_pos = cur + 1
-        return
+    options: dict[str, list[str]] = {
+        "format": ["audio", "video"],
+        "quality": ["480p", "720p", "1080p", "best"],
+    }
 
     if key in (ord("q"), 27):
         app.web_download_mode = False
@@ -335,11 +312,21 @@ def _handle_download_mode(app: PlayerApp, key: int) -> None:
         )
     elif key in (ord("k"), curses.KEY_UP):
         app.web_download_cursor = max(app.web_download_cursor - 1, 0)
-    elif key in (10, 13):
-        app.web_download_editing = True
+    elif key in (ord("h"), curses.KEY_LEFT):
         field = fields_order[app.web_download_cursor]
-        app.web_download_buf = app.web_download_fields.get(field, "")
-        app.web_download_cursor_pos = len(app.web_download_buf)
+        vals = options[field]
+        cur_val = app.web_download_fields.get(field, vals[0])
+        idx = vals.index(cur_val) if cur_val in vals else 0
+        app.web_download_fields[field] = vals[(idx - 1) % len(vals)]
+    elif key in (ord("l"), curses.KEY_RIGHT):
+        field = fields_order[app.web_download_cursor]
+        vals = options[field]
+        cur_val = app.web_download_fields.get(field, vals[0])
+        idx = vals.index(cur_val) if cur_val in vals else 0
+        app.web_download_fields[field] = vals[(idx + 1) % len(vals)]
+    elif key in (10, 13):
+        app.web_download_mode = False
+        _do_download(app)
 
 
 def _do_search(app: PlayerApp, query: str) -> None:
@@ -413,6 +400,9 @@ def _play_web_result(app: PlayerApp) -> None:
         return
     result = app.web_results[app.web_cursor]
 
+    if app.web_playing_idx >= 0 and app.web_playing_idx < len(app.web_result_status):
+        app.web_result_status[app.web_playing_idx] = "[-]"
+    app.web_playing_idx = app.web_cursor
     app.web_result_status[app.web_cursor] = "[►]"
 
     from ..stack import StackItem
@@ -438,7 +428,6 @@ def _download_web_result(app: PlayerApp, with_config: bool) -> None:
     if with_config:
         app.web_download_mode = True
         app.web_download_cursor = 0
-        app.web_download_editing = False
         cfg = app.config
         app.web_download_fields = {
             "format": cfg.get("online_download_format", "audio"),

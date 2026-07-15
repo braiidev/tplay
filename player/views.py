@@ -1144,25 +1144,27 @@ def _draw_motor_editor(app: PlayerApp, h: int, w: int) -> None:
 
 
 def _draw_download_config(app: PlayerApp, h: int, w: int) -> None:
-    """Configuración de descarga (patrón draw_meta_editor)."""
+    """Configuración de descarga cíclica."""
     texto = curses.color_pair(PAIR_TEXTO)
     destacar = curses.color_pair(PAIR_DESTACAR)
+    nav = curses.color_pair(PAIR_NAV)
     compact = h < COMPACT_THRESHOLD
 
     pad_x = 2
     draw_box(app.stdscr, h, w, "Configurar descarga")
 
     if compact:
-        safe_addstr(app.stdscr, 2, pad_x, "↑↓ Naveg  Enter Ejecutar  q:Salir", texto, h, w)
+        safe_addstr(app.stdscr, 2, pad_x, "↑↓ Naveg  ←→ Cambiar  Enter Descargar", texto, h, w)
         y0 = 3
     else:
         safe_addstr(app.stdscr, 2, pad_x,
-                    "↑/↓: navegar  Enter: ejecutar descarga  [q] cancelar",
+                    "↑/↓: navegar  ←/→: cambiar  Enter: descargar  [q] cancelar",
                     texto, h, w)
         y0 = 4
 
     fields_order = ["format", "quality"]
     labels = {"format": "Formato", "quality": "Calidad"}
+    arrows = {"format": ("◄ audio", "video ►"), "quality": ("◄ 480p", "best ►")}
 
     total = len(fields_order)
     cur = app.web_download_cursor
@@ -1170,32 +1172,18 @@ def _draw_download_config(app: PlayerApp, h: int, w: int) -> None:
     for i, field in enumerate(fields_order):
         row = y0 + i
         label = labels.get(field, field)
-        current = app.web_download_fields.get(field, "")
-        val = current if current else "(vacío)"
-        line = f"  {label}: {val}"
+        val = app.web_download_fields.get(field, "")
+        left, right = arrows.get(field, ("", ""))
+        line = f"  {label}: {left}  [{val}]  {right}"
         attr = destacar if i == cur else texto
-        if i == cur and not app.web_download_editing:
+        if i == cur:
             safe_addstr(app.stdscr, row, pad_x, line, attr | curses.A_REVERSE, h, w)
         else:
             safe_addstr(app.stdscr, row, pad_x, line, attr, h, w)
-        if i == cur and app.web_download_editing:
-            buf = app.web_download_buf
-            cx = pad_x + len(f"  {label}: ")
-            display = buf if buf else ""
-            try:
-                app.stdscr.addstr(row, cx, display[:w - cx - 2], attr)
-            except curses.error:
-                pass
-            cur_in_buf = app.web_download_cursor_pos
-            if cx + cur_in_buf < w - 1:
-                try:
-                    app.stdscr.chgat(row, cx + cur_in_buf, 1, attr | curses.A_REVERSE)
-                except curses.error:
-                    pass
 
     status_row = y0 + total
     if not compact and status_row < h - 1:
-        safe_addstr(app.stdscr, status_row + 1, pad_x, "  Enter: descargar  q: cancelar", texto, h, w)
+        safe_addstr(app.stdscr, status_row + 1, pad_x, "  Enter: descargar  q: cancelar", nav, h, w)
 
 
 def draw_favorites(app: PlayerApp, h: int, w: int) -> None:

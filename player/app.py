@@ -22,7 +22,7 @@ from .file_utils import list_dir as _list_dir
 from .stack import Stack, StackItem
 from . import views
 from . import ui
-from .ui import _build_hints, COMPACT_THRESHOLD
+from .ui import _build_hints, COMPACT_THRESHOLD, STATUS_ROW
 from . import handlers
 from . import keybindings as kb
 from .state import load_state, save_state, load_history, save_history
@@ -154,13 +154,11 @@ class PlayerApp:
         self.web_motor_edit_cursor_pos: int = 0
         self.web_download_mode: bool = False
         self.web_download_cursor: int = 0
-        self.web_download_editing: bool = False
         self.web_download_fields: dict[str, str] = {}
-        self.web_download_buf: str = ""
-        self.web_download_cursor_pos: int = 0
         self.web_download_queue: list[Any] = []
         self.web_download_max: int = self.config.get("online_download_max", 3)
         self.web_result_status: list[str] = []
+        self.web_playing_idx: int = -1
         self.web_platforms: list[Any] = []
         self._load_web_platforms()
 
@@ -518,6 +516,10 @@ class PlayerApp:
     def _check_playback_end(self) -> None:
         if not self.audio.is_ended():
             return
+        if self.web_playing_idx >= 0:
+            if self.web_playing_idx < len(self.web_result_status):
+                self.web_result_status[self.web_playing_idx] = "[-]"
+            self.web_playing_idx = -1
         if self.stack.is_empty:
             return
         cur = self.stack.current
@@ -1171,9 +1173,9 @@ class PlayerApp:
             if self.toast_ticks > 0:
                 ui.safe_addstr(
                     self.stdscr,
-                    h - 3,
+                    h - STATUS_ROW - 1,
                     2,
-                    self.toast_msg,
+                    self.toast_msg[: w - 4],
                     curses.color_pair(PAIR_TEXTO),
                     h,
                     w,
