@@ -1,13 +1,13 @@
 # STATE — tplay
 
 ## Estado actual
-- **Version**: v1.5.71
+- **Version**: v1.5.73
 - **Plan activo**: F10 yt-dlp Web Explorer v2 — **COMPLETADO**
 - **Bugs abiertos**: 0
-- **Docs**: Sincronizados con v1.5.71
+- **Docs**: Sincronizados con v1.5.73
 
 ## Último commit
-- `fix - 1.5.72 - B36-B39: Explorer refresh, stderr redirect, d/D toggle, estados`
+- `fix - 1.5.73 - B40-B43: d/D toggle fix, ESC config, q confirma, cancel real`
 
 ## Bugs fixeados post-implementación
 - B22: abr None comparison → search vacío

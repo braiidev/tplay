@@ -2,7 +2,35 @@
 
 ## Activos
 
-### B36 — Explorer no refresca post-download
+### B40 — d/D no toggle pause, reinicia descarga
+- **Archivo**: `player/handlers/webexplorer.py`
+- **Descripción**: Al presionar d/D con una descarga en progreso, en vez de pausar, re-inicia la descarga.
+- **Causa**: `_handle_download_key` verificaba solo status string, no la queue.
+- **Fix**: Verificar `web_download_queue` (si hay algo = descarga activa) + status para toggle.
+- **Estado**: Resuelto en v1.5.73
+
+### B41 — ESC en download config no vuelve a Web Explorer
+- **Archivo**: `player/handlers/webexplorer.py`
+- **Descripción**: ESC en modo config descarga no mostraba vista Web.
+- **Causa**: `_handle_download_mode` no seteaba `current_view`.
+- **Fix**: ESC setea `app.current_view = app.V_WEB`.
+- **Estado**: Resuelto en v1.5.73
+
+### B42 — Q no confirma si hay descargas activas
+- **Archivo**: `player/app.py`
+- **Descripción**: q cerraba sin preguntar con descargas en curso.
+- **Causa**: Sin check de `web_download_queue`.
+- **Fix**: Doble q para salir si hay descargas, toast informativo.
+- **Estado**: Resuelto en v1.5.73
+
+### B43 — C no cancela realmente
+- **Archivo**: `player/handlers/webexplorer.py`
+- **Descripción**: C decía "Cancelando" pero D reanudaba desde el mismo %.
+- **Causa**: `_run()` seteaba `[-]` en vez de `[C]`; yt-dlp continuaba download parcial.
+- **Fix**: `_run()` setea `[C]` en cancel, `[!]` en error. No confunde estados.
+- **Estado**: Resuelto en v1.5.73
+
+## Resueltos
 - **Archivo**: `player/handlers/webexplorer.py`
 - **Descripción**: Al completarse una descarga, la vista Explorer (vista 1) no muestra el archivo nuevo.
 - **Causa**: `app.entries` solo se actualiza si `app.current_dir == music_dir`.

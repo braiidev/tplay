@@ -1,5 +1,11 @@
 # CHANGELOG — tplay
 
+## v1.5.73
+- fix: B40 — d/D toggle pause/resume: verifica queue + status, no solo status
+- fix: B41 — ESC en download config vuelve a Web Explorer (V_WEB)
+- fix: B42 — q global confirma si hay descargas activas (doble q para salir)
+- fix: B43 — cancel real: status queda [C], error status [!], no [−]
+
 ## v1.5.72
 - fix: B36 — Explorer refresca siempre al completar descarga
 - fix: B37 — redirect fd 2 (stderr) a /dev/null, suprime output yt-dlp sin cortar curses
