@@ -475,3 +475,30 @@
 - `online_download_max` limitado a 1-10
 
 **Estado**: v1.5.70, mypy --strict pasa.
+
+---
+
+## Entrada 15 — 2025-07-15 — B44-B49: Web Explorer polish completo
+
+**Tarea**: Corregir 6 bugs de la vista 7 (Web Explorer) y refactorizar motor selector
+
+**Archivos modificados**:
+- `player/app.py` — ESC exceptions (B44), q warning (B48), hjkl aliasing V_WEB (B49), web_download_idx, web_download_cancel → dict
+- `player/handlers/webexplorer.py` — _cycle_platform, _enter_motor_edit, _delete_platform, _add_to_queue_next, Event por-ítem (B46), c cancel fix (B47), _do_download usa idx
+- `player/views.py` — _draw_web_main motor indicator, _draw_web_hints actualizado, eliminado _draw_motor_list
+
+**Bugs corregidos**:
+- B44: ESC en download/motor config → excepciones en `_handle_key_global`
+- B45: Enter descarga desde Calidad → `web_download_idx` guarda cursor
+- B46: d/D pause/resume → `dict[int, Event]` por-ítem
+- B47: c cancel limpia → `pop(idx)` + status `[-]`
+- B48: q verifica `queue + paused`
+- B49: Motor cíclico `h`/`l`, `a`/`e`/`d` inline, eliminado `web_motor_mode`
+
+**Decisión**:
+- Motor selector integrado en modo normal con `h`/`l` (sin vista exclusiva)
+- `a`/`d` contextuales: con resultados = queue; sin resultados = gestión motor
+- `e` siempre edita plataforma activa
+- Event por-ítem permite pausar/reanudar descargas individuales
+
+**Estado**: v1.5.74, mypy --strict pasa.

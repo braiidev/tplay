@@ -1,13 +1,13 @@
 # STATE — tplay
 
 ## Estado actual
-- **Version**: v1.5.73
+- **Version**: v1.5.74
 - **Plan activo**: F10 yt-dlp Web Explorer v2 — **COMPLETADO**
 - **Bugs abiertos**: 0
-- **Docs**: Sincronizados con v1.5.73
+- **Docs**: Sincronizados con v1.5.74
 
 ## Último commit
-- `fix - 1.5.73 - B40-B43: d/D toggle fix, ESC config, q confirma, cancel real`
+- `fix - 1.5.74 - B44-B49: ESC fix, Enter download, d/D pause, c cancel, q warning, motor ciclico`
 
 ## Bugs fixeados post-implementación
 - B22: abr None comparison → search vacío
@@ -24,6 +24,12 @@
 - B33: yt-dlp stdout leak (raíz real de B31) — progress=False
 - B34: _get_download_url quality_map incompleto
 - B35: _config_int_inc/dec no maneja online_download_max
+- B44: ESC en download/motor config no vuelve a V7
+- B45: Enter no descarga desde Calidad
+- B46: d/D no pausa/reanuda (Event por-ítem)
+- B47: c no limpia estado de descarga
+- B48: q no verifica descargas pausadas
+- B49: Motor requería vista exclusiva
 
 ## Pendiente para próxima sesión
 - [ ] #4: Download history (trackear descargas en downloads.json)

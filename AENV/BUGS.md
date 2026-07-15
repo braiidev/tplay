@@ -2,6 +2,48 @@
 
 ## Activos
 
+### B44 — ESC en download/motor config no vuelve a V7
+- **Archivo**: `player/app.py`
+- **Descripción**: ESC en modo config descarga o editor de motor no cambiaba a V7.
+- **Causa**: `_handle_key_global` interceptaba ESC antes de que llegara al handler de V7.
+- **Fix**: Agregado check `web_download_mode` y `web_motor_edit_mode` como excepciones en `_handle_key_global`.
+- **Estado**: Resuelto en v1.5.74
+
+### B45 — Enter no descarga desde modo Calidad
+- **Archivo**: `player/handlers/webexplorer.py`
+- **Descripción**: Enter en modo download config solo funcionaba si cursor estaba en Formato.
+- **Causa**: `_do_download` usaba `web_cursor` que podía haber cambiado con hjkl.
+- **Fix**: `web_download_idx` guarda el cursor al abrir modo config; `_do_download` usa ese idx.
+- **Estado**: Resuelto en v1.5.74
+
+### B46 — d/D no pausa/reanuda correctamente
+- **Archivo**: `player/handlers/webexplorer.py`, `player/app.py`
+- **Descripción**: Pausa cancelaba TODAS las descargas; reanudar fallaba porque Event seguía seteado.
+- **Causa**: `web_download_cancel` era un solo `threading.Event` compartido.
+- **Fix**: Cambiado a `dict[int, threading.Event]` (uno por ítem). Pausa setea solo el Event del ítem.
+- **Estado**: Resuelto en v1.5.74
+
+### B47 — c no limpia estado de descarga
+- **Archivo**: `player/handlers/webexplorer.py`
+- **Descripción**: `c` cancelaba pero no limpiaba `web_download_paused`; al reintentar d/D el estado quedaba inconsistente.
+- **Causa**: `web_download_paused` no se limpiaba; status quedaba `[C]` en vez de `[-]`.
+- **Fix**: `web_download_paused.pop(idx, None)` + status → `[-]` inmediatamente.
+- **Estado**: Resuelto en v1.5.74
+
+### B48 — q no verifica descargas pausadas
+- **Archivo**: `player/app.py`
+- **Descripción**: `q` solo verificaba `web_download_queue`, no `web_download_paused`.
+- **Causa**: Descargas pausadas no estaban en la queue (thread terminó), pero el usuario perdería el progreso.
+- **Fix**: `active = len(queue) + len(paused)`.
+- **Estado**: Resuelto en v1.5.74
+
+### B49 — Motor requería vista exclusiva
+- **Archivo**: `player/handlers/webexplorer.py`, `player/views.py`, `player/app.py`
+- **Descripción**: Cambiar de motor requería entrar a vista exclusiva con Tab, rompiendo flujo.
+- **Causa**: `_handle_motor_mode` y `_draw_motor_list` eran modos separados.
+- **Fix**: Motor cíclico con `h`/`l` en modo normal. `a`/`e`/`d` gestión inline. Eliminado `web_motor_mode`.
+- **Estado**: Resuelto en v1.5.74
+
 ### B40 — d/D no toggle pause, reinicia descarga
 - **Archivo**: `player/handlers/webexplorer.py`
 - **Descripción**: Al presionar d/D con una descarga en progreso, en vez de pausar, re-inicia la descarga.
