@@ -349,3 +349,30 @@
 - Almacenamiento en `~/.config/tplay/data/platforms.json`
 
 **Estado**: v1.5.61, mypy strict pasa.
+
+---
+
+## Entrada 18 — 2026-07-15 — F10: reescribir player/web.py
+
+**Tarea**: Fase 2 del Web Explorer v2 — fix B22 + download
+
+**Archivos modificados**:
+- `player/web.py` — reescritura completa
+
+**Cambios**:
+- WebResult: nuevo campo `download_url`
+- search(): `extract_flat=True` para listar + extracción individual por entry
+- download(): nueva función para descargar con yt-dlp
+  - Audio: mp3 (FFmpegExtractAudio)
+  - Video: mp4 (merge_output_format)
+  - Quality: configurable (480p/720p/1080p/best)
+- _get_download_url(): helper para obtener mejor URL según config
+- _get_download_url() selectora de calidad para audio y video
+
+**Decisión**:
+- Fix B22: `extract_flat=True` lista rápido, luego `extract_info()` por entry obtiene stream URL
+- Audio download usa FFmpegExtractAudio para convertir a mp3
+- Video download usa merge_output_format para mp4
+- Quality map: 480p=480, 720p=720, 1080p=1080, best=9999
+
+**Estado**: v1.5.62, mypy strict pasa.

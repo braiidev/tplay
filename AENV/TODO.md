@@ -8,10 +8,10 @@
 - [x] 1.3 Agregar `is_default` para proteger platforms de eliminación ✅
 
 ### Fase 2: Wrapper yt-dlp
-- [ ] 2.1 Reescribir `player/web.py` — search() con extract_flat=True + por-entry extraction
-- [ ] 2.2 Agregar `download()` — descarga con yt-dlp (fmt: audio/video, quality, stream)
-- [ ] 2.3 Agregar `download_url` a WebResult
-- [ ] 2.4 Fix B22: search() retorna resultados reales
+- [x] 2.1 Reescribir `player/web.py` — search() con extract_flat=True + por-entry extraction ✅
+- [x] 2.2 Agregar `download()` — descarga con yt-dlp (fmt: audio/video, quality, stream) ✅
+- [x] 2.3 Agregar `download_url` a WebResult ✅
+- [x] 2.4 Fix B22: search() retorna resultados reales ✅
 
 ### Fase 3: Handler V7
 - [ ] 3.1 Reescribir `player/handlers/webexplorer.py` — 3 modos (normal/search/motor)
