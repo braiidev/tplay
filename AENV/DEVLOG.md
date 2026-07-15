@@ -124,3 +124,13 @@
 - `ui.py`: Help tab "Historial" unificado
 
 **Estado**: v1.5.80, mypy strict pasa (28 archivos), archivos compilan OK
+
+---
+
+## Entrada 14 — 2025-07-15 — v1.6.0 Audit: Critical Bugs
+- C1: `app.py` — toast double-decrement en compact mode. Agregado guard `not compact` en toast no-compact.
+- C3: `handlers/history.py` — data loss: `_do_history_remove` y `_do_history_clear` nunca persistían. Agregado `save_history()` después de mutaciones.
+- C8: `handlers/webexplorer.py` — `_add_to_queue` usaba `result.url` (stream temporal). Cambiado a resolver stream URL async con `get_stream_url()` antes de agregar al stack.
+- C4: `web.py` — skip (dead code, función `download()` nunca se llama).
+
+**Estado**: v1.6.0, mypy strict pasa (28 archivos), archivos compilan OK

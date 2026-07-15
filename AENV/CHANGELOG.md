@@ -1,5 +1,10 @@
 # CHANGELOG — tplay
 
+## v1.6.0
+- fix: C1 — toast double-decrement en compact mode (app.py)
+- fix: C3 — history data loss: _do_history_remove/_clear ahora persisten con save_history()
+- fix: C8 — _add_to_queue resuelve stream URL async en vez de usar URL temporal
+
 ## v1.5.80
 - feat: #4+#5 Historial unificado (descargas+streams) con tabs [Descargas] [Streams]
 - feat: DownloadEntry campos `is_temp`, `duration`, `channel`, `play_count`
