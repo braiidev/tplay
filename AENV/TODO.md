@@ -2,18 +2,26 @@
 
 ## Pendiente para próxima sesión
 
-### Security Fixes (prioritarios)
-- [ ] S1+S2: Agregar `--` end-of-options a subprocess de yt-dlp
-- [ ] S4: Path validation en `_do_mkdir`
-- [ ] S9: Thread safety en `Stack._items` (pending-flag pattern)
-- [ ] S12-S13: Atomic writes para config/persistence (temp + os.replace)
-- [ ] D1: Hacer `--js-runtime node` condicional (detectar `node` en PATH)
-- [ ] D8: Wrap VLC import con graceful fallback antes de curses
-- [ ] D2+D9: Pin `yt-dlp==<tested>` y `python-vlc>=3.0.0,<4.0.0`
-- [ ] S15+S16: Agregar `_confirm` antes de borrado de download history
+### Security Fixes — Media Severity
+- [ ] S3: yt-dlp `--no-warnings` flag
+- [ ] S5-S8: Input validation en handlers
+- [ ] S10-S11: Network timeout en yt-dlp subprocess
+- [ ] S14: File size limits en downloads
 
 ### Features
 - [ ] #6: Cache Management (limpiar cache yt-dlp)
+
+## Completado
+
+### v1.7.0 — Security Fixes High Severity ✅
+- F1: `--js-runtime node` condicional (`_has_node()`)
+- F2: VLC import graceful fallback (`_VLC_ERROR`)
+- F3: Pin versions `python-vlc>=3.0.0,<4.0.0`, `yt-dlp==2026.07.04`
+- F4: `--` end-of-options en subprocess yt-dlp
+- F5: Path validation en `_do_mkdir`
+- F6: Stack thread safety (`_stack_pending_adds`)
+- F7: Atomic writes para 7 módulos de persistencia
+- F8: Confirm dialogs antes de borrado
 
 ## Completado
 

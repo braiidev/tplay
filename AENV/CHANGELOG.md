@@ -1,5 +1,15 @@
 # CHANGELOG — tplay
 
+## v1.7.0
+- fix: F1 — `_has_node()` cached helper, `--js-runtime node` condicional en `_build_stream_cmd`/`_build_download_cmd`
+- fix: F2 — VLC import wrapped en try/except con `_VLC_ERROR` fallback, `AudioEngine.__init__` check `vlc is None`
+- fix: F3 — `requirements.txt` pinned: `python-vlc>=3.0.0,<4.0.0`, `yt-dlp==2026.07.04`
+- fix: F4 — `--` end-of-options en `_build_search_cmd`, `_build_stream_cmd`, `_build_download_cmd`
+- fix: F5 — `_do_mkdir` validates `os.path.realpath(result).startswith(root + os.sep)`
+- fix: F6 — Stack thread safety via `_stack_pending_adds` pending-flag pattern en `app.py` + `webexplorer.py`
+- fix: F7 — `atomic_write()` en `file_utils.py`, aplicado a config/state/downloads/playlist/platforms/favorites/radios
+- fix: F8 — `_confirm` dialogs antes de `_clear_tab` y `_remove_and_delete` en `download_history.py`
+
 ## v1.6.7
 - feat: U1 — `draw_listen` muestra stack size `(N)` en el título cuando hay items
 - feat: U2 — help tab "Explorador" documenta indicador `[+]/` para directorios con subdirs

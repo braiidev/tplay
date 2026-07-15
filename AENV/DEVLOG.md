@@ -241,3 +241,18 @@
 - Fortalezas: handler dispatch table, DownloadManager thread safety, error-aware VLC wrapper, graceful degradation, compact UI, shared utilities, undo/redo, config cache.
 
 **Estado**: v1.6.7, mypy strict, audit funcional COMPLETO + security audit generado
+
+---
+
+## Entrada 23 — 2026-07-15 — v1.7.0 Security Fixes F1-F8
+- F1: `web.py` — `_has_node()` cached, `--js-runtime node` condicional (no crash en systems sin Node.js)
+- F2: `audio.py` — VLC import wrapped en try/except, `_VLC_ERROR` message, `AudioEngine.__init__` check
+- F3: `requirements.txt` — pinned `python-vlc>=3.0.0,<4.0.0`, `yt-dlp==2026.07.04`
+- F4: `web.py` — `--` end-of-options en `_build_search_cmd`, `_build_stream_cmd`, `_build_download_cmd`
+- F5: `handlers/explorer.py` — `_do_mkdir` validates realpath against root prefix
+- F6: `app.py` + `handlers/webexplorer.py` — `_stack_pending_adds` pending-flag pattern para thread safety
+- F7: `file_utils.py` — `atomic_write()` helper (write .tmp + os.replace), aplicado a 7 módulos de persistencia
+- F8: `handlers/download_history.py` — `_confirm` dialogs antes de `_clear_tab` y `_remove_and_delete`
+- Mypy check pasa (28 archivos)
+
+**Estado**: v1.7.0, mypy strict, security fixes F1-F8 completos

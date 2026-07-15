@@ -1,15 +1,15 @@
 # STATE — tplay
 
 ## Estado actual
-- **Version**: v1.6.7
-- **Plan activo**: Audit completo + Security audit generado (AUDIT_v1.6.7_SECURITY.md)
+- **Version**: v1.7.0
+- **Plan activo**: Security fixes F1-F8 implementados
 - **Bugs abiertos**: 0
-- **Docs**: Sincronizados con v1.6.7
+- **Docs**: Sincronizados con v1.7.0
 
 ## Último commit
-- `docs: v1.6.7 — audit completo (todas las etapas 1-5)`
+- `v1.7.0 code — security fixes F1-F8`
 
-## Resumen v1.5.75→v1.6.7
+## Resumen v1.5.75→v1.7.0
 | Versión | Cambio |
 |---------|--------|
 | 1.5.75 | Migración Python API → subprocess |
@@ -26,9 +26,9 @@
 | 1.6.5 | R1 FilterState, P8 audio cache, V1-V5 visual |
 | 1.6.6 | P1 config cache, P4 history lookup, P5 undo shallow copy |
 | 1.6.7 | U1-U10 UX improvements + Security audit completo |
+| 1.7.0 | Security fixes: F1-F8 (critical + high severity) |
 
 ## Pendiente para próxima sesión
-- [ ] Security fixes: D1 (js-runtime condicional), D8 (VLC import graceful), D2+D9 (pin versions)
-- [ ] Security fixes: S1+S2 (-- end-of-options), S12-S13 (atomic writes), S9 (stack thread safety)
+- [ ] Medium severity security fixes (S3, S5-S8, S10-S11, S14, D3-D7, D11-D16, B1-B10)
 - [ ] #6: Cache management
 - [ ] Features nuevas según necesidad
