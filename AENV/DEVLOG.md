@@ -1,653 +1,98 @@
 # DEVLOG — tplay
 
 ## Entrada 1 — 2025-07-14 — Setup AENV
-
-**Tarea**: Migrar tracking del proyecto a sistema AENV
-
-**Archivos creados**:
-- AENV/STATE.md
-- AENV/DEVLOG.md
-- AENV/BUGS.md
-- AENV/TODO.md
-- AENV/CHANGELOG.md
-- AENV/TEST.md
-- AENV/docs/INDEX.md
-- AENV/docs/MODELS.md
-- AENV/docs/BUSINESS.md
-- AENV/docs/ARCH.md
-- AGENTS.md (reescribido como índice)
-
-**Decisión**: Migración completa — el proyecto ya tiene documentación extensa en AGENTS.md y TODO.md, se reorganiza en estructura AENV estándar.
-
-**Estado**: v1.5.45, 128+ items completados, pendiente F2 (ecualizador).
+- Migrar tracking a sistema AENV
+- Archivos: STATE.md, DEVLOG.md, BUGS.md, TODO.md, CHANGELOG.md, TEST.md, docs/
+- Estado: v1.5.45
 
 ---
 
 ## Entrada 2 — 2025-07-14 — Explorer read-only fuera del root
-
-**Tarea**: Implementar modo solo-lectura en el Explorer para directorios fuera del music_dir configurado
-
-**Archivos modificados**:
-- `player/handlers/explorer.py` — `_is_inside_root()`, bloqueo de ops de escritura
-- `player/views.py` — indicador `[RO]` en título del Explorer
-
-**Decisión**: Solo lectura (no bloqueo total) — el usuario puede navegar libremente pero no modificar archivos fuera del directorio raíz. Operaciones bloqueadas: delete, mkdir, rename, copy, move, tag edit.
-
-**Estado**: v1.5.46, mypy strict pasa.
+- `_is_inside_root()` + bloqueo ops de escritura + indicador `[RO]`
+- Estado: v1.5.46
 
 ---
 
 ## Entrada 3 — 2025-07-14 — 9 extensiones nuevas
-
-**Tarea**: Agregar soporte para .m4a .aac .opus .weba .wma .aiff .aif .flv .wmv
-
-**Archivos modificados**:
-- `player/file_utils.py` — AUDIO_EXT, VIDEO_EXT, EXT_LABEL
-
-**Decisión**: Solo alta + media (9 ext). No se agregan nicho audiophile (.wv .ape .tak .tta) ni video legacy (.3gp .mpg .mpeg .ts .m4v .ogv).
-
-**Estado**: v1.5.47, mypy strict pasa.
+- .m4a .aac .opus .weba .wma .aiff .aif .flv .wmv
+- Estado: v1.5.47
 
 ---
 
 ## Entrada 4 — 2025-07-14 — Fix symlinks en Explorer
-
-**Tarea**: Corregir bug donde Explorer no ve directorios que son symlinks
-
-**Causa raíz**: refactor P1 (os.listdir → os.scandir) usó `follow_symlinks=False`, que ignora symlinks-to-dirs. `os.listdir` + `os.path.isdir()` los seguía.
-
-**Fix**: `entry.is_dir(follow_symlinks=True)` en file_utils.py
-
-**Estado**: v1.5.48, mypy strict pasa.
+- `entry.is_dir(follow_symlinks=True)` en file_utils.py
+- Estado: v1.5.48
 
 ---
 
-## Entrada 5 — 2026-07-14 — F2 Ecualizador gráfico
-
-**Tarea**: Implementar ecualizador gráfico de 10 bandas con presets y modo Custom
-
-**Archivos modificados**:
-- `player/audio.py` — +6 métodos EQ (set_equalizer, apply_preset, disable_equalizer, get_equalizer_info, reapply_equalizer), reapply en play_file
-- `player/config.py` — defaults EQ + 16 presets (Flat..Custom) + EQ_PRESET_NAMES
-- `player/app.py` — config tab Audio, persistencia session (save/resume), eq_edit_mode + _handle_eq_edit
-- `player/handlers/listen.py` — tecla E toggle EQ
-- `player/handlers/config_view.py` — _cycle_eq_preset, _toggle_bool con EQ, abre overlay Custom
-- `player/views.py` — [EQ] indicator, hint E, draw_eq_overlay (10 bandas + preamp), compact EQ indicator
-- `player/state.py` — save_state con eq_enabled/eq_bands/eq_preamp/eq_preset
-
-**Decisión**: 
-- VLC API: `set_amp_at_index`/`get_amp_at_index` (no `set_band_value`)
-- 16 presets propios (no nativos de VLC) — más control sobre los valores
-- Custom mode: overlay con j/k/h/l/r/s/Esc
-- Re-aplicar EQ después de play_file por seguridad
-
-**Estado**: v1.5.49, mypy strict pasa.
+## Entrada 5-9 — 2025-07-14 — F2 Ecualizador
+- Ecualizador gráfico 10 bandas + 16 presets + Custom mode
+- Preamp configurable, barras visuales, r reset, hints contextuales
+- Estado: v1.5.55, mypy strict pasa
 
 ---
 
-## Entrada 6 — 2026-07-14 — F2 refinamiento EQ
-
-**Tarea**: Refinar ecualizador — eliminar overlay, integrar Custom en Config, preamp configurable, fix volumen
-
-**Cambios**:
-- Eliminado: eq_edit_mode, draw_eq_overlay, _handle_eq_edit (overlay system)
-- Tecla E ahora cicla presets, e toggle ON/OFF
-- Preamp configurable para TODOS los presets (no solo Custom)
-- Custom bandas integradas en Config/Audio tab (items dinámicos con tipo eq_band)
-- Default preamp +12dB para compensar reducción de volumen de VLC
-- Helper _reapply_eq en config_view.py
-
-**Archivos modificados**:
-- `player/app.py` — _build_config_tabs dinámico, eliminado overlay
-- `player/config.py` — eq_preamp default 12.0
-- `player/handlers/listen.py` — E=ciclar, e=toggle
-- `player/handlers/config_view.py` — _eq_preamp_inc/dec, _eq_band_inc/dec, _reapply_eq
-- `player/views.py` — draw_config muestra preamp/bands, eliminado draw_eq_overlay
-
-**Estado**: v1.5.50, mypy strict pasa.
+## Entrada 10-12 — 2025-07-14 — Rediseño visual
+- draw_box_inline, scroll indicators, tab carousel helper
+- Listen metadata centrada + volumen visual
+- Config/Audio polish (solo lectura bands + hints)
+- Estado: v1.5.55, mypy strict pasa
 
 ---
 
-## Entrada 7 — 2026-07-14 — EQ barras visuales + r reset
-
-**Tarea**: Agregar barras visuales en Config/Audio + fix r reset
-
-**Cambios**:
-- Helper `_eq_bar(value, bar_w)` genera string de barras (█/░)
-- Config/Audio tab muestra barras para preamp y bandas
-  - Full mode (≥61 cols): 40 chars, 1 dB por char
-  - Compact mode (<61 cols): 4 chars, 10 dB por char
-- Hints line "← → cambiar" en tab Audio
-- `r` en config resetea: banda → 0.0, preamp → 0.0, preset → Flat
-- Fix cursor: se guarda/restaura después de _build_config_tabs
-
-**Archivos modificados**:
-- `player/views.py` — _eq_bar(), draw_config con barras y hints Audio
-- `player/handlers/config_view.py` — handler `r` para EQ items
-
-**Estado**: v1.5.50, mypy strict pasa.
+## Entrada 13-14 — 2025-07-14 — Bug fixes post-rediseño
+- B14: Config/Audio bands siempre visibles
+- B15: History g/G implementados
+- Estado: v1.5.57
 
 ---
 
-## Entrada 8 — 2026-07-14 — Fix alineación visual EQ bands
-
-**Tarea**: Alinear labels de bandas custom en Config/Audio
-
-**Problema**: Labels con longitudes distintas ("60 Hz" vs "1k" vs "Preamp") causaban desfase visual en colon, valores y barras.
-
-**Solución**: Padear labels a 6 chars con `{label:<6}`, unificar branches `eq_preamp`/`eq_band` en uno solo.
-
-**Archivos modificados**:
-- `player/views.py` — draw_config, branch unificado eq_preamp/eq_band con label padeado
-
-**Estado**: v1.5.51, mypy strict pasa.
+## Entrada 15-16 — 2025-07-14 — Bug fixes B13+B16+B17
+- B13: Listen hints toggle con `;`
+- B16: Custom EQ persistence (`custom_bands`)
+- B17: Config/Audio cursor skip disabled bands
+- Cleanup: eliminado r reset (conflicto con shuffle)
+- Estado: v1.5.59, 0 bugs activos
 
 ---
 
-## Entrada 9 — 2026-07-14 — Rediseño visual Fase 1+2
+## Entrada 17-21 — 2025-07-15 — F10: Web Explorer v2 (consolidado)
 
-**Tarea**: Consistencia visual + jerarquía en Listen y Config
-
-**Cambios**:
-- `COMPACT_THRESHOLD = 16` en `ui.py` — reemplaza 19 hardcoded `h < 16` / `h < 12` en todo el codebase
-- Icono de pausa unificado a `❚❚` (antes: `||` en status, `❚❚` en compact, `||` en help)
-- Separador visual `───` entre preamp y bandas en Config/Audio (Custom mode)
-  - Item virtual `("separator")` en lista de items, cursor lo salta automáticamente
-- Listen view: título con icono `♪` y color `destacar` (antes: sin icono, color `texto`)
-
-**Archivos modificados**:
-- `player/ui.py` — COMPACT_THRESHOLD, pausa ❚❚, help text
-- `player/views.py` — COMPACT_THRESHOLD import, separador Config, Listen title
-- `player/app.py` — COMPACT_THRESHOLD import, separator item en _build_config_tabs
-- `player/handlers/config_view.py` — _skip_separator(), COMPACT_THRESHOLD import
-- `player/handlers/explorer.py` — COMPACT_THRESHOLD import
-- `player/handlers/history.py` — COMPACT_THRESHOLD import
-- `player/handlers/playlist.py` — COMPACT_THRESHOLD import
-- `player/handlers/radio.py` — COMPACT_THRESHOLD import
-
-**Estado**: v1.5.52, mypy strict pasa.
-
----
-
-## Entrada 10 — 2026-07-14 — draw_box_inline + scroll indicators
-
-**Tarea**: Fase 1.1 (unificar box drawing) + Fase 3.2 (scroll indicators)
-
-**Cambios**:
-- `draw_box_inline(win, h, w, title, clear)` en `ui.py` — helper para box con título inline + limpieza interior
-- Reemplaza implementación manual en `draw_mini_stack` y `draw_listen_compact` (~15 líneas eliminadas)
-- `draw_scroll_indicators(win, h, w, has_above, has_below)` en `ui.py` — dibuja `▲`/`▼` en borde derecho
-- Indicadores en: explorer, playlist, history, favorites, radio, config
-- Fix: `favorites` list_h usa `COMPACT_THRESHOLD` (era hardcoded `16`)
-
-**Archivos modificados**:
-- `player/ui.py` — draw_box_inline, draw_scroll_indicators
-- `player/views.py` — reemplazo manual boxes, scroll indicators en 6 vistas, fix favorites threshold
-
-**Estado**: v1.5.53, mypy strict pasa.
-
----
-
-## Entrada 11 — 2026-07-14 — Listen metadata centrada + volumen visual
-
-**Tarea**: Fase 2.2 (metadata centrada) + Fase 2.3 (indicador volumen visual)
-
-**Cambios**:
-- Helper `_vol_bar(vol, bar_w)` genera barra de volumen (█/░)
-- **2.2 Listen full**: estado, título ♪ y artista/álbum centrados con `_center(s, inner_w)`
-- **2.2 Listen compact**: título y artista/álbum centrados (sin filas extra, misma densidad)
-- **2.3 Listen full**: `Vol:████░░░░ 50%` en controles (8 chars bar, fallback a texto si w<50)
-- **2.3 Listen compact**: `V:██░░ 50%` en controles (4 chars bar, fallback si no cabe)
-
-**Archivos modificados**:
-- `player/views.py` — _vol_bar(), draw_listen centrado + vol bar, draw_listen_compact centrado + vol bar
-
-**Decisión**:
-- Centrado dinámico con `_center(s, w-4)` — funciona en cualquier ancho
-- Barra de volumen con fallback automático a texto si el espacio no alcanza
-- Compact mode: sin filas extra, solo centrado horizontal (preserva densidad)
-
-**Estado**: v1.5.54, mypy strict pasa.
-
----
-
-## Entrada 12 — 2026-07-14 — Config/Audio polish (solo lectura + hints)
-
-**Tarea**: Fase 4.1 (bands solo lectura) + Fase 4.2 (hints contextuales)
-
-**Cambios**:
-- **4.1** Config/Audio: bandas EQ muestran color `texto` cuando preset ≠ Custom (antes siempre `destacar` en cursor)
-- **4.2** Config/Audio: hints dinámicos por tipo de item:
-  - `eq_preamp` / `eq_band`: `← → ±0.5dB │ r reset`
-  - `choice`: `← → cambiar │ r reset`
-  - Otros: `← → cambiar` (genérico)
-- Variable `is_custom_eq` calculada una vez por frame
-
-**Archivos modificados**:
-- `player/views.py` — draw_config: is_custom_eq, hints contextuales, eq_band color
-
-**Decisión**:
-- Solo `eq_band` usa color condicional — `eq_preamp` sigue siendo editable en todos los presets
-- Hints se recalculan por frame (simple, sin caché)
-
-**Estado**: v1.5.55, mypy strict pasa.
-
----
-
-## Entrada 13 — 2026-07-14 — Refactor visual helpers (Fase 5)
-
-**Tarea**: Fase 5.1 (tab carousel helper) + Fase 5.2 (list helpers)
-
-**Cambios**:
-- **5.1** `draw_tab_carousel(win, y, tab_names, current_idx, inner_w, ox, nav_attr, curr_attr, fill_attr, sep, h, w)` — helper unificado para carousel de pestañas
-  - Reemplaza implementación manual en `draw_config` (~30 líneas → 4 líneas)
-  - Reemplaza implementación manual en `draw_help` (~35 líneas → 5 líneas)
-- **5.2** `clamp_scroll(scroll, total, list_h, cursor) → int` — normaliza scroll clamping
-- **5.2** `draw_list_indicators(win, h, w, scroll, total, list_h)` — dibuja ▲/▼ basado en scroll/total
-  - Reemplaza 3 líneas en 6 vistas (explorer, playlist, history, config, radio, favorites)
-
-**Archivos modificados**:
-- `player/ui.py` — draw_tab_carousel, clamp_scroll, draw_list_indicators
-- `player/views.py` — refactored draw_config, draw_help, draw_explorer, draw_playlist, draw_history, draw_radio, draw_favorites
-
-**Decisión**:
-- 5.1: Helper dibuja carousel + fills, caller dibuja borders/bars si necesita
-- 5.2: Helpers ligeros (no render genérico) — cada vista mantiene su lógica de render, pero scroll/indicators son consistentes
-
-**Estado**: v1.5.56, mypy strict pasa.
-
----
-
-## Entrada 14 — 2026-07-14 — Bug fixes post-rediseño
-
-**Tarea**: Corregir bugs encontrados al probar el rediseño visual
-
-**Bugs corregidos**:
-- **B14** Config/Audio bands no visibles para presets non-Custom
-  - Causa: `_build_config_tabs()` solo agregaba bands cuando `eq_preset == "Custom"`
-  - Fix: siempre agregar separator + 10 bands, `views.py` ya usaba `texto` para non-Custom
-- **B15** History g/G no implementados
-  - Causa: handler no tenía cases para `g`/`G`
-  - Fix: agregados `g→cursor=0`, `G→cursor=len-1`
-
-**Pendiente**:
-- **B13** Listen hints show/hide — requiere config option + tecla toggle (para próxima sesión)
-
-**Archivos modificados**:
-- `player/app.py` — _build_config_tabs: bands siempre visibles
-- `player/handlers/history.py` — g/G handlers
-
-**Estado**: v1.5.57, mypy strict pasa.
-
----
-
-## Entrada 15 — 2026-07-14 — Bug fixes B13+B16+B17 + Custom EQ persistence
-
-**Tarea**: Corregir bugs activos de UX en Config/Audio y Listen + persistencia de Custom EQ
-
-**Bugs corregidos**:
-- **B13** Listen hints no se pueden ocultar
-  - Fix: config `show_listen_hints` + toggle con `;`
-- **B17** Config/Audio cursor navega bands en non-Custom
-  - Fix: `_skip_disabled` reemplaza `_skip_separator`; guarda `start` antes del `+1`; revierte si no hay item accesible
-  - Iteraciones: last_valid (erróneo) → revert a start → primer válido (final)
-- **B16** Custom EQ no se guarda
-  - Fix: key `custom_bands` en config; guarda al salir de Custom, restaura al entrar
-
-**Custom EQ persistence**:
-- `custom_bands` key separada en config.json
-- `_cycle_eq_preset` guarda custom_bands al salir de Custom, restaura al entrar
-- `r` reset banda: actualiza solo esa banda en custom_bands
-- `r` preset: limpia custom_bands a [0.0]*10
-- Listen handler `E`:同步 lógica custom_bands
-
-**Archivos modificados**:
-- `player/config.py` — custom_bands default
-- `player/handlers/config_view.py` — _cycle_eq_preset, _skip_disabled, r handlers
-- `player/handlers/listen.py` — E handler, `;` handler
-- `player/keybindings.py` — `;` reserved
-- `player/views.py` — hints condicional
-- `player/ui.py` — Help Listen hints
-
-**Estado**: v1.5.59, mypy strict pasa, 0 bugs activos.
-
----
-
-## Entrada 16 — 2026-07-14 — Cleanup: eliminar r reset de Config/Audio
-
-**Tarea**: Eliminar `r` reset de Config/Audio (conflicto con shuffle global)
-
-**Problema**: `r` es mapeado a "shuffle" en keybindings. `_handle_key_global` lo intercepta antes de `handle_config`.
-
-**Decisión**: Eliminar funcionalidad de reset en Config/Audio. El usuario edita manualmente.
-
-**Archivos modificados**:
-- `player/handlers/config_view.py` — eliminado bloque `elif key == ord("r")`
-- `player/views.py` — eliminado hint `(r, reset)` de Config/Audio
-
-**Estado**: v1.5.59, mypy strict pasa, 0 bugs activos.
-
----
-
-## Entrada 17 — 2026-07-15 — F10: crear player/platforms.py
-
-**Tarea**: Fase 1 del Web Explorer v2 — crear registry de plataformas
-
-**Archivos creados**:
+### Phase 1: Platform Registry (v1.5.61)
 - `player/platforms.py` — Platform dataclass + load/save + 6 defaults
 
-**Cambios**:
-- Platform dataclass: name, url, search_pattern, download_pattern, search_prefix, downloads, is_default
-- 6 plataformas default con búsqueda nativa: YouTube, SoundCloud, Vimeo, Dailymotion, Twitch, Niconico
-- Funciones: load_platforms, save_platforms, get_search_prefix, get_platform, increment_downloads, can_delete
-- Helper _dict_to_platform para conversión segura de dicts
-- Property has_search para verificar soporte de búsqueda
-
-**Decisión**:
-- `is_default=True` protege de eliminación (can_delete retorna False)
-- search_prefix vacío = plataforma sin búsqueda nativa (solo URL directa)
-- Almacenamiento en `~/.config/tplay/data/platforms.json`
-
-**Estado**: v1.5.61, mypy strict pasa.
-
----
-
-## Entrada 18 — 2026-07-15 — F10: reescribir player/web.py
-
-**Tarea**: Fase 2 del Web Explorer v2 — fix B22 + download
-
-**Archivos modificados**:
-- `player/web.py` — reescritura completa
-
-**Cambios**:
-- WebResult: nuevo campo `download_url`
-- search(): `extract_flat=True` para listar + extracción individual por entry
-- download(): nueva función para descargar con yt-dlp
-  - Audio: mp3 (FFmpegExtractAudio)
-  - Video: mp4 (merge_output_format)
-  - Quality: configurable (480p/720p/1080p/best)
-- _get_download_url(): helper para obtener mejor URL según config
-- _get_download_url() selectora de calidad para audio y video
-
-**Decisión**:
-- Fix B22: `extract_flat=True` lista rápido, luego `extract_info()` por entry obtiene stream URL
-- Audio download usa FFmpegExtractAudio para convertir a mp3
-- Video download usa merge_output_format para mp4
-- Quality map: 480p=480, 720p=720, 1080p=1080, best=9999
-
-**Estado**: v1.5.62, mypy strict pasa.
-
----
-
-## Entrada 19 — 2026-07-15 — F10: reescribir player/handlers/webexplorer.py
-
-**Tarea**: Fase 3 del Web Explorer v2 — handler con 3 modos + gestión + descarga
-
-**Archivos modificados**:
-- `player/handlers/webexplorer.py` — reescritura completa (110→530 líneas)
-- `player/app.py` — nuevos estados web + _load_web_platforms()
-
-**Cambios**:
-- 3 modos: normal (lista), search (prompt), motor (gestión)
-- Motor mode: add/edit/delete plataformas (patrón meta_editor)
-- Download: D (directo), d (con config)
-- g/G: navegación primer/último resultado
-- A/a: add to queue
-- x: clear results
-- Cola de descarga: max 3 (configurable hasta 10)
-- Check re-descarga
-- Plataformas sin búsqueda: URL completa en prompt
-
-**Decisión**:
-- Patrón meta_editor para motor edit y download config
-- Estados en lista: [-] [►] [D] [P] [Q] [✓] [X] [!]
-- Tab alterna entre motor y search
-- _load_web_platforms() en __init__ para cargar plataformas al inicio
-
-**Estado**: v1.5.63, mypy strict pasa.
-
----
-
-## Entrada 20 — 2026-07-15 — F10: reescribir player/views.py
-
-**Tarea**: Fase 4 del Web Explorer v2 — UI con motor+prompt+estados + editors
-
-**Archivos modificados**:
-- `player/views.py` — reescritura de draw_web() + 4 funciones nuevas
-
-**Cambios**:
-- draw_web(): dispatch a sub-funciones según modo
-- _draw_web_main(): layout motor+prompt+divider+lista con estados
-- _draw_motor_list(): lista de plataformas con stats
-- _draw_motor_editor(): editor de plataformas (patrón meta_editor)
-- _draw_download_config(): configuración de descarga
-- _draw_web_hints(): hints contextuales por modo
-- Estados en lista: [-] [►] [D] [P] [Q] [✓] [X] [!]
-- Truncado de texto automático
-
-**Decisión**:
-- Patrón draw_meta_editor para motor_editor y download_config
-- Layout: Línea 1 motor+prompt, línea 2 divider, línea 3+ lista
-- Hints diferentes por modo (search/motor/normal)
-- Status display: 3 chars fijos + título truncado + duración
-
-**Estado**: v1.5.64, mypy strict pasa.
-
----
-
-## Entrada 21 — 2026-07-15 — F10: actualizar config.py + ui.py
-
-**Tarea**: Fase 5 del Web Explorer v2 — defaults downloads + help tab
-
-**Archivos modificados**:
-- `player/config.py` — defaults downloads
-- `player/ui.py` — help tab Web actualizado
-
-**Cambios**:
-- config.py: online_platform, online_download_format, online_download_quality, online_download_stream, online_download_max
-- ui.py: help tab Web con todas las teclas nuevas (Tab, g/G, D, d, A/a, x, motor keys)
-
-**Decisión**:
-- Defaults: audio, 480p, fastest, max 3
-- Help tab: 3 secciones (Web Explorer, Búsqueda, Motor)
-
-**Estado**: v1.5.65, mypy strict pasa.
-
----
-
-## Entrada 16 — 2025-07-15 — B33-B35: yt-dlp output + config + quality fix
-
-**Tarea**: Analizar PROBLEMS.md, encontrar y corregir bugs introducidos + nuevos
-
-**Bugs encontrados**:
-- B33: Opciones `"stdout"`/`"stderr"` en yt-dlp **no existen** — eran ignoradas silenciosamente. `progress=False` es la forma correcta.
-- B34: `_get_download_url` quality_map faltaba worst/144p/240p
-- B35: `_config_int_inc/dec` no manejaba `online_download_max` (cambiar en config no hacía nada)
-- Thread safety: progress callback podía escribir a `web_result_status` vacío
-
-**Cambios**:
-- web.py: eliminadas opciones falsas stdout/stddev, agregado `progress=False`, fix `_get_download_url` quality_map
-- config_view.py: `_config_int_inc/dec` ahora maneja `online_download_max`
-- webexplorer.py: bounds check en `_progress` callback y `_run` completion
-
-**Decisión**:
-- `progress=False` solo desactiva la barra de progreso en terminal; progress hooks (API) siguen funcionando
-- `online_download_max` limitado a 1-10
-
-**Estado**: v1.5.70, mypy --strict pasa.
-
----
-
-## Entrada 15 — 2025-07-15 — B44-B49: Web Explorer polish completo
-
-**Tarea**: Corregir 6 bugs de la vista 7 (Web Explorer) y refactorizar motor selector
-
-**Archivos modificados**:
-- `player/app.py` — ESC exceptions (B44), q warning (B48), hjkl aliasing V_WEB (B49), web_download_idx, web_download_cancel → dict
-- `player/handlers/webexplorer.py` — _cycle_platform, _enter_motor_edit, _delete_platform, _add_to_queue_next, Event por-ítem (B46), c cancel fix (B47), _do_download usa idx
-- `player/views.py` — _draw_web_main motor indicator, _draw_web_hints actualizado, eliminado _draw_motor_list
-
-**Bugs corregidos**:
-- B44: ESC en download/motor config → excepciones en `_handle_key_global`
-- B45: Enter descarga desde Calidad → `web_download_idx` guarda cursor
-- B46: d/D pause/resume → `dict[int, Event]` por-ítem
-- B47: c cancel limpia → `pop(idx)` + status `[-]`
-- B48: q verifica `queue + paused`
-- B49: Motor cíclico `h`/`l`, `a`/`e`/`d` inline, eliminado `web_motor_mode`
-
-**Decisión**:
-- Motor selector integrado en modo normal con `h`/`l` (sin vista exclusiva)
-- `a`/`d` contextuales: con resultados = queue; sin resultados = gestión motor
-- `e` siempre edita plataforma activa
-- Event por-ítem permite pausar/reanudar descargas individuales
-
-**Estado**: v1.5.74, mypy --strict pasa.
-
----
-
-## Entrada 16 — 2025-07-15 — B50-B52: Search fix, motor editor, indicator
-
-**Tarea**: Corregir 3 bugs reportados post-B44-B49
-
-**Archivos modificados**:
-- `player/web.py` — eliminada 2da extracción por-entry, nueva función `get_stream_url()` on-demand
-- `player/handlers/webexplorer.py` — `_play_web_result` usa `get_stream_url()`, motor editor solo `Esc`
-- `player/views.py` — motor indicator `← [MOTOR] →`
-
-**Bugs corregidos**:
-- B50: Motor editor `q` → `Esc` (q cierra app globalmente)
-- B51: Motor indicator formato `← [MOTOR] →`
-- B52: Búsqueda Sin Resultados — YouTube bloqueaba 2da extracción; fix: extracción plana + stream on-demand
-
-**Decisión**:
-- `search()` solo hace `extract_flat=True` (rápido, sin bot detection)
-- `get_stream_url()` extrae stream URL on-demand al play
-- `download()` sigue recibiendo webpage URL (yt-dlp maneja internamente)
-
-**Estado**: v1.5.74, mypy --strict pasa.
-
----
-
-## Entrada 17 — 2025-07-15 — B53: Error handling para descarga/play
-
-**Tarea**: Mejorar manejo de errores de yt-dlp (bot detection, 403, 429, unavailable)
-
-**Archivos modificados**:
-- `player/web.py` — `_classify_error()`, `search()` lanza RuntimeError, `get_stream_url()` retorna None, `download()` usa classify
-- `player/handlers/webexplorer.py` — `_play_web_result` maneja None con [!] + toast
-
-**Bugs corregidos**:
-- B53: Errores crudos de yt-dlp → mensajes amigables en español
-
-**Decisión**:
-- Sin browser/cookies — si falla, toast + [!] y nada más
-- `_classify_error()` mapea: bot detection, 403, 429, unavailable, format, network
-- `get_stream_url()` retorna None (no fallback silencioso)
-
-**Estado**: v1.5.74, mypy --strict pasa.
-
----
-
-## Entrada 18 — 2025-07-15 — Migración yt-dlp: Python API → subprocess
-
-**Tarea**: Resolver YouTube bot detection ("Sign in to confirm you're not a bot")
-
-**Problema**: La API de Python (`yt_dlp.YoutubeDL`) es detectada por YouTube y bloqueada. Incluso contenido previamente descargado falla.
-
-**Solución**: Migrar todas las funciones de `web.py` a subprocess (yt-dlp como CLI):
-- `search()`: subprocess + `--flat-playlist --dump-json`, parse JSON lines
-- `get_stream_url()`: subprocess + `--get-url -f bestaudio/best`
-- `download()`: subprocess con `cancel_event` para cancelación
-
-**Archivos modificados**:
-- `player/web.py` — rewrito completo (301→260 líneas)
-- `player/handlers/webexplorer.py` — eliminada dependencia de `yt_dlp.utils.DownloadCancelled`
+### Phase 2: Wrapper yt-dlp (v1.5.62)
+- `player/web.py` — search(), get_stream_url(), download() con subprocess
+
+### Phase 3: Handler V7 (v1.5.63)
+- `player/handlers/webexplorer.py` — 3 modos (normal/search/motor) + descarga
+
+### Phase 4: Views V7 (v1.5.64)
+- `player/views.py` — draw_web + motor_list + motor_editor + download_config
+
+### Phase 5: App & Config (v1.5.65)
+- config.py defaults + ui.py help tab Web
+
+### Phase 6: Polish (v1.5.66-v1.5.74)
+- B22-B59: Search fix, motor editor, error handling, pause/resume, cancel
+- Migración Python API → subprocess (bot detection fix)
+- `--continue` flag para pause/resume
+
+### Phase 7: DownloadManager (v1.5.78-v1.5.79)
+- **v1.5.78**: `DownloadManager` class (worker loop, cola, concurrencia, SIGSTOP/SIGCONT)
+- **v1.5.79**: Integración completa en handler/views/app
+  - Eliminadas variables viejas (`web_download_queue`, `web_download_cancel`, `web_download_paused`)
+  - Views leen de `get_result_status()` (combina playing + download state)
+  - Config `online_cookies` (none/firefox/brave/chromium) + `--js-runtime node`
+  - Auto-refresh explorer al completar descarga
+  - Fix `q` exit bug (count only active + reset after 5s)
+
+**Archivos tocados**: web.py, webexplorer.py, app.py, views.py, config.py, config_view.py
 
 **Descubrimientos**:
-- `--extractor-args "youtube:player_client=mweb"` causa error de formatos (solo devuelve storyboards)
-- El approach subprocess sin args especiales funciona correctamente
-- Cliente por defecto (`android_vr`) tiene todos los formatos disponibles
-- La detección de bots es específica de la API de Python, no del CLI
+- YouTube requiere `--js-runtime node` para resolver signatures (yt-dlp 2026.7.4+)
+- Firefox cookies funciona; Brave no tiene DB de cookies instalada
+- `--cookies-from-browser` es la única forma confiable de bypass bot detection
+- `yt-dlp[default]` instala `yt-dlp-ejs` (challenge solver)
 
-**Decisión**:
-- Sin `--extractor-args` — el subprocess approach es suficiente
-- `cancel_event` en `download()` para cancelación (no excepciones)
-- `_build_*_cmd()` helpers para construir comandos
-
-**Estado**: v1.5.75, test manual exitoso (search + stream + download). mypy pasa.
-
----
-
-## Entrada 19 — 2025-07-15 — Fix 4 bugs Web Explorer post-migración
-
-**Tarea**: Corregir 4 bugs introducidos por la migración a subprocess
-
-**Bugs**:
-- B55: Pause/Resume mostraba [!] en vez de mantener [P]
-- B56: Cancel no reseteaba progreso (mensaje inconsistente)
-- B57: Vista 7 hiper lenta (is_available() en cada frame)
-- B58: Temp files .part no se limpiaban
-
-**Archivos modificados**:
-- `player/web.py` — cache is_available(), mensaje cancel consistente, cleanup .part
-- `player/handlers/webexplorer.py` — _run() verifica paused antes de overwrite, _play_web_result async
-
-**Causa raíz**:
-- B55/B56: `web.py` retornaba `"Cancelado"` pero handler buscaba `"Cancelado por usuario"`
-- B57: `is_available()` ejecutaba `subprocess.run(["yt-dlp","--version"])` en cada frame de render (~20fps = 20 subprocess/s)
-- B58: yt-dlp deja `.part` al ser kill -9
-
-**Estado**: v1.5.76, mypy pasa.
-
----
-
-## Entrada 20 — 2025-07-15 — Fix pause/resume restart from 0%
-
-**Tarea**: Pause/resume reiniciaba descarga desde 0% en vez de continuar
-
-**Problema**: Al pausar, `proc.kill()` deja archivo `.part`. Al reanudar, nuevo subprocess sin `--continue` empieza de 0.
-
-**Solución**:
-- Agregado `--continue` a `_build_download_cmd()`
-- `_cleanup_part_files()` movido de `download()` a `_cancel_download()` (solo cancel explícito)
-- Pause: `.part` se mantiene, `--continue` lo retoma
-- Cancel: `.part` se limpia
-
-**Archivos modificados**:
-- `player/web.py` — `--continue` en cmd, removido cleanup del download loop
-- `player/handlers/webexplorer.py` — `_cancel_download()` llama `_cleanup_part_files()`
-
-**Estado**: v1.5.77, mypy pasa.
-
----
-
-## Entrada 21 — 2025-07-15 — DownloadManager refactor (INCOMPLETO)
-
-**Tarea**: Refactorizar cola de descargas — B60: todos los items comparten estado
-
-**Problema**: La cola actual es falsa — los items se marcan [Q] pero nunca se ejecutan. Todos los updates van al mismo `web_result_status[dl_idx]`. Cancel/pause afecta todos los items.
-
-**Solución**: Implementar `DownloadManager` con:
-- `DownloadState` enum (QUEUED, DOWNLOADING, PAUSED, COMPLETED, FAILED, STOPPED)
-- `DownloadItem` dataclass con estado independiente por item
-- Worker loop con concurrencia limitada (`max_concurrent` de config)
-- `pause_item()` usa SIGSTOP/SIGCONT (Linux)
-- `stop_item()` mata proceso y limpia .part
-- Callbacks para notificar UI de cambios
-
-**Lo implementado (web.py)**:
-- `DownloadState`, `DownloadItem`, `DownloadManager` class
-- `add_download()`, `pause_item()`, `resume_item()`, `stop_item()`
-- `get_items()`, `get_item()`, `active_count()`, `pending_count()`
-- `_worker_loop()`, `_download_worker()`, `shutdown()`
-- `get_download_manager()` singleton
-
-**Lo pendiente**:
-- Actualizar `webexplorer.py` para usar DownloadManager en vez de lógica vieja
-- Actualizar `app.py` (remover `web_download_queue`, `web_download_cancel`, `web_download_paused`)
-- Actualizar `views.py` (leer estado de `get_download_manager().get_items()`)
-- Test de cola con 3+ descargas
-
-**Archivos tocados**: `player/web.py`
-
-**Estado**: v1.5.78, DownloadManager implementado pero no integrado en handler/views.
+**Estado**: v1.5.79, mypy strict pasa, B60 resuelto, 0 bugs activos
