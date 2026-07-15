@@ -866,12 +866,19 @@ class PlayerApp:
             curses.flushinp()
             return True
         if key == ord("q"):
-            from .web import get_download_manager
+            from .web import get_download_manager, DownloadState
             dm = get_download_manager()
-            active = len(dm.items)
+            active_states = {DownloadState.QUEUED, DownloadState.DOWNLOADING, DownloadState.PAUSED}
+            active = sum(1 for i in dm.items if i.state in active_states)
             if active > 0:
                 self.toast_msg = f"Hay {active} descarga/s en curso. Presiona q de nuevo para salir"
                 self.toast_ticks = 80
+                import time as _time
+                now = _time.monotonic()
+                last = getattr(self, "_q_last", 0.0)
+                if now - last > 5.0:
+                    self._q_pending = 0
+                self._q_last = now
                 self._q_pending = getattr(self, "_q_pending", 0) + 1
                 if self._q_pending < 2:
                     return True
