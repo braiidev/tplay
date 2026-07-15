@@ -621,6 +621,13 @@ def _cancel_download(app: PlayerApp) -> None:
     app.web_download_paused.pop(idx, None)
     if idx < len(app.web_result_status):
         app.web_result_status[idx] = "[-]"
+
+    from .. import web
+    from ..config import load as _load_config
+    cfg = _load_config()
+    music_dir = cfg.get("music_dir", os.path.expanduser("~/Music"))
+    web._cleanup_part_files(music_dir)
+
     _toast(app, "Descarga cancelada")
 
 

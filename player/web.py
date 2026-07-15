@@ -94,6 +94,7 @@ def _build_download_cmd(
 ) -> list[str]:
     """Construye comando para descarga."""
     cmd = list(_YTDLP_COMMON)
+    cmd.append("--continue")
 
     outtmpl = os.path.join(output_path, "%(title)s.%(ext)s")
 
@@ -250,7 +251,6 @@ def download(
         if cancel_event and cancel_event.is_set():
             proc.kill()
             proc.wait()
-            _cleanup_part_files(output_path)
             return False, "Cancelado por usuario"
 
         line = line.strip()
