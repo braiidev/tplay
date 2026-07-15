@@ -28,6 +28,7 @@ def _toast(app: PlayerApp, msg: str) -> None:
 
 def _confirm(app: PlayerApp, label: str, callback: Callable[..., None]) -> None:
     app.dialog = {"type": "confirm", "label": label, "callback": callback}
+    curses.curs_set(0)
     curses.flushinp()
 
 

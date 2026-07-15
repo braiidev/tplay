@@ -1242,9 +1242,10 @@ class PlayerApp:
 
             if compact:
                 if self.toast_ticks > 0:
+                    toast_y = max(1, h - 2)
                     ui.safe_addstr(
                         self.stdscr,
-                        1,
+                        toast_y,
                         2,
                         self.toast_msg[: w - 4],
                         curses.color_pair(PAIR_TEXTO),

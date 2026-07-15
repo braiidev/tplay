@@ -236,7 +236,8 @@ def draw_dialog(win: curses.window, h: int, w: int, title: str, text: str,
     texto = curses.color_pair(PAIR_TEXTO)
     dest = curses.color_pair(PAIR_OVERLAY)
 
-    DH = 5
+    text_lines = text.split("\n") if "\n" in text else [text]
+    DH = 5 + max(0, len(text_lines) - 1)
     oy = max(1, (h - DH) // 2)
 
     if compact:
@@ -275,9 +276,12 @@ def draw_dialog(win: curses.window, h: int, w: int, title: str, text: str,
         # Row 2: content (message or input)
         oy += 1
         if is_confirm:
-            content = f"  {text}  "
-            pad_l = max(0, (ih - len(content)) // 2)
-            rline(" " * pad_l + content)
+            for line_text in text_lines:
+                content = f"  {line_text}  "
+                pad_l = max(0, (ih - len(content)) // 2)
+                rline(" " * pad_l + content)
+                oy += 1
+            oy -= 1
         else:
             field_w = max(1, ih - len(text) - 6)
             if prompt_cursor_pos < 0:
@@ -305,7 +309,6 @@ def draw_dialog(win: curses.window, h: int, w: int, title: str, text: str,
                     win.chgat(oy, ox + 1 + cx, 1, dest | curses.A_REVERSE)
                 except curses.error:
                     pass
-            curses.curs_set(0)
 
         # Row 3: buttons or empty
         oy += 1
@@ -436,6 +439,7 @@ HELP_TABS: list[HelpTab] = [
             ("  ARCHIVOS", PAIR_NAV),
             ("", None),
             ("    Enter     Abrir dir / reproducir", PAIR_TEXTO),
+            ("    [+/]      Directorio tiene subdirectorios", PAIR_NAV),
             ("    Tab       Marcar/desmarcar archivo", PAIR_TEXTO),
             ("    a / A     Añadir a pila (final/tras)", PAIR_TEXTO),
             ("    f         Añadir/quitar de favoritos", PAIR_TEXTO),

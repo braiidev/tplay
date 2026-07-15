@@ -131,7 +131,9 @@ def draw_listen(app: PlayerApp, h: int, w: int) -> None:
                 safe_addstr(app.stdscr, h - 3, 2, hints2, nav, h, w)
         return
 
-    draw_box(app.stdscr, h, w, "Listen")
+    stack_n = len(app.stack.items)
+    title = f"Listen ({stack_n})" if stack_n > 0 else "Listen"
+    draw_box(app.stdscr, h, w, title)
     mid = max(3, (h - 8) // 2)
 
     if not app.stack.items or not app.audio.playing:
@@ -376,7 +378,7 @@ def draw_listen_compact(app: PlayerApp, h: int, w: int) -> None:
     # ── Goto overlay for compact ──
     if app.goto_mode:
         goto_h = 5
-        oy = max(0, (h - goto_h) // 2)
+        oy = min(max(0, (h - goto_h) // 2), max(0, h - goto_h - 3))
         bw = min(22, w - 4)
         ox = (w - bw) // 2
         safe_addstr(app.stdscr, oy, ox, "┌" + "─" * (bw - 2) + "┐", marco, h, w)
@@ -956,6 +958,13 @@ def draw_radio(app: PlayerApp, h: int, w: int) -> None:
         safe_addstr(win, y0, 2, "  Sin radios guardadas", texto, h, w)
         return
     draw_list_indicators(win, h, w, scroll, len(radios), list_h)
+    nav = curses.color_pair(PAIR_NAV)
+    hints = _build_hints([
+        ("Enter", "►"), ("a/A", "agregar"), ("e", "editar"),
+        ("d", "eliminar"), ("f", "fav"), ("x", "export"),
+    ], w)
+    if hints:
+        safe_addstr(win, h - 2, 2, hints, nav, h, w)
 
 
 def draw_dir_picker(app: PlayerApp, win: curses.window, h: int, w: int) -> None:
