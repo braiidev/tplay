@@ -525,9 +525,6 @@ def _start_download(
     app.web_download_queue.append(result)
 
     def _progress(d: dict[str, Any]) -> None:
-        if cancel_event.is_set():
-            from yt_dlp.utils import DownloadCancelled
-            raise DownloadCancelled("Cancelado por usuario")
         if dl_idx >= len(app.web_result_status):
             return
         if d.get("status") == "downloading":
@@ -543,6 +540,7 @@ def _start_download(
         success, msg = web.download(
             result.webpage_url, music_dir, fmt, quality,
             progress_hook=_progress, resume=resume,
+            cancel_event=cancel_event,
         )
 
         app.web_download_cancel.pop(dl_idx, None)

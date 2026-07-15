@@ -1,11 +1,18 @@
-"""yt-dlp wrapper para Web Explorer."""
+"""yt-dlp wrapper para Web Explorer — subprocess approach."""
 from __future__ import annotations
 
+import json
 import os
-from dataclasses import dataclass
+import subprocess
+import threading
+from dataclasses import dataclass, field
 from typing import Any
 
 from .config import load as _load_config
+
+
+_YTDLP_BIN = "yt-dlp"
+_YTDLP_COMMON = [_YTDLP_BIN, "--no-warnings", "--ignore-errors", "--no-colors"]
 
 
 @dataclass
@@ -24,72 +31,134 @@ class WebResult:
 def is_available() -> bool:
     """Verifica si yt-dlp está instalado."""
     try:
-        import yt_dlp  # noqa: F401
-        return True
-    except ImportError:
+        r = subprocess.run(
+            [_YTDLP_BIN, "--version"],
+            capture_output=True, text=True, timeout=5,
+        )
+        return r.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired):
         return False
 
 
-def _classify_error(e: Exception) -> str:
+def _classify_error(msg: str) -> str:
     """Clasifica errores de yt-dlp en mensajes amigables."""
-    msg = str(e).lower()
-    if "sign in to confirm" in msg or "bot" in msg:
+    low = msg.lower()
+    if "sign in to confirm" in low or "bot" in low:
         return "YouTube requiere autenticación — no se puede descargar"
-    if "http error 403" in msg:
+    if "http error 403" in low:
         return "Acceso denegado (403) — video restringido"
-    if "http error 429" in msg:
+    if "http error 429" in low:
         return "Demasiadas solicitudes — esperá un momento"
-    if "unavailable" in msg or "no longer available" in msg:
+    if "unavailable" in low or "no longer available" in low:
         return "Video no disponible"
-    if "requested format" in msg or "no video" in msg:
+    if "requested format" in low or "no video" in low:
         return "Formato no disponible para este video"
-    if "network" in msg or "connection" in msg or "timeout" in msg:
+    if "network" in low or "connection" in low or "timeout" in low:
         return "Error de conexión — verificá tu red"
-    return f"Error: {e}"
+    return f"Error: {msg}"
+
+
+def _build_search_cmd(
+    query: str, max_results: int, search_prefix: str,
+) -> list[str]:
+    """Construye comando para búsqueda."""
+    cmd = list(_YTDLP_COMMON)
+    cmd.extend(["--flat-playlist", "--dump-json"])
+    cmd.append(f"{search_prefix}{max_results}:{query}")
+    return cmd
+
+
+def _build_stream_cmd(
+    webpage_url: str, platform_name: str | None = None,
+) -> list[str]:
+    """Construye comando para obtener stream URL."""
+    cmd = list(_YTDLP_COMMON)
+    cmd.extend(["--get-url", "-f", "bestaudio/best"])
+
+    cmd.append(webpage_url)
+    return cmd
+
+
+def _build_download_cmd(
+    webpage_url: str,
+    output_path: str,
+    fmt: str = "audio",
+    quality: str = "480p",
+    platform_name: str | None = None,
+) -> list[str]:
+    """Construye comando para descarga."""
+    cmd = list(_YTDLP_COMMON)
+
+    outtmpl = os.path.join(output_path, "%(title)s.%(ext)s")
+
+    if fmt == "audio":
+        cmd.extend([
+            "-x", "--audio-format", "mp3",
+            "-f", "bestaudio/best",
+            "-o", outtmpl,
+        ])
+    else:
+        quality_map: dict[str, str] = {
+            "worst": "worst",
+            "144p": "bestvideo[height<=144]+bestaudio/best[height<=144]",
+            "240p": "bestvideo[height<=240]+bestaudio/best[height<=240]",
+            "480p": "bestvideo[height<=480]+bestaudio/best[height<=480]",
+            "720p": "bestvideo[height<=720]+bestaudio/best[height<=720]",
+            "1080p": "bestvideo[height<=1080]+bestaudio/best[height<=1080]",
+            "best": "bestvideo+bestaudio/best",
+        }
+        fmt_selector = quality_map.get(quality, quality_map["480p"])
+        cmd.extend([
+            "-f", fmt_selector,
+            "--merge-output-format", "mp4",
+            "-o", outtmpl,
+        ])
+
+    cmd.append(webpage_url)
+    return cmd
 
 
 def search(
-    query: str, max_results: int = 5, search_prefix: str = "ytsearch"
+    query: str, max_results: int = 5, search_prefix: str = "ytsearch",
 ) -> list[WebResult]:
-    """
-    Busca en la plataforma indicada.
-
-    Usa extract_flat=True para obtener la lista rápida (sin extraer streams).
-    El stream URL se obtiene on-demand al play/download.
-    """
+    """Busca en la plataforma indicada via subprocess."""
     if not is_available():
-        raise RuntimeError(
-            "yt-dlp no instalado: pip install --break-system-packages yt-dlp"
-        )
+        raise RuntimeError("yt-dlp no instalado")
 
     results: list[WebResult] = []
+    cmd = _build_search_cmd(query, max_results, search_prefix)
+
     try:
-        import yt_dlp
-    except ImportError:
+        proc = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=30,
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("Búsqueda timeout — intentá de nuevo")
+    except FileNotFoundError:
+        raise RuntimeError("yt-dlp no encontrado en PATH")
+
+    if proc.returncode != 0 and not proc.stdout.strip():
+        err = proc.stderr.strip()
+        if err:
+            raise RuntimeError(_classify_error(err))
         return results
 
-    list_opts: dict[str, Any] = {
-        "quiet": True,
-        "no_warnings": True,
-        "extract_flat": True,
-    }
-    try:
-        with yt_dlp.YoutubeDL(list_opts) as ydl:
-            info = ydl.extract_info(
-                f"{search_prefix}{max_results}:{query}", download=False
-            )
-            if not info or "entries" not in info:
-                return results
-            entries = list(info["entries"])
-    except Exception as e:
-        raise RuntimeError(_classify_error(e)) from e
+    for line in proc.stdout.strip().split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            continue
 
-    for entry in entries:
         if entry is None:
             continue
+
         entry_url = entry.get("url") or entry.get("webpage_url", "")
         if not entry_url:
             continue
+
         results.append(
             WebResult(
                 title=entry.get("title", "Sin título"),
@@ -97,7 +166,7 @@ def search(
                 duration=int(entry.get("duration") or 0),
                 channel=entry.get("channel", entry.get("uploader", "")),
                 webpage_url=entry.get("webpage_url", entry_url),
-                platform=info.get("extractor", "unknown"),
+                platform=entry.get("extractor", "unknown"),
             )
         )
 
@@ -105,98 +174,28 @@ def search(
 
 
 def get_stream_url(webpage_url: str) -> str | None:
-    """Extrae la stream URL desde una webpage URL (on-demand).
+    """Obtiene la stream URL directa via subprocess.
 
     Returns:
-        Stream URL o None si falla (el caller debe manejar el error).
+        Stream URL o None si falla.
     """
     if not is_available():
         return None
+
+    cmd = _build_stream_cmd(webpage_url)
+
     try:
-        import yt_dlp
-    except ImportError:
+        proc = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=15,
+        )
+    except (subprocess.TimeoutExpired, FileNotFoundError):
         return None
 
-    opts: dict[str, Any] = {
-        "quiet": True,
-        "no_warnings": True,
-        "extract_flat": False,
-        "skip_download": True,
-    }
-    try:
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(webpage_url, download=False)
-            if not info:
-                return None
-            stream = info.get("url", "")
-            if not stream and info.get("formats"):
-                audio_fmts = [
-                    f for f in info["formats"] if f.get("acodec") != "none"
-                ]
-                if audio_fmts:
-                    best = max(audio_fmts, key=lambda f: f.get("abr") or 0)
-                    stream = best.get("url", "")
-            return stream or None
-    except Exception:
+    if proc.returncode != 0:
         return None
 
-
-def _get_download_url(info: dict[str, Any]) -> str:
-    """Obtiene la mejor URL de descarga desde info dict."""
-    if info.get("url"):
-        return str(info["url"])
-
-    if not info.get("formats"):
-        return ""
-
-    cfg = _load_config()
-    fmt = cfg.get("online_download_format", "audio")
-    quality = cfg.get("online_download_quality", "480p")
-
-    if fmt == "audio":
-        candidates = [
-            f
-            for f in info["formats"]
-            if f.get("acodec") != "none" and f.get("vcodec") == "none"
-        ]
-        if candidates:
-            best = max(candidates, key=lambda f: f.get("abr") or 0)
-            return str(best.get("url", ""))
-
-    quality_map: dict[str, int] = {
-        "worst": 0,
-        "144p": 144,
-        "240p": 240,
-        "480p": 480,
-        "720p": 720,
-        "1080p": 1080,
-        "best": 9999,
-    }
-    target_height = quality_map.get(quality, 480)
-
-    video_fmts = [
-        f
-        for f in info["formats"]
-        if f.get("vcodec") != "none" and f.get("acodec") != "none"
-    ]
-    if video_fmts:
-        if target_height == 0:
-            best = min(video_fmts, key=lambda f: f.get("height", 0))
-        elif target_height == 9999:
-            best = max(video_fmts, key=lambda f: f.get("height", 0))
-        else:
-            suitable = [f for f in video_fmts if f.get("height", 0) <= target_height]
-            best = max(suitable, key=lambda f: f.get("height", 0)) if suitable else max(
-                video_fmts, key=lambda f: f.get("height", 0)
-            )
-        return str(best.get("url", ""))
-
-    all_fmts = [f for f in info["formats"] if f.get("url")]
-    if all_fmts:
-        best = max(all_fmts, key=lambda f: f.get("height", 0))
-        return str(best.get("url", ""))
-
-    return ""
+    url = proc.stdout.strip().split("\n")[0].strip()
+    return url if url.startswith("http") else None
 
 
 def download(
@@ -206,12 +205,13 @@ def download(
     quality: str = "480p",
     progress_hook: Any = None,
     resume: bool = False,
+    cancel_event: threading.Event | None = None,
 ) -> tuple[bool, str]:
-    """
-    Descarga un archivo con yt-dlp.
+    """Descarga un archivo con yt-dlp via subprocess.
 
     Args:
-        resume: si True, continua descarga parcial (continuedl).
+        resume: ignorado (mantenido por compatibilidad de interfaz).
+        cancel_event: evento de threading para cancelar la descarga.
 
     Returns:
         (success, filename) o (False, error_message)
@@ -219,75 +219,74 @@ def download(
     if not is_available():
         return False, "yt-dlp no instalado"
 
-    try:
-        import yt_dlp
-    except ImportError:
-        return False, "yt-dlp no disponible"
-
-    outtmpl = os.path.join(output_path, "%(title)s.%(ext)s")
-
-    quality_map: dict[str, str] = {
-        "worst": "worst",
-        "144p": "bestvideo[height<=144]+bestaudio/best[height<=144]",
-        "240p": "bestvideo[height<=240]+bestaudio/best[height<=240]",
-        "480p": "bestvideo[height<=480]+bestaudio/best[height<=480]",
-        "720p": "bestvideo[height<=720]+bestaudio/best[height<=720]",
-        "1080p": "bestvideo[height<=1080]+bestaudio/best[height<=1080]",
-        "best": "bestvideo+bestaudio/best",
-    }
-
-    if fmt == "audio":
-        opts: dict[str, Any] = {
-            "quiet": True,
-            "no_warnings": True,
-            "noprogress": True,
-            "format": "bestaudio/best",
-            "postprocessors": [
-                {
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
-                    "preferredquality": "192",
-                }
-            ],
-            "outtmpl": outtmpl,
-        }
-    else:
-        fmt_selector = quality_map.get(quality, quality_map["480p"])
-        opts = {
-            "quiet": True,
-            "no_warnings": True,
-            "noprogress": True,
-            "format": fmt_selector,
-            "merge_output_format": "mp4",
-            "outtmpl": outtmpl,
-        }
-
-    if resume:
-        opts["continuedl"] = True
-
-    if progress_hook is not None:
-        opts["progress_hooks"] = [progress_hook]
+    cmd = _build_download_cmd(url, output_path, fmt, quality)
 
     try:
-        fd_save = os.dup(2)
-        with open(os.devnull, "w") as devnull:
-            os.dup2(devnull.fileno(), 2)
-            try:
-                with yt_dlp.YoutubeDL(opts) as ydl:
-                    info = ydl.extract_info(url, download=True)
-                    if info:
-                        title = info.get("title", "download")
-                        ext = "mp3" if fmt == "audio" else "mp4"
-                        filename = f"{title}.{ext}"
-                        return True, filename
-                    return False, "No se pudo obtener info del video"
-            finally:
-                os.dup2(fd_save, 2)
-                os.close(fd_save)
-    except yt_dlp.utils.DownloadCancelled:
-        return False, "Cancelado"
-    except Exception as e:
-        return False, _classify_error(e)
+        proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, bufsize=1,
+        )
+    except FileNotFoundError:
+        return False, "yt-dlp no encontrado en PATH"
+
+    filename = ""
+
+    for line in proc.stdout or []:
+        if cancel_event and cancel_event.is_set():
+            proc.kill()
+            proc.wait()
+            return False, "Cancelado"
+
+        line = line.strip()
+        if not line:
+            continue
+
+        if progress_hook is not None:
+            hook_data: dict[str, Any] = {}
+
+            if "[download]" in line:
+                pct_str = line.split("%")[0].split()[-1]
+                try:
+                    pct = int(float(pct_str))
+                    hook_data = {
+                        "status": "downloading",
+                        "downloaded_bytes": pct,
+                        "total_bytes": 100,
+                    }
+                except (ValueError, IndexError):
+                    pass
+
+                if "Destination:" in line:
+                    filename = line.split("Destination:")[-1].strip()
+                elif "has already" in line:
+                    filename = line.split("has already")[-1].strip()
+            elif "[ExtractAudio]" in line:
+                hook_data = {"status": "postprocessor"}
+            elif "ERROR" in line or "error" in line.lower():
+                hook_data = {"status": "error", "message": line}
+
+            if hook_data:
+                try:
+                    progress_hook(hook_data)
+                except Exception:
+                    pass
+
+    proc.wait()
+
+    if proc.returncode != 0:
+        stderr_text = ""
+        try:
+            _, stderr_text = proc.communicate(timeout=5)
+        except Exception:
+            pass
+        return False, _classify_error(stderr_text or "Error desconocido")
+
+    if not filename:
+        title = url.split("/")[-1].split("?")[0][:50]
+        ext = "mp3" if fmt == "audio" else "mp4"
+        filename = f"{title}.{ext}"
+
+    return True, filename
 
 
 def format_duration(seconds: int) -> str:
