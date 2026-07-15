@@ -373,17 +373,10 @@ def _do_search(app: PlayerApp, query: str) -> None:
         try:
             results = web.search(query, max_results, search_prefix=prefix)
         except RuntimeError as e:
-            results = []
-            app.web_loading = False
-            _toast(app, str(e))
+            app._web_search_error = str(e)
             return
 
-        app.web_results = results
-        app.web_cursor = 0
-        app.web_scroll = 0
-        app.web_loading = False
-        if not results:
-            _toast(app, f"Sin resultados: {query}")
+        app._web_search_pending = results
 
     t = threading.Thread(target=_run, daemon=True)
     t.start()
@@ -420,42 +413,10 @@ def _play_web_result(app: PlayerApp) -> None:
     def _run() -> None:
         stream_url = web.get_stream_url(result.webpage_url)
         if not stream_url:
-            app.web_playing_idx = -1
-            _toast(app, "No se puede reproducir — video restringido o no disponible")
+            app._web_play_error = "No se puede reproducir — video restringido o no disponible"
             return
 
-        from ..downloads import add_entry, save_history, TMP_DIR
-        from ..stack import StackItem
-
-        os.makedirs(TMP_DIR, exist_ok=True)
-        entry = add_entry(
-            app.download_history,
-            title=result.title,
-            url=stream_url,
-            webpage_url=result.webpage_url,
-            file_path="",
-            fmt="audio",
-            quality="480p",
-            platform=result.platform,
-            is_temp=True,
-            duration=result.duration,
-            channel=result.channel,
-        )
-        save_history(app.download_history)
-
-        dm = web.get_download_manager()
-        dm.add_download(
-            result.webpage_url, result.title,
-            "audio", "480p", result.platform,
-            output_dir=TMP_DIR,
-        )
-
-        item = StackItem(path=stream_url, name=result.title)
-        app.stack.items = [item]
-        app.stack.playhead = 0
-        app.audio.play_file(stream_url)
-        app.current_view = app.V_LISTEN
-        _toast(app, f"▶ {result.title}")
+        app._web_play_pending = (stream_url, result)
 
     t = threading.Thread(target=_run, daemon=True)
     t.start()

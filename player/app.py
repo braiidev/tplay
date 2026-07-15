@@ -168,6 +168,10 @@ class PlayerApp:
         self.dl_history_filtered: list[int] = list(range(len(self.download_history)))
         self.dl_history_tab: int = 0  # 0=Descargas, 1=Streams
         self._download_completed_pending: bool = False
+        self._web_search_pending: list[Any] | None = None
+        self._web_search_error: str | None = None
+        self._web_play_pending: tuple[str, Any] | None = None  # (stream_url, result)
+        self._web_play_error: str | None = None
 
         self._load_web_platforms()
 
@@ -563,6 +567,64 @@ class PlayerApp:
                     range(len(self.download_history))
                 )
 
+    def _process_web_search(self) -> None:
+        if self._web_search_error is not None:
+            self.web_loading = False
+            self.toast(self._web_search_error)
+            self._web_search_error = None
+            return
+        if self._web_search_pending is None:
+            return
+        self.web_results = self._web_search_pending
+        self.web_cursor = 0
+        self.web_scroll = 0
+        self.web_loading = False
+        self._web_search_pending = None
+        if not self.web_results:
+            self.toast("Sin resultados")
+
+    def _process_web_play(self) -> None:
+        if self._web_play_error is not None:
+            self.web_playing_idx = -1
+            self.toast(self._web_play_error)
+            self._web_play_error = None
+            return
+        if self._web_play_pending is None:
+            return
+        stream_url, result = self._web_play_pending
+        self._web_play_pending = None
+        from .downloads import add_entry, save_history, TMP_DIR
+        from .stack import StackItem
+        import os
+        os.makedirs(TMP_DIR, exist_ok=True)
+        add_entry(
+            self.download_history,
+            title=result.title,
+            url=stream_url,
+            webpage_url=result.webpage_url,
+            file_path="",
+            fmt="audio",
+            quality="480p",
+            platform=result.platform,
+            is_temp=True,
+            duration=result.duration,
+            channel=result.channel,
+        )
+        save_history(self.download_history)
+        from .web import get_download_manager
+        dm = get_download_manager()
+        dm.add_download(
+            result.webpage_url, result.title,
+            "audio", "480p", result.platform,
+            output_dir=TMP_DIR,
+        )
+        item = StackItem(path=stream_url, name=result.title)
+        self.stack.items = [item]
+        self.stack.playhead = 0
+        self.audio.play_file(stream_url)
+        self.current_view = self.V_LISTEN
+        self.toast(f"▶ {result.title}")
+
     def _check_playback_end(self) -> None:
         if not self.audio.is_ended():
             return
@@ -601,6 +663,8 @@ class PlayerApp:
             while self.running:
                 self._check_playback_end()
                 self._process_download_completions()
+                self._process_web_search()
+                self._process_web_play()
                 self.audio.check_sleep_timer()
                 cur = self.audio.current_file
                 if cur and cur != self._history_last:
