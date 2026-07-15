@@ -80,6 +80,12 @@ def _handle_normal_mode(app: PlayerApp, key: int) -> None:
     elif key == ord("x"):
         _clear_results(app)
         return
+    elif key == ord("c") and _has_active_download(app):
+        _cancel_download(app)
+        return
+    elif key == ord("P") and _has_active_download(app):
+        _pause_download(app)
+        return
     elif key == 27:
         app.current_view = app.V_LISTEN
         curses.flushinp()
@@ -419,6 +425,11 @@ def _download_web_result(app: PlayerApp, with_config: bool) -> None:
     if app.web_cursor >= len(app.web_results):
         return
 
+    idx = app.web_cursor
+    if idx in app.web_download_paused:
+        _resume_download(app, idx)
+        return
+
     if len(app.web_download_queue) >= app.web_download_max:
         result = app.web_results[app.web_cursor]
         app.web_result_status[app.web_cursor] = "[Q]"
@@ -464,7 +475,7 @@ def _do_download(app: PlayerApp) -> None:
 
 
 def _start_download(
-    app: PlayerApp, result: Any, fmt: str, quality: str
+    app: PlayerApp, result: Any, fmt: str, quality: str, resume: bool = False
 ) -> None:
     """Inicia una descarga en background thread."""
     from .. import web
@@ -480,8 +491,12 @@ def _start_download(
     idx = app.web_cursor
     app.web_result_status[idx] = "[D]"
     app.web_download_queue.append(result)
+    app.web_download_cancel.clear()
 
     def _progress(d: dict[str, Any]) -> None:
+        if app.web_download_cancel.is_set():
+            from yt_dlp.utils import DownloadCancelled
+            raise DownloadCancelled("Cancelado por usuario")
         if idx >= len(app.web_result_status):
             return
         if d.get("status") == "downloading":
@@ -490,12 +505,13 @@ def _start_download(
             if total > 0:
                 pct = int(current * 100 / total)
                 app.web_result_status[idx] = f"[{pct:2d}%]"
-        elif d.get("status") == "finished":
-            app.web_result_status[idx] = "[✓]"
+        elif d.get("status") in ("finished", "postprocessor"):
+            app.web_result_status[idx] = "[PP]"
 
     def _run() -> None:
         success, msg = web.download(
-            result.webpage_url, music_dir, fmt, quality, progress_hook=_progress
+            result.webpage_url, music_dir, fmt, quality,
+            progress_hook=_progress, resume=resume,
         )
 
         if idx < len(app.web_result_status):
@@ -505,8 +521,9 @@ def _start_download(
                 if app.current_dir == os.path.realpath(music_dir):
                     app.entries = _list_dir(app.current_dir)
             else:
-                app.web_result_status[idx] = "[!]"
-                _toast(app, f"Error: {msg}")
+                app.web_result_status[idx] = "[-]"
+                if msg != "Cancelado por usuario":
+                    _toast(app, f"Error: {msg}")
 
         if result in app.web_download_queue:
             app.web_download_queue.remove(result)
@@ -533,6 +550,49 @@ def _clear_results(app: PlayerApp) -> None:
     app.web_scroll = 0
     app.web_result_status = []
     _toast(app, "Lista limpiada")
+
+
+def _has_active_download(app: PlayerApp) -> bool:
+    """Verifica si hay una descarga en curso."""
+    return len(app.web_download_queue) > 0
+
+
+def _cancel_download(app: PlayerApp) -> None:
+    """Cancela la descarga activa."""
+    if not app.web_download_queue:
+        return
+    app.web_download_cancel.set()
+    _toast(app, "Cancelando descarga...")
+
+
+def _pause_download(app: PlayerApp) -> None:
+    """Pausa la descarga activa (cancel + guardar para resume)."""
+    if not app.web_download_queue:
+        return
+    idx = app.web_cursor
+    if idx < len(app.web_results):
+        result = app.web_results[idx]
+        fmt = app.config.get("online_download_format", "audio")
+        quality = app.config.get("online_download_quality", "480p")
+        app.web_download_paused[idx] = (result.webpage_url, fmt, quality)
+        app.web_result_status[idx] = "[P]"
+    app.web_download_cancel.set()
+    _toast(app, "Descarga pausada (presiona D para reanudar)")
+
+
+def _resume_download(app: PlayerApp, idx: int) -> None:
+    """Reanuda una descarga pausada."""
+    if idx not in app.web_download_paused:
+        return
+    if len(app.web_download_queue) >= app.web_download_max:
+        _toast(app, "Cola llena, espera a que termine otra descarga")
+        return
+
+    result = app.web_results[idx]
+    _, fmt, quality = app.web_download_paused.pop(idx)
+    app.web_result_status[idx] = "[D]"
+    _start_download(app, result, fmt, quality, resume=True)
+    _toast(app, f"Reanudando: {result.title}")
 
 
 def _add_to_history(app: PlayerApp, query: str) -> None:

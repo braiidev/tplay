@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-import sys
 from dataclasses import dataclass
 from typing import Any
 
@@ -176,9 +175,13 @@ def download(
     fmt: str = "audio",
     quality: str = "480p",
     progress_hook: Any = None,
+    resume: bool = False,
 ) -> tuple[bool, str]:
     """
     Descarga un archivo con yt-dlp.
+
+    Args:
+        resume: si True, continua descarga parcial (continuedl).
 
     Returns:
         (success, filename) o (False, error_message)
@@ -191,7 +194,6 @@ def download(
     except ImportError:
         return False, "yt-dlp no disponible"
 
-    cfg = _load_config()
     outtmpl = os.path.join(output_path, "%(title)s.%(ext)s")
 
     quality_map: dict[str, str] = {
@@ -208,7 +210,7 @@ def download(
         opts: dict[str, Any] = {
             "quiet": True,
             "no_warnings": True,
-            "progress": False,
+            "noprogress": True,
             "format": "bestaudio/best",
             "postprocessors": [
                 {
@@ -224,11 +226,14 @@ def download(
         opts = {
             "quiet": True,
             "no_warnings": True,
-            "progress": False,
+            "noprogress": True,
             "format": fmt_selector,
             "merge_output_format": "mp4",
             "outtmpl": outtmpl,
         }
+
+    if resume:
+        opts["continuedl"] = True
 
     if progress_hook is not None:
         opts["progress_hooks"] = [progress_hook]
@@ -242,6 +247,8 @@ def download(
                 filename = f"{title}.{ext}"
                 return True, filename
             return False, "No se pudo obtener info del video"
+    except yt_dlp.utils.DownloadCancelled:
+        return False, "Cancelado"
     except Exception as e:
         return False, str(e)
 

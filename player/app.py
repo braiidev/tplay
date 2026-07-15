@@ -157,6 +157,8 @@ class PlayerApp:
         self.web_download_fields: dict[str, str] = {}
         self.web_download_queue: list[Any] = []
         self.web_download_max: int = self.config.get("online_download_max", 3)
+        self.web_download_cancel: threading.Event = threading.Event()
+        self.web_download_paused: dict[int, tuple[str, str, str]] = {}
         self.web_result_status: list[str] = []
         self.web_playing_idx: int = -1
         self.web_platforms: list[Any] = []
