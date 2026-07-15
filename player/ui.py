@@ -628,7 +628,7 @@ HELP_TABS: list[HelpTab] = [
         ]
     },
     {
-        "name": "Historial",
+        "name": "Descargas",
         "lines": [
             ("", None),
             ("  HISTORIAL UNIFICADO", PAIR_NAV),

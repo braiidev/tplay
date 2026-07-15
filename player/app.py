@@ -1208,6 +1208,7 @@ class PlayerApp:
     def _draw(self) -> None:
         try:
             h, w = self.stdscr.getmaxyx()
+            self.audio.refresh_time_cache()
             self.stdscr.erase()
 
             self.scroll = max(0, self.scroll)

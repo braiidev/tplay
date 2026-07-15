@@ -3,6 +3,7 @@ from __future__ import annotations
 import curses
 import os
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from ..file_utils import is_media as _is_media_file
@@ -53,6 +54,40 @@ def _navigate_cursor(cursor: int, key: int, total: int, page_h: int) -> int:
     elif key == ord("G"):
         return max(0, total - 1)
     return cursor
+
+
+@dataclass
+class FilterState:
+    """Estado de filtro reutilizable para cualquier vista."""
+    text: str = ""
+    cursor_pos: int = 0
+    filtered_indices: list[int] = field(default_factory=list)
+
+
+def _handle_filter_text(key: int, fs: FilterState) -> bool:
+    """Maneja input de texto del filtro (backspace, chars, left/right).
+    Retorna True si se procesó la tecla, False si es para la vista (ESC/Enter/Down/Up)."""
+    if key in (27, 10, 13, curses.KEY_DOWN, curses.KEY_UP,
+               curses.KEY_NPAGE, curses.KEY_PPAGE):
+        return False
+    if key in (curses.KEY_LEFT, ord("h")):
+        if fs.cursor_pos > 0:
+            fs.cursor_pos -= 1
+        return True
+    if key in (curses.KEY_RIGHT, ord("l")):
+        if fs.cursor_pos < len(fs.text):
+            fs.cursor_pos += 1
+        return True
+    if key in (127, curses.KEY_BACKSPACE):
+        if fs.cursor_pos > 0:
+            fs.text = fs.text[:fs.cursor_pos - 1] + fs.text[fs.cursor_pos:]
+            fs.cursor_pos -= 1
+        return True
+    if 32 <= key <= 126:
+        fs.text = fs.text[:fs.cursor_pos] + chr(key) + fs.text[fs.cursor_pos:]
+        fs.cursor_pos += 1
+        return True
+    return True
 
 
 def _page_size(app: PlayerApp) -> int:

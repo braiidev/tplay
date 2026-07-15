@@ -670,7 +670,7 @@ def draw_download_history(app: PlayerApp, h: int, w: int) -> None:
             dur = format_duration(entry.duration)
             count = f"{entry.play_count}x" if entry.play_count > 1 else ""
             title_w = w - 30
-            entry_title = entry.title[:title_w]
+            entry_title = entry.title[:title_w - 1] + "…" if len(entry.title) > title_w else entry.title
             line = f" {icon} {entry_title}"
             if dur:
                 line += f"  {dur:>6}"
@@ -681,7 +681,7 @@ def draw_download_history(app: PlayerApp, h: int, w: int) -> None:
             status = "✓" if exists else "✗"
             size = format_size(entry.file_size_bytes)
             title_w = w - 25
-            entry_title = entry.title[:title_w]
+            entry_title = entry.title[:title_w - 1] + "…" if len(entry.title) > title_w else entry.title
             line = f" {status} {entry_title}"
             if size:
                 line += f"  {size:>6}"
@@ -921,7 +921,7 @@ def draw_radio(app: PlayerApp, h: int, w: int) -> None:
     draw_box(win, h, w, "Radios")
     radios = app.radios
     y0 = 2
-    list_h = h - app.LIST_H - 1
+    list_h = h - LIST_H - 1
     scroll = app.radio_scroll
     cursor = app.radio_cursor
     visible = radios[scroll:scroll + list_h] if radios else []

@@ -49,6 +49,8 @@ class AudioEngine:
         self.rate = 1.0
         self._eq = None
         self._eq_enabled = False
+        self._cached_time: int = -1
+        self._cached_length: int = -1
 
     def toggle_play_pause(self) -> None:
         if self.playing:
@@ -66,6 +68,8 @@ class AudioEngine:
         self.current_file = None
         self.sleep_timer_active = False
         self.rate = 1.0
+        self._cached_time = -1
+        self._cached_length = -1
 
     def toggle_mute(self) -> None:
         if self.muted:
@@ -98,12 +102,23 @@ class AudioEngine:
         self.paused = False
         self.current_file = path
         self.sleep_timer_expired = False
+        self._cached_time = -1
+        self._cached_length = -1
         self.reapply_equalizer()
         self.player.set_rate(self.rate)
 
     def is_ended(self) -> bool:
         return (self.playing and not self.paused
                 and self.player.get_state() == vlc.State.Ended)
+
+    def refresh_time_cache(self) -> None:
+        """Cachea time/length una vez por frame (evita locks de VLC por acceso)."""
+        try:
+            self._cached_time = int(self.player.get_time())
+            self._cached_length = int(self.player.get_length())
+        except Exception:
+            self._cached_time = 0
+            self._cached_length = 0
 
     def check_sleep_timer(self) -> None:
         if self.sleep_timer_active:
@@ -133,12 +148,16 @@ class AudioEngine:
         return f"[◴ {m}:{s:02d}]"
 
     def get_time(self) -> int:
+        if self._cached_time >= 0:
+            return self._cached_time
         try:
             return int(self.player.get_time())
         except Exception:
             return 0
 
     def get_length(self) -> int:
+        if self._cached_length >= 0:
+            return self._cached_length
         try:
             return int(self.player.get_length())
         except Exception:

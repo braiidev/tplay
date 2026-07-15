@@ -72,12 +72,13 @@ THEMES: dict[str, dict[str, int]] = {
              "destacar": curses.COLOR_WHITE, "nav": curses.COLOR_WHITE, "overlay": curses.COLOR_WHITE,
              "mono_bold": True},
     "calido": {"marco": curses.COLOR_YELLOW, "texto": curses.COLOR_WHITE,
-               "destacar": curses.COLOR_RED, "nav": curses.COLOR_RED, "overlay": curses.COLOR_YELLOW},
+               "destacar": curses.COLOR_RED, "nav": curses.COLOR_GREEN, "overlay": curses.COLOR_YELLOW},
     "contraste": {"marco": curses.COLOR_MAGENTA, "texto": curses.COLOR_WHITE,
                   "destacar": curses.COLOR_GREEN, "nav": curses.COLOR_MAGENTA, "overlay": curses.COLOR_GREEN},
     "flatline": {"marco": curses.COLOR_CYAN, "texto": curses.COLOR_WHITE,
                  "destacar": curses.COLOR_RED, "nav": curses.COLOR_CYAN, "overlay": curses.COLOR_RED},
-    "custom": {"marco": 0, "texto": 0, "destacar": 0, "nav": 0, "overlay": 0},
+    "custom": {"marco": curses.COLOR_CYAN, "texto": curses.COLOR_WHITE,
+               "destacar": curses.COLOR_YELLOW, "nav": curses.COLOR_GREEN, "overlay": curses.COLOR_MAGENTA},
 }
 THEME_NAMES: list[str] = list(THEMES.keys())
 
