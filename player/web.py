@@ -19,6 +19,7 @@ from .config import load as _load_config
 _YTDLP_BIN = "yt-dlp"
 _YTDLP_COMMON = [_YTDLP_BIN, "--no-warnings", "--ignore-errors", "--no-colors"]
 _ytdlp_available: bool | None = None
+_node_available: bool | None = None
 
 
 class DownloadState(enum.Enum):
@@ -78,6 +79,22 @@ def is_available() -> bool:
     return _ytdlp_available
 
 
+def _has_node() -> bool:
+    """Verifica si Node.js está disponible (cached)."""
+    global _node_available
+    if _node_available is not None:
+        return _node_available
+    try:
+        r = subprocess.run(
+            ["node", "--version"],
+            capture_output=True, text=True, timeout=3,
+        )
+        _node_available = r.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        _node_available = False
+    return _node_available
+
+
 def _classify_error(msg: str) -> str:
     """Clasifica errores de yt-dlp en mensajes amigables."""
     low = msg.lower()
@@ -102,6 +119,7 @@ def _build_search_cmd(
     """Construye comando para búsqueda."""
     cmd = list(_YTDLP_COMMON)
     cmd.extend(["--flat-playlist", "--dump-json"])
+    cmd.append("--")
     cmd.append(f"{search_prefix}{max_results}:{query}")
     return cmd
 
@@ -112,7 +130,8 @@ def _build_stream_cmd(
     """Construye comando para obtener stream URL."""
     cmd = list(_YTDLP_COMMON)
     cmd.extend(["--get-url", "-f", "bestaudio/best"])
-    cmd.extend(["--js-runtime", "node"])
+    if _has_node():
+        cmd.extend(["--js-runtime", "node"])
 
     cfg = _load_config()
     cookies = cfg.get("online_cookies", "none")
@@ -122,6 +141,7 @@ def _build_stream_cmd(
         else:
             cmd.extend(["--cookies-from-browser", cookies])
 
+    cmd.append("--")
     cmd.append(webpage_url)
     return cmd
 
@@ -136,7 +156,8 @@ def _build_download_cmd(
     cfg = _load_config()
     cmd = list(_YTDLP_COMMON)
     cmd.append("--continue")
-    cmd.extend(["--js-runtime", "node"])
+    if _has_node():
+        cmd.extend(["--js-runtime", "node"])
 
     cookies = cfg.get("online_cookies", "none")
     if cookies and cookies != "none":
@@ -170,6 +191,7 @@ def _build_download_cmd(
             "-o", outtmpl,
         ])
 
+    cmd.append("--")
     cmd.append(webpage_url)
     return cmd
 

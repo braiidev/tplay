@@ -167,6 +167,7 @@ class PlayerApp:
         self._web_search_error: str | None = None
         self._web_play_pending: tuple[str, Any] | None = None  # (stream_url, result)
         self._web_play_error: str | None = None
+        self._stack_pending_adds: list[tuple[Any, int]] = []  # (StackItem, insert_pos or -1)
 
         self._load_web_platforms()
 
@@ -561,6 +562,18 @@ class PlayerApp:
                     range(len(self.download_history))
                 )
 
+    def _process_stack_pending_adds(self) -> None:
+        if not self._stack_pending_adds:
+            return
+        pending = self._stack_pending_adds[:]
+        self._stack_pending_adds.clear()
+        for item, pos in pending:
+            if pos < 0:
+                self.stack.items.append(item)
+            else:
+                self.stack.items.insert(pos, item)
+        self.toast(f"Añadido: {pending[-1][0].name}")
+
     def _process_web_search(self) -> None:
         if self._web_search_error is not None:
             self.web_loading = False
@@ -654,6 +667,7 @@ class PlayerApp:
             while self.running:
                 self._check_playback_end()
                 self._process_download_completions()
+                self._process_stack_pending_adds()
                 self._process_web_search()
                 self._process_web_play()
                 self.audio.check_sleep_timer()

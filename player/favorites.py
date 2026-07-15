@@ -20,7 +20,7 @@ def load_favorites() -> list[dict[str, str]]:
 def save_favorites(favorites: list[dict[str, str]]) -> None:
     try:
         os.makedirs(CONFIG_DIR, exist_ok=True)
-        with open(FAVORITES_FILE, "w") as f:
-            json.dump(favorites, f, indent=2)
+        from .file_utils import atomic_write
+        atomic_write(FAVORITES_FILE, json.dumps(favorites, indent=2))
     except (OSError, PermissionError):
         pass

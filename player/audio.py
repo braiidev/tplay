@@ -3,7 +3,13 @@ from __future__ import annotations
 import os
 import time
 
-import vlc
+_VLC_ERROR: str | None = None
+try:
+    import vlc
+except (ImportError, OSError) as _vlc_err:
+    vlc = None
+    _VLC_ERROR = str(_vlc_err)
+
 from .config import CONFIG_DIR
 
 LOG_FILE: str = os.path.join(CONFIG_DIR, "error.log")
@@ -28,11 +34,18 @@ class AudioEngine:
     _eq_enabled: bool
 
     def __init__(self) -> None:
+        if vlc is None:
+            raise RuntimeError(
+                f"VLC/libvlc no encontrado. Instalá VLC y python-vlc.\n{_VLC_ERROR}"
+            )
         self._saved_stderr = os.dup(2)
         os.makedirs(CONFIG_DIR, exist_ok=True)
-        log_fd: int = os.open(LOG_FILE, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
-        os.dup2(log_fd, 2)
-        os.close(log_fd)
+        try:
+            log_fd: int = os.open(LOG_FILE, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+            os.dup2(log_fd, 2)
+            os.close(log_fd)
+        except OSError:
+            pass
 
         self.instance = vlc.Instance("--no-video", "--quiet")
         self.player = self.instance.media_player_new()

@@ -29,22 +29,22 @@ def save_state(playing: bool, file: str = "", position: int = 0,
                eq_preset: str = "Flat") -> None:
     try:
         os.makedirs(CONFIG_DIR, exist_ok=True)
-        with open(STATE_FILE, "w") as f:
-            json.dump({
-                "playing": playing,
-                "file": file,
-                "position": position,
-                "stack_items": stack_items or [],
-                "playhead": playhead,
-                "shuffle": shuffle,
-                "repeat": repeat,
-                "volume": volume,
-                "rate": rate,
-                "eq_enabled": eq_enabled,
-                "eq_bands": eq_bands or [0.0] * 10,
-                "eq_preamp": eq_preamp,
-                "eq_preset": eq_preset,
-            }, f)
+        from .file_utils import atomic_write
+        atomic_write(STATE_FILE, json.dumps({
+            "playing": playing,
+            "file": file,
+            "position": position,
+            "stack_items": stack_items or [],
+            "playhead": playhead,
+            "shuffle": shuffle,
+            "repeat": repeat,
+            "volume": volume,
+            "rate": rate,
+            "eq_enabled": eq_enabled,
+            "eq_bands": eq_bands or [0.0] * 10,
+            "eq_preamp": eq_preamp,
+            "eq_preset": eq_preset,
+        }))
     except (OSError, PermissionError):
         pass
 
@@ -55,8 +55,8 @@ HISTORY_FILE: str = os.path.join(CONFIG_DIR, "history.json")
 def save_history(history: list[Any]) -> None:
     try:
         os.makedirs(CONFIG_DIR, exist_ok=True)
-        with open(HISTORY_FILE, "w") as f:
-            json.dump(history[:100], f, indent=2)
+        from .file_utils import atomic_write
+        atomic_write(HISTORY_FILE, json.dumps(history[:100], indent=2))
     except (OSError, PermissionError):
         pass
 

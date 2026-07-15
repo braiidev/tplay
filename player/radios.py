@@ -20,7 +20,7 @@ def load_radios() -> list[dict[str, str]]:
 def save_radios(radios: list[dict[str, str]]) -> None:
     try:
         os.makedirs(CONFIG_DIR, exist_ok=True)
-        with open(RADIOS_FILE, "w") as f:
-            json.dump(radios, f, indent=2)
+        from .file_utils import atomic_write
+        atomic_write(RADIOS_FILE, json.dumps(radios, indent=2))
     except (OSError, PermissionError):
         pass

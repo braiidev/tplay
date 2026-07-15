@@ -5,7 +5,7 @@ import curses
 import os
 from typing import TYPE_CHECKING
 
-from .shared import _toast, _clamp_scroll, _page_size, _navigate_cursor
+from .shared import _toast, _clamp_scroll, _page_size, _navigate_cursor, _confirm
 
 if TYPE_CHECKING:
     from player.app import PlayerApp
@@ -216,16 +216,18 @@ def _remove_and_delete(app: PlayerApp) -> None:
     idx = items[app.dl_history_cursor]
     entry = app.download_history[idx]
 
-    if entry.exists:
-        try:
-            os.remove(entry.file_path)
-        except OSError:
-            pass
+    def _do() -> None:
+        if entry.exists:
+            try:
+                os.remove(entry.file_path)
+            except OSError:
+                pass
+        remove_entry(app.download_history, idx)
+        save_history(app.download_history)
+        _toast(app, f"Borrado: {entry.title}")
+        _rebuild_filtered(app)
 
-    remove_entry(app.download_history, idx)
-    save_history(app.download_history)
-    _toast(app, f"Borrado: {entry.title}")
-    _rebuild_filtered(app)
+    _confirm(app, f"Borrar archivo: {entry.title}?", _do)
 
 
 def _clear_tab(app: PlayerApp) -> None:
@@ -240,20 +242,22 @@ def _clear_tab(app: PlayerApp) -> None:
         indices = get_downloads(history)
         label = "descargas"
 
-    deleted = 0
-    for i in reversed(indices):
-        entry = history[i]
-        if entry.exists:
-            try:
-                os.remove(entry.file_path)
-                deleted += 1
-            except OSError:
-                pass
-        history.pop(i)
+    def _do() -> None:
+        deleted = 0
+        for i in reversed(indices):
+            entry = history[i]
+            if entry.exists:
+                try:
+                    os.remove(entry.file_path)
+                    deleted += 1
+                except OSError:
+                    pass
+            history.pop(i)
+        save_history(history)
+        _toast(app, f"Limpiados {deleted} {label}")
+        _rebuild_filtered(app)
 
-    save_history(history)
-    _toast(app, f"Limpiados {deleted} {label}")
-    _rebuild_filtered(app)
+    _confirm(app, f"Limpiar todo el tab de {label}?", _do)
 
 
 def _get_list_h(app: PlayerApp) -> int:

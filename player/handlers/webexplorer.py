@@ -491,8 +491,7 @@ def _add_to_queue(app: PlayerApp) -> None:
             return
         from ..stack import StackItem
         item = StackItem(path=stream_url, name=result.title)
-        app.stack.items.append(item)
-        _toast(app, f"Añadido: {result.title}")
+        app._stack_pending_adds.append((item, -1))
 
     import threading
     t = threading.Thread(target=_run, daemon=True)
@@ -514,8 +513,7 @@ def _add_to_queue_next(app: PlayerApp) -> None:
         from ..stack import StackItem
         item = StackItem(path=stream_url, name=result.title)
         insert_pos = app.stack.playhead + 1
-        app.stack.items.insert(insert_pos, item)
-        _toast(app, f"Añadido después del actual: {result.title}")
+        app._stack_pending_adds.append((item, insert_pos))
 
     import threading
     t = threading.Thread(target=_run, daemon=True)

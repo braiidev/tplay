@@ -127,8 +127,8 @@ def invalidate_cache() -> None:
 def save(cfg: dict[str, Any]) -> None:
     try:
         os.makedirs(CONFIG_DIR, exist_ok=True)
-        with open(CONFIG_FILE, "w") as f:
-            json.dump(cfg, f, indent=2)
+        from .file_utils import atomic_write
+        atomic_write(CONFIG_FILE, json.dumps(cfg, indent=2))
         invalidate_cache()
     except OSError:
         pass

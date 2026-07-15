@@ -264,7 +264,11 @@ def _do_mkdir(app: PlayerApp, buf: str) -> None:
     if not buf:
         return
     try:
-        path = os.path.join(app.current_dir, buf)
+        path = os.path.realpath(os.path.join(app.current_dir, buf))
+        root = os.path.realpath(app.current_dir)
+        if not path.startswith(root + os.sep) and path != root:
+            _toast(app, "Ruta inválida")
+            return
         os.makedirs(path, exist_ok=True)
         app.entries = _list_dir(app.current_dir)
     except Exception as e:

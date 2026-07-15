@@ -69,3 +69,11 @@ def is_video_file(path: str) -> bool:
 
 def is_playlist_file(path: str) -> bool:
     return path.lower().endswith(PLAYLIST_EXT)
+
+
+def atomic_write(path: str, data: str) -> None:
+    """Escribe contenido de forma atómica (temp + replace)."""
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        f.write(data)
+    os.replace(tmp, path)

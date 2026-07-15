@@ -50,8 +50,8 @@ def save_history(history: list[DownloadEntry]) -> None:
     """Guarda historial a archivo."""
     try:
         os.makedirs(os.path.dirname(DOWNLOADS_FILE), exist_ok=True)
-        with open(DOWNLOADS_FILE, "w") as f:
-            json.dump([asdict(e) for e in history], f, indent=2)
+        from .file_utils import atomic_write
+        atomic_write(DOWNLOADS_FILE, json.dumps([asdict(e) for e in history], indent=2))
     except OSError:
         pass
 

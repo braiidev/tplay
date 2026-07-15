@@ -39,7 +39,7 @@ def save_all(playlist_data: dict[str, list[tuple[str, str]]], active_name: str) 
            for name, songs in playlist_data.items()]
     data = {"active": active_name, "playlists": pls}
     try:
-        with open(PLAYLIST_FILE, "w") as f:
-            json.dump(data, f, indent=2)
+        from .file_utils import atomic_write
+        atomic_write(PLAYLIST_FILE, json.dumps(data, indent=2))
     except OSError:
         pass

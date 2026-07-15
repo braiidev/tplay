@@ -110,8 +110,8 @@ def save_platforms(platforms: list[Platform]) -> None:
     """Guarda plataformas a archivo."""
     try:
         os.makedirs(os.path.dirname(PLATFORMS_FILE), exist_ok=True)
-        with open(PLATFORMS_FILE, "w") as f:
-            json.dump([asdict(p) for p in platforms], f, indent=2)
+        from .file_utils import atomic_write
+        atomic_write(PLATFORMS_FILE, json.dumps([asdict(p) for p in platforms], indent=2))
     except OSError:
         pass
 
