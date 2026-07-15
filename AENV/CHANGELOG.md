@@ -4,10 +4,11 @@
 - fix: B60 — DownloadManager integrado completamente en handler/views/app
 - fix: B60 — Eliminadas variables viejas (web_download_queue, web_download_cancel, web_download_paused, web_result_status)
 - fix: B60 — Views leen de get_result_status() (combina playing + download state)
-- feat: Config online_cookies (none/fireway/chromium) + --js-runtime node
+- feat: Config online_cookies (none/firefox/chromium) + --js-runtime node
 - feat: Auto-refresh explorer al completar descarga (callback en DownloadManager)
 - fix: B60 — q exit: solo cuenta items activos (QUEUED/DOWNLOADING/PAUSED) + reset counter tras 5s
 - fix: YouTube bot detection: --js-runtime node para resolver signatures
+- fix: B61 — .part cleanup on exit: shutdown() fix deadlock + finally block en run()
 
 ## v1.5.78
 - feat: DownloadManager class (worker loop, cola, concurrencia limitada)

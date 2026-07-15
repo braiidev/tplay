@@ -5,6 +5,13 @@ _(ninguno)_
 
 ## Resueltos recientes
 
+### B61 — .part files no se limpian al salir de la app
+- **Archivo**: `player/web.py`, `player/app.py`
+- **Descripción**: Al salir de la app con descargas en curso, los archivos `.part` quedaban en `~/Music` ocupando espacio. También `shutdown()` tenía deadlock (sostén `_lock` + llamada a `stop_item()` que también agarraba `_lock`).
+- **Causa**: `app.py` no llamaba `dm.shutdown()` al salir. `shutdown()` intentaba llamar `stop_item()` mientras sostén el lock.
+- **Fix**: `shutdown()` ahora recolecta IDs primero, suelta lock, luego llama `stop_item()`. `finally` block en `run()` llama `dm.shutdown()` en cualquier salida (q, Ctrl+C, error).
+- **Estado**: Resuelto en v1.5.79
+
 ### B60 — Cola de descargas no funciona correctamente
 - **Archivo**: `player/handlers/webexplorer.py`, `player/app.py`
 - **Descripción**: Todos los items mostraban estado del primero; [Q] nunca se ejecutaba; cancel/pause afectaba todos; q no contaba solo activos.
