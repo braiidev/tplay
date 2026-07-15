@@ -1,5 +1,12 @@
 # CHANGELOG — tplay
 
+## v1.5.66
+- fix: B25 — download no bloqueante (thread + progress % en lista)
+- fix: B25 — nombre archivo usa título (page URL en vez de stream URL)
+- fix: B25 — Explorer refresca post-descarga
+- fix: B24 — feedback visual de carga en búsqueda ("Buscando..." blink)
+- fix: B23 — prompt persiste query post-búsqueda
+
 ## v1.5.65
 - feat: config.py — defaults downloads (platform, format, quality, stream, max)
 - feat: ui.py — help tab Web actualizado con todas las teclas nuevas
