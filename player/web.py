@@ -169,6 +169,7 @@ def download(
     output_path: str,
     fmt: str = "audio",
     quality: str = "480p",
+    progress_hook: Any = None,
 ) -> tuple[bool, str]:
     """
     Descarga un archivo con yt-dlp.
@@ -216,6 +217,9 @@ def download(
             "merge_output_format": "mp4",
             "outtmpl": outtmpl,
         }
+
+    if progress_hook is not None:
+        opts["progress_hooks"] = [progress_hook]
 
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:

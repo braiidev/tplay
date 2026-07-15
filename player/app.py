@@ -142,6 +142,7 @@ class PlayerApp:
         self.web_search_mode: bool = False
         self.web_search_buf: str = ""
         self.web_last_query: str = ""
+        self.web_loading: bool = False
         self.web_motor_mode: bool = False
         self.web_active_platform: int = 0
         self.web_motor_edit_mode: bool = False
@@ -820,6 +821,7 @@ class PlayerApp:
             self.dir_picker_mode = False
             self.web_search_mode = False
             self.web_search_buf = ""
+            self.web_loading = False
             self.web_motor_mode = False
             self.web_motor_edit_mode = False
             self.web_download_mode = False

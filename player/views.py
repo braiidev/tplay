@@ -978,6 +978,11 @@ def _draw_web_main(app: PlayerApp, h: int, w: int, p_name: str) -> None:
     y_divider = 3
     safe_addstr(app.stdscr, y_divider, 2, "─" * (w - 4), nav, h, w)
 
+    if app.web_loading:
+        safe_addstr(app.stdscr, (h - 4) // 2, 2, "  Buscando...", destacar | curses.A_BLINK, h, w)
+        _draw_web_hints(app, h, w)
+        return
+
     if not app.web_results:
         safe_addstr(app.stdscr, (h - 4) // 2, 2, "  Sin resultados", nav, h, w)
         _draw_web_hints(app, h, w)

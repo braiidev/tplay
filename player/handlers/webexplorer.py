@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import curses
 import os
+import threading
 from typing import Any, TYPE_CHECKING
 
 from .shared import _toast, _clamp_scroll, _prompt
@@ -364,18 +365,27 @@ def _do_search(app: PlayerApp, query: str) -> None:
             _toast(app, f"{platform.name} no tiene búsqueda nativa. Ingresá una URL completa.")
         return
 
-    try:
-        results = web.search(query, max_results, search_prefix=prefix)
-    except RuntimeError as e:
-        _toast(app, str(e))
-        return
+    app.web_loading = True
 
-    app.web_results = results
-    app.web_cursor = 0
-    app.web_scroll = 0
-    app.web_result_status = ["[-]"] * len(results)
-    if not results:
-        _toast(app, f"Sin resultados: {query}")
+    def _run() -> None:
+        try:
+            results = web.search(query, max_results, search_prefix=prefix)
+        except RuntimeError as e:
+            results = []
+            app.web_loading = False
+            _toast(app, str(e))
+            return
+
+        app.web_results = results
+        app.web_cursor = 0
+        app.web_scroll = 0
+        app.web_result_status = ["[-]"] * len(results)
+        app.web_loading = False
+        if not results:
+            _toast(app, f"Sin resultados: {query}")
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
 
 
 def _handle_url_input(app: PlayerApp, url: str, platform: Platform) -> None:
@@ -467,9 +477,10 @@ def _do_download(app: PlayerApp) -> None:
 def _start_download(
     app: PlayerApp, result: Any, fmt: str, quality: str
 ) -> None:
-    """Inicia una descarga."""
+    """Inicia una descarga en background thread."""
     from .. import web
     from ..config import load as _load_config
+    from ..file_utils import list_dir as _list_dir
 
     cfg = _load_config()
     music_dir = cfg.get("music_dir", os.path.expanduser("~/Music"))
@@ -481,17 +492,35 @@ def _start_download(
     app.web_result_status[idx] = "[D]"
     app.web_download_queue.append(result)
 
-    success, msg = web.download(result.download_url, music_dir, fmt, quality)
+    def _progress(d: dict[str, Any]) -> None:
+        if d.get("status") == "downloading":
+            total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
+            current = d.get("downloaded_bytes") or 0
+            if total > 0:
+                pct = int(current * 100 / total)
+                app.web_result_status[idx] = f"[{pct:2d}%]"
+        elif d.get("status") == "finished":
+            app.web_result_status[idx] = "[✓]"
 
-    if success:
-        app.web_result_status[idx] = "[✓]"
-        _toast(app, f"Descargado: {msg}")
-    else:
-        app.web_result_status[idx] = "[!]"
-        _toast(app, f"Error: {msg}")
+    def _run() -> None:
+        success, msg = web.download(
+            result.webpage_url, music_dir, fmt, quality, progress_hook=_progress
+        )
 
-    if result in app.web_download_queue:
-        app.web_download_queue.remove(result)
+        if success:
+            app.web_result_status[idx] = "[✓]"
+            _toast(app, f"Descargado: {msg}")
+            if app.current_dir == os.path.realpath(music_dir):
+                app.entries = _list_dir(app.current_dir)
+        else:
+            app.web_result_status[idx] = "[!]"
+            _toast(app, f"Error: {msg}")
+
+        if result in app.web_download_queue:
+            app.web_download_queue.remove(result)
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
 
 
 def _add_to_queue(app: PlayerApp) -> None:
