@@ -959,6 +959,10 @@ def _draw_web_main(app: PlayerApp, h: int, w: int, p_name: str) -> None:
         prompt_str = f"buscar: {app.web_search_buf}"
         motor_attr = texto
         prompt_attr = texto | curses.A_UNDERLINE
+    elif app.web_last_query:
+        prompt_str = f"buscar: {app.web_last_query}"
+        motor_attr = texto
+        prompt_attr = nav
     else:
         prompt_str = "presiona / para buscar"
         motor_attr = destacar | curses.A_REVERSE if False else texto

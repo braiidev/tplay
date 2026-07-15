@@ -108,6 +108,7 @@ def _handle_search_input(app: PlayerApp, key: int) -> None:
         query = app.web_search_buf.strip()
         if not query:
             return
+        app.web_last_query = query
         _add_to_history(app, query)
         _do_search(app, query)
         return
@@ -372,7 +373,7 @@ def _do_search(app: PlayerApp, query: str) -> None:
     app.web_results = results
     app.web_cursor = 0
     app.web_scroll = 0
-    app.web_result_status = ["[-"] * len(results)
+    app.web_result_status = ["[-]"] * len(results)
     if not results:
         _toast(app, f"Sin resultados: {query}")
 
@@ -391,7 +392,7 @@ def _handle_url_input(app: PlayerApp, url: str, platform: Platform) -> None:
         app.web_results = results
         app.web_cursor = 0
         app.web_scroll = 0
-        app.web_result_status = ["[-"] * len(results)
+        app.web_result_status = ["[-]"] * len(results)
     else:
         _toast(app, "No se pudo obtener contenido de la URL")
 

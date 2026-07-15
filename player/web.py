@@ -89,7 +89,7 @@ def search(
                         f for f in detail["formats"] if f.get("acodec") != "none"
                     ]
                     if audio_fmts:
-                        best = max(audio_fmts, key=lambda f: f.get("abr", 0))
+                        best = max(audio_fmts, key=lambda f: f.get("abr") or 0)
                         stream_url = best.get("url", "")
                 if not stream_url:
                     continue
@@ -130,7 +130,7 @@ def _get_download_url(info: dict[str, Any]) -> str:
             if f.get("acodec") != "none" and f.get("vcodec") == "none"
         ]
         if candidates:
-            best = max(candidates, key=lambda f: f.get("abr", 0))
+            best = max(candidates, key=lambda f: f.get("abr") or 0)
             return str(best.get("url", ""))
 
     quality_map: dict[str, int] = {

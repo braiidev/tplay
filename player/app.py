@@ -141,6 +141,7 @@ class PlayerApp:
         self.web_scroll: int = 0
         self.web_search_mode: bool = False
         self.web_search_buf: str = ""
+        self.web_last_query: str = ""
         self.web_motor_mode: bool = False
         self.web_active_platform: int = 0
         self.web_motor_edit_mode: bool = False
