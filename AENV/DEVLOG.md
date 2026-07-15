@@ -618,3 +618,36 @@
 - `player/handlers/webexplorer.py` — `_cancel_download()` llama `_cleanup_part_files()`
 
 **Estado**: v1.5.77, mypy pasa.
+
+---
+
+## Entrada 21 — 2025-07-15 — DownloadManager refactor (INCOMPLETO)
+
+**Tarea**: Refactorizar cola de descargas — B60: todos los items comparten estado
+
+**Problema**: La cola actual es falsa — los items se marcan [Q] pero nunca se ejecutan. Todos los updates van al mismo `web_result_status[dl_idx]`. Cancel/pause afecta todos los items.
+
+**Solución**: Implementar `DownloadManager` con:
+- `DownloadState` enum (QUEUED, DOWNLOADING, PAUSED, COMPLETED, FAILED, STOPPED)
+- `DownloadItem` dataclass con estado independiente por item
+- Worker loop con concurrencia limitada (`max_concurrent` de config)
+- `pause_item()` usa SIGSTOP/SIGCONT (Linux)
+- `stop_item()` mata proceso y limpia .part
+- Callbacks para notificar UI de cambios
+
+**Lo implementado (web.py)**:
+- `DownloadState`, `DownloadItem`, `DownloadManager` class
+- `add_download()`, `pause_item()`, `resume_item()`, `stop_item()`
+- `get_items()`, `get_item()`, `active_count()`, `pending_count()`
+- `_worker_loop()`, `_download_worker()`, `shutdown()`
+- `get_download_manager()` singleton
+
+**Lo pendiente**:
+- Actualizar `webexplorer.py` para usar DownloadManager en vez de lógica vieja
+- Actualizar `app.py` (remover `web_download_queue`, `web_download_cancel`, `web_download_paused`)
+- Actualizar `views.py` (leer estado de `get_download_manager().get_items()`)
+- Test de cola con 3+ descargas
+
+**Archivos tocados**: `player/web.py`
+
+**Estado**: v1.5.78, DownloadManager implementado pero no integrado en handler/views.
