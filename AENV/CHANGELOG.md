@@ -1,5 +1,11 @@
 # CHANGELOG — tplay
 
+## v1.5.70
+- fix: B33 — yt-dlp progress=False + eliminadas opciones falsas stdout/stddev (corrompía curses)
+- fix: B34 — _get_download_url quality_map: worst/144p/240p
+- fix: B35 — _config_int_inc/dec: online_download_max ahora funcional
+- fix: thread safety — bounds check en progress callback + completion handler
+
 ## v1.5.69
 - fix: B32 — toast reposicionado a h-2 (borde inferior del box)
 

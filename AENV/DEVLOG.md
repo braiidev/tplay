@@ -452,3 +452,26 @@
 - Help tab: 3 secciones (Web Explorer, Búsqueda, Motor)
 
 **Estado**: v1.5.65, mypy strict pasa.
+
+---
+
+## Entrada 16 — 2025-07-15 — B33-B35: yt-dlp output + config + quality fix
+
+**Tarea**: Analizar PROBLEMS.md, encontrar y corregir bugs introducidos + nuevos
+
+**Bugs encontrados**:
+- B33: Opciones `"stdout"`/`"stderr"` en yt-dlp **no existen** — eran ignoradas silenciosamente. `progress=False` es la forma correcta.
+- B34: `_get_download_url` quality_map faltaba worst/144p/240p
+- B35: `_config_int_inc/dec` no manejaba `online_download_max` (cambiar en config no hacía nada)
+- Thread safety: progress callback podía escribir a `web_result_status` vacío
+
+**Cambios**:
+- web.py: eliminadas opciones falsas stdout/stddev, agregado `progress=False`, fix `_get_download_url` quality_map
+- config_view.py: `_config_int_inc/dec` ahora maneja `online_download_max`
+- webexplorer.py: bounds check en `_progress` callback y `_run` completion
+
+**Decisión**:
+- `progress=False` solo desactiva la barra de progreso en terminal; progress hooks (API) siguen funcionando
+- `online_download_max` limitado a 1-10
+
+**Estado**: v1.5.70, mypy --strict pasa.

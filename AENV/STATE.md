@@ -1,13 +1,13 @@
 # STATE — tplay
 
 ## Estado actual
-- **Version**: v1.5.69
+- **Version**: v1.5.70
 - **Plan activo**: F10 yt-dlp Web Explorer v2 — **COMPLETADO**
 - **Bugs abiertos**: 0
-- **Docs**: Sincronizados con v1.5.69
+- **Docs**: Sincronizados con v1.5.70
 
 ## Último commit
-- `fix - 1.5.69 - toast reposicionado a h-2 (borde inferior del box)`
+- `fix - 1.5.70 - B33: yt-dlp progress=False, B34: quality_map, B35: download_max int handler`
 
 ## Bugs fixeados post-implementación
 - B22: abr None comparison → search vacío
@@ -19,8 +19,11 @@
 - B28: toast tapa status bar
 - B29: quality options incompletas
 - B30: q cierra app + aesthetic incorrecta
-- B31: yt-dlp corrompe curses
+- B31: yt-dlp corrompe curses (primera approx)
 - B32: toast borra borde inferior del box
+- B33: yt-dlp stdout leak (raíz real de B31) — progress=False
+- B34: _get_download_url quality_map incompleto
+- B35: _config_int_inc/dec no maneja online_download_max
 
 ## Pendiente para próxima sesión
 - [ ] #4: Download history (trackear descargas en downloads.json)

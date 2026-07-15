@@ -6,6 +6,27 @@ _(ninguno)_
 
 ## Resueltos
 
+### B35 — _config_int_inc/dec no maneja online_download_max
+- **Archivo**: `player/handlers/config_view.py`
+- **Descripción**: Cambiar "Descargas máximas" en Config/Sistema no hacía nada.
+- **Causa**: `_config_int_inc/dec` solo manejaba `volume` y `sleep_timer_minutes`.
+- **Fix**: Agregado caso `online_download_max` con sync a `app.web_download_max`.
+- **Estado**: Resuelto en v1.5.70
+
+### B34 — _get_download_url quality_map incompleto
+- **Archivo**: `player/web.py`
+- **Descripción**: Worst/144p/240p caían en fallback 480p al obtener URL de descarga.
+- **Causa**: quality_map solo tenía 480p/720p/1080p/best.
+- **Fix**: Agregado worst (min height), 144p, 240p al quality_map.
+- **Estado**: Resuelto en v1.5.70
+
+### B33 — yt-dlp corrompe curses (progreso visible + bordes destruidos)
+- **Archivo**: `player/web.py`
+- **Descripción**: `[download] 90.4%...` se dibuja fuera del box; al finalizar, helper bar y bordes `│` desaparecen.
+- **Causa**: Opciones `"stdout"` y `"stderr"` en yt-dlp **no son válidas** — yt-dlp las ignora silenciosamente y escribe progreso a stdout real.
+- **Fix**: Eliminadas opciones falsas; agregado `"progress": False` para suprimir barra de progreso. Progress hooks siguen funcionando (son API separada).
+- **Estado**: Resuelto en v1.5.70
+
 ### B32 — Toast borra borde inferior del box
 - **Archivo**: `player/app.py`
 - **Descripción**: Toast en `h-4` sobreescribe `│` del borde; al desaparecer no se restaura.
@@ -16,9 +37,9 @@ _(ninguno)_
 ### B31 — yt-dlp corrompe curses (status bar desaparece)
 - **Archivo**: `player/web.py`
 - **Descripción**: Output de yt-dlp se dibuja encima de status bar, borra `│` de marcos.
-- **Causa**: yt-dlp escribe a stdout/stderr que curses captura.
-- **Fix**: Redirect stdout/stderr a `/dev/null` via `opts["stdout"]` y `opts["stderr"]`.
-- **Estado**: Resuelto en v1.5.68
+- **Causa**: Opciones `"stdout"`/`"stderr"` no son válidas en yt-dlp.
+- **Fix**: Resuelto definitivamente en B33 (progress=False).
+- **Estado**: Superseded by B33
 
 ### B30 — Download config: q cierra app + aesthetic incorrecta
 - **Archivo**: `player/handlers/webexplorer.py`, `player/views.py`
