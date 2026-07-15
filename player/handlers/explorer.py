@@ -107,6 +107,7 @@ def handle_explorer(app: PlayerApp, key: int) -> None:
             if not paths:
                 _toast(app, "Playlist vacía o inválida")
             else:
+                app._push_snapshot()
                 items = [StackItem(path=p, name=os.path.basename(p)) for p in paths]
                 app.stack.items = items
                 app._play_current()

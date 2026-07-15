@@ -7,11 +7,7 @@ import subprocess
 import threading
 import time
 import copy
-from typing import TYPE_CHECKING, Any, Callable
-
-if TYPE_CHECKING:
-    from player.audio import AudioEngine
-    from player.stack import Stack, StackItem
+from typing import Any, Callable
 
 from .audio import AudioEngine
 from .config import load as load_config, save as save_config, apply_theme
@@ -550,7 +546,6 @@ class PlayerApp:
             return
         self._download_completed_pending = False
         from .web import get_download_manager, DownloadState
-        from .file_utils import list_dir as _list_dir
         dm = get_download_manager()
         self.entries = _list_dir(self.current_dir)
         for item in dm.items:
@@ -1235,8 +1230,6 @@ class PlayerApp:
                 self.stdscr.refresh()
                 return
 
-            needs_cursor = False
-
             if self.meta_edit_mode:
                 views.draw_meta_editor(self, self.stdscr, h, w)
             elif self.dir_picker_mode:
@@ -1352,7 +1345,5 @@ class PlayerApp:
             self.audio.volume,
             self.stack.shuffle,
             self.stack.repeat,
-            self.active_name,
             self.current_view,
-            self.stack,
         )

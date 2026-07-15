@@ -131,7 +131,7 @@ def _cycle_theme(app: PlayerApp, direction: int) -> None:
     new_theme = THEME_NAMES[(idx + direction) % len(THEME_NAMES)]
     app.config["theme"] = new_theme
     app._build_config_tabs()
-    app.config_cursor = min(app.config_cursor, len(app.config_items) - 1)
+    app.config_cursor = max(0, min(app.config_cursor, len(app.config_items) - 1))
     app._apply_theme()
     from ..config import save as _save_config
     _save_config(app.config)
@@ -208,7 +208,7 @@ def _cycle_eq_preset(app: PlayerApp, direction: int) -> None:
         app.config["eq_bands"] = list(EQ_PRESETS.get(new_preset, [0.0] * 10))
     saved_cursor = app.config_cursor
     app._build_config_tabs()
-    app.config_cursor = min(saved_cursor, len(app.config_items) - 1)
+    app.config_cursor = max(0, min(saved_cursor, len(app.config_items) - 1))
     app.config_scroll = 0
     if app.config.get("eq_enabled", False):
         preamp = app.config.get("eq_preamp", 0.0)

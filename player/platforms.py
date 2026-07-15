@@ -137,6 +137,7 @@ def increment_downloads(platforms: list[Platform], name: str) -> None:
     for p in platforms:
         if p.name.lower() == name.lower():
             p.downloads += 1
+            save_platforms(platforms)
             break
 
 

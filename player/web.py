@@ -254,97 +254,6 @@ def get_stream_url(webpage_url: str) -> str | None:
     return url if url.startswith("http") else None
 
 
-def download(
-    url: str,
-    output_path: str,
-    fmt: str = "audio",
-    quality: str = "480p",
-    progress_hook: Any = None,
-    resume: bool = False,
-    cancel_event: threading.Event | None = None,
-) -> tuple[bool, str]:
-    """Descarga un archivo con yt-dlp via subprocess.
-
-    Args:
-        resume: ignorado (mantenido por compatibilidad de interfaz).
-        cancel_event: evento de threading para cancelar la descarga.
-
-    Returns:
-        (success, filename) o (False, error_message)
-    """
-    if not is_available():
-        return False, "yt-dlp no instalado"
-
-    cmd = _build_download_cmd(url, output_path, fmt, quality)
-
-    try:
-        proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, bufsize=1,
-        )
-    except FileNotFoundError:
-        return False, "yt-dlp no encontrado en PATH"
-
-    filename = ""
-
-    for line in proc.stdout or []:
-        if cancel_event and cancel_event.is_set():
-            proc.kill()
-            proc.wait()
-            return False, "Cancelado por usuario"
-
-        line = line.strip()
-        if not line:
-            continue
-
-        if progress_hook is not None:
-            hook_data: dict[str, Any] = {}
-
-            if "[download]" in line:
-                pct_str = line.split("%")[0].split()[-1]
-                try:
-                    pct = int(float(pct_str))
-                    hook_data = {
-                        "status": "downloading",
-                        "downloaded_bytes": pct,
-                        "total_bytes": 100,
-                    }
-                except (ValueError, IndexError):
-                    pass
-
-                if "Destination:" in line:
-                    filename = line.split("Destination:")[-1].strip()
-                elif "has already" in line:
-                    filename = line.split("has already")[-1].strip()
-            elif "[ExtractAudio]" in line:
-                hook_data = {"status": "postprocessor"}
-            elif "ERROR" in line or "error" in line.lower():
-                hook_data = {"status": "error", "message": line}
-
-            if hook_data:
-                try:
-                    progress_hook(hook_data)
-                except Exception:
-                    pass
-
-    proc.wait()
-
-    if proc.returncode != 0:
-        stderr_text = ""
-        try:
-            _, stderr_text = proc.communicate(timeout=5)
-        except Exception:
-            pass
-        return False, _classify_error(stderr_text or "Error desconocido")
-
-    if not filename:
-        title = url.split("/")[-1].split("?")[0][:50]
-        ext = "mp3" if fmt == "audio" else "mp4"
-        filename = f"{title}.{ext}"
-
-    return True, filename
-
-
 def format_duration(seconds: int) -> str:
     """Formatea duración en HH:MM:SS o MM:SS."""
     if seconds <= 0:
@@ -487,10 +396,6 @@ class DownloadManager:
                 if item.url == url:
                     return item
             return None
-
-    def get_items(self) -> list[DownloadItem]:
-        with self._lock:
-            return list(self._items)
 
     def get_item(self, item_id: int) -> DownloadItem | None:
         with self._lock:

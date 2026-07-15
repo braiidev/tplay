@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 from .config import PAIR_MARCO, PAIR_TEXTO, PAIR_DESTACAR, PAIR_NAV, PAIR_OVERLAY
 from .file_utils import time_str, ext_label, is_url as _is_url, is_video_file as _is_video_file
-from .ui import safe_addstr, draw_box, draw_box_inline, draw_scroll_indicators, draw_tab_carousel, clamp_scroll, draw_list_indicators, _build_hints, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN, COMPACT_THRESHOLD
+from .ui import safe_addstr, draw_box, draw_box_inline, draw_tab_carousel, clamp_scroll, draw_list_indicators, _build_hints, LIST_H, EXPLORER_MARGIN, PLAYLIST_MARGIN, COMPACT_THRESHOLD
 from . import keybindings as kb
 from .handlers import _get_current_key
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import json
+import copy
 import curses
 from typing import Any
 
@@ -68,7 +69,8 @@ THEMES: dict[str, dict[str, int]] = {
     "clasico": {"marco": curses.COLOR_CYAN, "texto": curses.COLOR_WHITE,
                 "destacar": curses.COLOR_YELLOW, "nav": curses.COLOR_GREEN, "overlay": curses.COLOR_MAGENTA},
     "mono": {"marco": curses.COLOR_WHITE, "texto": curses.COLOR_WHITE,
-             "destacar": curses.COLOR_WHITE, "nav": curses.COLOR_WHITE, "overlay": curses.COLOR_WHITE},
+             "destacar": curses.COLOR_WHITE, "nav": curses.COLOR_WHITE, "overlay": curses.COLOR_WHITE,
+             "mono_bold": True},
     "calido": {"marco": curses.COLOR_YELLOW, "texto": curses.COLOR_WHITE,
                "destacar": curses.COLOR_RED, "nav": curses.COLOR_RED, "overlay": curses.COLOR_YELLOW},
     "contraste": {"marco": curses.COLOR_MAGENTA, "texto": curses.COLOR_WHITE,
@@ -85,6 +87,8 @@ PAIR_DESTACAR: int = 3
 PAIR_NAV: int = 4
 PAIR_OVERLAY: int = 5
 
+MONO_BOLD: bool = False
+
 
 def load() -> dict[str, Any]:
     try:
@@ -94,7 +98,7 @@ def load() -> dict[str, Any]:
                 cfg.setdefault(k, DEFAULT_CONFIG[k])
             return cfg
     except (FileNotFoundError, json.JSONDecodeError):
-        fallback: dict[str, Any] = dict(DEFAULT_CONFIG)
+        fallback: dict[str, Any] = copy.deepcopy(DEFAULT_CONFIG)
         return fallback
 
 
@@ -108,13 +112,16 @@ def save(cfg: dict[str, Any]) -> None:
 
 
 def apply_theme(config: dict[str, Any]) -> None:
+    global MONO_BOLD
     theme_name = config.get("theme", "clasico")
     if theme_name == "custom":
         cc = config.get("custom_colors", {})
         merged = {**DEFAULT_CONFIG["custom_colors"], **cc}
         t = {k: COLORS.get(v, curses.COLOR_WHITE) for k, v in merged.items()}
+        MONO_BOLD = False
     else:
         t = THEMES.get(theme_name, THEMES["clasico"])
+        MONO_BOLD = bool(t.get("mono_bold", False))
     curses.init_pair(PAIR_MARCO, t["marco"], -1)
     curses.init_pair(PAIR_TEXTO, t["texto"], -1)
     curses.init_pair(PAIR_DESTACAR, t["destacar"], -1)

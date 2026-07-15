@@ -14,6 +14,9 @@ from ..stack import StackItem
 
 
 def handle_favorites(app: PlayerApp, key: int) -> None:
+    if key == 27:  # ESC always works
+        app.current_view = app.V_EXPLORER
+        return
     if not app.favorites:
         if key in (10, 13, ord("d"), ord("a"), ord("A")):
             _toast(app, "Sin favoritos")

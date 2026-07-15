@@ -462,22 +462,6 @@ def _handle_download_key(app: PlayerApp, with_config: bool) -> None:
     _toast(app, f"Encolado: {result.title}")
 
 
-def _do_download_direct(app: PlayerApp) -> None:
-    """Ejecuta descarga directa con configuracion guardada."""
-    idx = app.web_download_idx
-    if idx >= len(app.web_results):
-        return
-
-    from .. import web
-    dm = web.get_download_manager()
-    result = app.web_results[idx]
-    cfg = app.config
-    fmt = cfg.get("online_download_format", "audio")
-    quality = cfg.get("online_download_quality", "480p")
-    dm.add_download(result.webpage_url, result.title, fmt, quality, result.platform)
-    _toast(app, f"Encolado: {result.title}")
-
-
 def _do_download(app: PlayerApp) -> None:
     """Ejecuta descarga con configuracion del editor."""
     idx = app.web_download_idx

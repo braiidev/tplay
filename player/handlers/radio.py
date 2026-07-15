@@ -102,11 +102,11 @@ def handle_radio(app: PlayerApp, key: int) -> None:
     if key in (10, 13):
         _do_play_radio(app)
         return
-    if key == ord("d") and app.radios:
+    if key == ord("d") and app.radios and 0 <= app.radio_cursor < len(app.radios):
         name = app.radios[app.radio_cursor]["name"]
         _confirm(app, f"¿Eliminar radio '{name}'?", lambda: _do_delete_radio(app))
         return
-    if key == ord("E") and app.radios:
+    if key == ord("E") and app.radios and 0 <= app.radio_cursor < len(app.radios):
         r = app.radios[app.radio_cursor]
         app.radio_edit_idx = app.radio_cursor
         app.radio_edit_field = "name"
@@ -120,7 +120,7 @@ def handle_radio(app: PlayerApp, key: int) -> None:
     if key == ord("X"):
         _do_export_radios_m3u(app)
         return
-    if key == ord("f") and app.radios:
+    if key == ord("f") and app.radios and 0 <= app.radio_cursor < len(app.radios):
         r = app.radios[app.radio_cursor]
         _toggle_favorite(app, r["url"], r["name"])
         return

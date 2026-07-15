@@ -44,19 +44,6 @@ def list_dir(path: str) -> list[tuple[str, bool, str]]:
     return dirs + files
 
 
-def human_size(path: str) -> str:
-    try:
-        size = os.path.getsize(path)
-        if size < 1024:
-            return f"{size}B"
-        elif size < 1024 ** 2:
-            return f"{size // 1024}KB"
-        else:
-            return f"{size / (1024 ** 2):.1f}MB"
-    except OSError:
-        return ""
-
-
 def time_str(secs: int | None) -> str:
     if secs is None or secs < 0:
         return "--:--"

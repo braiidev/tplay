@@ -50,10 +50,6 @@ class AudioEngine:
         self._eq = None
         self._eq_enabled = False
 
-    @property
-    def is_playing(self) -> bool:
-        return self.playing
-
     def toggle_play_pause(self) -> None:
         if self.playing:
             if self.paused:
@@ -103,6 +99,7 @@ class AudioEngine:
         self.current_file = path
         self.sleep_timer_expired = False
         self.reapply_equalizer()
+        self.player.set_rate(self.rate)
 
     def is_ended(self) -> bool:
         return (self.playing and not self.paused
@@ -185,6 +182,13 @@ class AudioEngine:
             self.player.set_equalizer(self._eq)
 
     def close(self) -> None:
+        if self.player:
+            self.player.stop()
+            self.player.release()
+            self.player = None
+        if self.instance:
+            self.instance.release()
+            self.instance = None
         if hasattr(self, '_saved_stderr') and self._saved_stderr is not None:
             os.dup2(self._saved_stderr, 2)
             os.close(self._saved_stderr)

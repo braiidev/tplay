@@ -195,8 +195,7 @@ def draw_list_indicators(win: curses.window, h: int, w: int,
 
 
 def draw_status(win: curses.window, h: int, w: int, audio: Any, playing: bool, current_file: str | None, volume: int,
-                shuffle: bool, repeat: bool, active_name: str, current_view: int,
-                stack: Any = None) -> None:
+                shuffle: bool, repeat: bool, current_view: int) -> None:
     if current_view == 1:  # V_LISTEN — status en su propio layout
         return
     status = curses.color_pair(PAIR_OVERLAY)
@@ -265,7 +264,9 @@ def draw_dialog(win: curses.window, h: int, w: int, title: str, text: str,
             l = len(s)
             if l < ih:
                 s += " " * (ih - l)
-            safe_addstr(win, oy, ox, vb + s + vb, dest, h, w)
+            safe_addstr(win, oy, ox, vb, dest, h, w)
+            safe_addstr(win, oy, ox + 1, s, texto, h, w)
+            safe_addstr(win, oy, ox + ih + 1, vb, dest, h, w)
 
         # Row 1: empty
         oy += 1
@@ -290,7 +291,9 @@ def draw_dialog(win: curses.window, h: int, w: int, title: str, text: str,
             if len(s) < ih:
                 s += " " * (ih - len(s))
             try:
-                win.addstr(oy, ox, vb + s + vb, dest)
+                win.addstr(oy, ox, vb, dest)
+                win.addstr(oy, ox + 1, s, texto)
+                win.addstr(oy, ox + ih + 1, vb, dest)
             except curses.error:
                 pass
             cur_in_visible = max(0, min(prompt_cursor_pos - prompt_scroll, len(prompt_buf) - prompt_scroll))
