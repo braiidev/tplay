@@ -2,41 +2,30 @@
 
 ## Pendiente para próxima sesión
 
-### Etapa 3: DRY Refactoring (restante)
-- [ ] R1: FilterState + handle_filter_input genérico
-- [ ] R4-R6: Drawing helpers (_draw_row, _draw_item_with_duration, _draw_empty)
-- [ ] R7-R10: Handler pattern helpers
-- [ ] R13-R14: Motor/Meta editor shared + color pair caching
+### Performance restante
+- [ ] P1-P7,P9: Config cache, items property, _add_history O(n), deepcopy undo, busy-wait, config labels, save_history batch
 
-### Etapa 4: Performance
-- [ ] P1-P10: Config cache, DownloadManager opts, app state opts, view render opts
-
-### Etapa 5: UX + Visual
-- [ ] U1-U10: UX improvements
-- [ ] V1-V6: Visual fixes
+### UX
+- [ ] U1-U10: UX improvements (stack size indicator, dialog multiline, etc.)
 
 ### Features
 - [ ] #6: Cache Management (limpiar cache yt-dlp)
 
 ## Completado
 
-### Etapa 3: DRY Refactoring (parcial) ✅ (v1.6.4)
+### Etapa 3-5: DRY + Performance + Visual ✅ (v1.6.4-v1.6.5)
+- R1: FilterState + handle_filter_text
 - R2: navigate_cursor helper
 - R15: import save a nivel módulo
-- R11/R12: Skip (diferentes firmas / deps circulares)
+- P8: Audio time/length cache
+- V1-V5: Visual fixes (ellipsis, LIST_H, help tab, theme fixes)
 
 ### Etapa 2: Audit Bugs Menores + Dead Code ✅ (v1.6.3)
 - A1-A10: 10 bugs menores corregidos
-- D1-D12: 10 dead code items eliminados (D3,D5 skipped — audit incorrecto)
+- D1-D12: 10 dead code items eliminados
 
 ### Etapa 1: Audit Critical Bugs ✅ (v1.6.0-v1.6.2)
-- C1: Toast double-decrement fix
-- C2: Data race en download callback fix
-- C3: History data loss fix
-- C5: TOCTOU race en active_count fix
-- C6: _callbacks list race fix
-- C7: Thread safety en webexplorer fix
-- C8: URL incorrecta en _add_to_queue fix
+- C1-C8: 7 critical bugs corregidos
 
 ### #4+#5: Historial Unificado ✅ (v1.5.80)
 - Unificado downloads + streams en una sola vista `H`

@@ -63,7 +63,7 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 
 | # | Patrón | Archivos | Sugerencia |
 |---|--------|----------|------------|
-| R1 | **Modo filtro** (init/cancel/backspace/char) | `explorer.py`, `playlist.py`, `download_history.py` | `FilterState` + `handle_filter_input()` genérico en `shared.py` |
+| R1 | **Modo filtro** (init/cancel/backspace/char) | `explorer.py`, `playlist.py`, `download_history.py` | `FilterState` + `handle_filter_input()` genérico en `shared.py` | ✅ v1.6.5 |
 | R2 | **Navegación de cursor** (down/up/pgup/pgdn/g/G) | 6 handlers | `navigate_cursor(cursor, key, total, page_size) -> int` | ✅ v1.6.4 |
 | R3 | **Scroll clamping** | Todos los handlers | Unificar offset compact/no-compact en helper |
 | R4 | **Cursor row con REVERSE highlight** | 14+ ubicaciones en `views.py` | `_draw_row(win, y, x, text, attr, is_cursor, h, w)` |
@@ -90,7 +90,7 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 | P5 | `app.py:997` | `copy.deepcopy(self.playlist_data)` en cada undo snapshot. Playlists grandes = copies grandes. |
 | P6 | `app.py:622` | `time.sleep(0.05)` busy-wait loop. Wastes CPU cuando idle. |
 | P7 | `views.py:701-799` | `draw_config` reconstruye `labels` dict en cada frame. Cachear. |
-| P8 | `views.py:89-119` | `draw_listen` llama `audio.get_length()` y `audio.get_time()` en cada frame. VLC API calls con locks. Cachear al inicio del render cycle. |
+| P8 | `views.py:89-119` | `draw_listen` llama `audio.get_length()` y `audio.get_time()` en cada frame. VLC API calls con locks. Cachear al inicio del render cycle. | ✅ v1.6.5 |
 | P9 | `downloads.py:49-56` | `save_history` reescribe JSON completo en cada llamada. Batch o debounce. |
 | P10 | `downloads.py:35-36` | `exists` property hace I/O de filesystem por acceso. Cachear o invalidar manualmente. |
 
@@ -130,11 +130,11 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 
 | # | Archivo:Línea | Descripción |
 |---|---------------|-------------|
-| V1 | `views.py:672,684` | Download history titles se truncan sin ellipsis. Todas las demás vistas usan `[:max-1] + "..."`. |
-| V2 | `views.py:924` | `draw_radio` usa `app.LIST_H` en vez del constante importado `LIST_H`. Divergence hazard. |
-| V3 | `ui.py:648` | Dos help tabs se llaman "Historial" (tab 4 = playback history, tab 9 = download history). Confuso. |
-| V4 | `config.py:72-73` | Theme `calido` usa `COLOR_RED` para nav y destacar. Roles indistinguibles. |
-| V5 | `config.py:78` | Theme `custom` inicializa todos los colores a 0 (COLOR_BLACK). Si falta `apply_theme`, texto invisible. |
+| V1 | `views.py:672,684` | Download history titles se truncan sin ellipsis. Todas las demás vistas usan `[:max-1] + "..."`. | ✅ v1.6.5 |
+| V2 | `views.py:924` | `draw_radio` usa `app.LIST_H` en vez del constante importado `LIST_H`. Divergence hazard. | ✅ v1.6.5 |
+| V3 | `ui.py:648` | Dos help tabs se llaman "Historial" (tab 4 = playback history, tab 9 = download history). Confuso. | ✅ v1.6.5 |
+| V4 | `config.py:72-73` | Theme `calido` usa `COLOR_RED` para nav y destacar. Roles indistinguibles. | ✅ v1.6.5 |
+| V5 | `config.py:78` | Theme `custom` inicializa todos los colores a 0 (COLOR_BLACK). Si falta `apply_theme`, texto invisible. | ✅ v1.6.5 |
 | V6 | `config.py:115` | Color name inválido en custom_colors silenciosamente fallback a WHITE. Sin feedback al usuario. |
 
 ---
@@ -155,15 +155,24 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 - [x] A1-A10: Bugs menores ✅ v1.6.3
 - [x] D1-D12: Eliminar código muerto ✅ v1.6.3 (D3,D5 skipped — audit incorrecto)
 
-### Etapa 3: Abstracciones + DRY (v1.6.4)
+### Etapa 3: Abstracciones + DRY (v1.6.5)
+- [x] R1: FilterState + handle_filter_text genérico ✅ v1.6.5
 - [x] R2: navigate_cursor helper ✅ v1.6.4
+- [x] R4-R6: Drawing helpers ⏭️ draw_item_row ya existe
 - [x] R11: clamp_scroll unificado ⏭️ Skip (diferentes firmas)
 - [x] R12: format_duration unificado ⏭️ Skip (deps circulares)
+- [x] R13: Motor/Meta editor shared ⏭️ Skip (diferentes estructuras)
 - [x] R15: import save a nivel módulo ✅ v1.6.4
-- [ ] R1: FilterState + handle_filter_input genérico
-- [ ] R4-R6: Drawing helpers (_draw_row, _draw_item_with_duration, _draw_empty)
-- [ ] R7-R10: Handler pattern helpers
-- [ ] R13-R14: Motor/Meta editor shared + color pair caching
+
+### Etapa 4: Performance (v1.6.5)
+- [x] P8: Audio time/length cache ✅ v1.6.5
+- [x] P10: exists property I/O ⏭️ Skip (stat rápido)
+- [ ] P1-P7,P9: Performance restantes (config cache, items property, etc.)
+
+### Etapa 5: UX + Visual (v1.6.5)
+- [x] V1-V5: Visual fixes ✅ v1.6.5
+- [x] V6: Color name fallback ⏭️ Skip (fallback seguro)
+- [ ] U1-U10: UX improvements
 
 ### Etapa 4: Performance (v1.6.3)
 - [ ] P1: Cache config load

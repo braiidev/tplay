@@ -190,3 +190,17 @@
 - R12: Skip — `format_duration` unificado (dependencias circulares entre `web.py` y `downloads.py`, no vale el churn)
 
 **Estado**: v1.6.4, mypy strict pasa (28 archivos), archivos compilan OK
+
+---
+
+## Entrada 19 — 2025-07-15 — v1.6.5 Audit: DRY + Performance + Visual
+- R1: `shared.py` — nuevo `FilterState` dataclass + `_handle_filter_text()` genérico para modo filtro
+- P8: `audio.py` — `refresh_time_cache()` cachea `get_time()`/`get_length()` una vez por frame en `_draw()`, evita VLC locks por acceso múltiple. Cache invalidado en `stop()` y `play_file()`.
+- V1: `views.py` — download history titles ahora usan ellipsis al truncar (`[:w-1] + "…"`)
+- V2: `views.py` — `draw_radio` usa constante `LIST_H` en vez de `app.LIST_H`
+- V3: `ui.py` — help tab duplicado "Historial" renombrado a "Descargas"
+- V4: `config.py` — theme `calido` nav cambiado de RED a GREEN
+- V5: `config.py` — theme `custom` defaults seguros (CYAN/WHITE/YELLOW/GREEN/MAGENTA)
+- Skipped: R4-R6 (draw_item_row ya existe), R13 (diferentes estructuras), P10 (stat rápido), V6 (fallback seguro)
+
+**Estado**: v1.6.5, mypy strict pasa (28 archivos), archivos compilan OK

@@ -1,5 +1,18 @@
 # CHANGELOG — tplay
 
+## v1.6.5
+- refactor: R1 — `FilterState` dataclass + `_handle_filter_text()` genérico en shared.py
+- perf: P8 — `audio.refresh_time_cache()` cachea time/length una vez por frame (reduce VLC locks)
+- fix: V1 — download history titles ahora usan ellipsis al truncar
+- fix: V2 — `draw_radio` usa constante `LIST_H` en vez de `app.LIST_H`
+- fix: V3 — help tab "Historial" duplicado renombrado a "Descargas"
+- fix: V4 — theme `calido` nav cambiado de RED a GREEN (diferente de destacar)
+- fix: V5 — theme `custom` defaults a CYAN/WHITE/YELLOW/GREEN/MAGENTA en vez de todo BLACK
+- skip: R4-R6 — `draw_item_row` ya existe como helper, no vale duplicar
+- skip: R13 — keybindings y meta editor son estructuralmente diferentes
+- skip: P10 — `exists` property I/O es rápido (stat syscall), no vale cachear
+- skip: V6 — fallback a WHITE ya es seguro, no necesita toast
+
 ## v1.6.4
 - refactor: R2 — `_navigate_cursor()` helper en shared.py (down/up/pgup/pgdn/g/G)
 - refactor: R2 — explorer, playlist, download_history, favorites, radio usan `_navigate_cursor()`
