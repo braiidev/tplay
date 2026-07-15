@@ -153,3 +153,29 @@
 - Etapa 1 Audit COMPLETADA ✅ (C1-C8, C4 skipped dead code).
 
 **Estado**: v1.6.2, mypy strict pasa (28 archivos), archivos compilan OK
+
+---
+
+## Entrada 17 — 2025-07-15 — v1.6.3 Audit: Bugs menores + Dead Code
+- D1: `web.py` — eliminada función `download()` (88 líneas, nunca llamada)
+- D2: `webexplorer.py` — eliminada `_do_download_direct()` (nunca referenciada)
+- D4: `app.py` — eliminado bloque TYPE_CHECKING redundante
+- D6: `file_utils.py` — eliminada `human_size()` (nunca llamada)
+- D7: `audio.py` — eliminada propiedad `is_playing` (nunca usada)
+- D8: `web.py` — eliminado `get_items()` (duplicado exacto de propiedad `items`)
+- D9: `app.py` — eliminado `needs_cursor = False` (asignado, nunca leído)
+- D10: `app.py` — eliminado re-import redundante de `_list_dir`
+- D11: `ui.py` — eliminados parámetros `active_name` y `stack` de `draw_status()`
+- D12: `views.py` — eliminado import `draw_scroll_indicators` (nunca usado)
+- A1: `config.py` — `copy.deepcopy(DEFAULT_CONFIG)` en vez de `dict()` para fallback
+- A2: `config.py` — theme mono ahora tiene flag `mono_bold` para diferenciar roles
+- A3: `audio.py` — `play_file()` ahora llama `set_rate()` después de play
+- A4: `audio.py` — `close()` ahora libera player e instance de VLC
+- A5: `explorer.py` — playlist open ahora hace `_push_snapshot()` antes de reemplazar stack
+- A6: `radio.py` — bounds check antes de acceder `app.radios[radio_cursor]`
+- A7: `config_view.py` — cursor se clamp a `max(0, len-1)` después de rebuild
+- A8: `favorites.py` — ESC siempre funciona, incluso con lista vacía
+- A9: `platforms.py` — `increment_downloads()` ahora llama `save_platforms()`
+- A10: `ui.py` — dialog text usa `PAIR_TEXTO` en vez de `PAIR_OVERLAY`
+
+**Estado**: v1.6.3, mypy strict pasa (28 archivos), archivos compilan OK

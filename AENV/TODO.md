@@ -2,14 +2,27 @@
 
 ## Pendiente para próxima sesión
 
-### Etapa 2: Bugs menores + Dead Code
-- [ ] A1-A10: Bugs menores del audit (config shallow copy, mono theme, audio rate, etc.)
-- [ ] D1-D12: Dead code cleanup (download() 88 líneas, _do_download_direct, imports muertos)
+### Etapa 3: DRY Refactoring
+- [ ] R1-R3: FilterState + navigate_cursor + scroll clamping
+- [ ] R4-R6: Drawing helpers (_draw_row, _draw_item_with_duration, _draw_empty)
+- [ ] R7-R10: Handler pattern helpers
+- [ ] R11-R15: Unificación de funciones duplicadas
 
-### Etapa 3: Features
+### Etapa 4: Performance
+- [ ] P1-P10: Config cache, DownloadManager opts, app state opts, view render opts
+
+### Etapa 5: UX + Visual
+- [ ] U1-U10: UX improvements
+- [ ] V1-V6: Visual fixes
+
+### Features
 - [ ] #6: Cache Management (limpiar cache yt-dlp)
 
 ## Completado
+
+### Etapa 2: Audit Bugs Menores + Dead Code ✅ (v1.6.3)
+- A1-A10: 10 bugs menores corregidos
+- D1-D12: 10 dead code items eliminados (D3,D5 skipped — audit incorrecto)
 
 ### Etapa 1: Audit Critical Bugs ✅ (v1.6.0-v1.6.2)
 - C1: Toast double-decrement fix

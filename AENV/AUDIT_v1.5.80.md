@@ -27,33 +27,33 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 
 | # | Archivo:Línea | Descripción |
 |---|---------------|-------------|
-| A1 | `config.py:89-98` | **Shallow copy de nested dict.** `dict(DEFAULT_CONFIG)` comparte `custom_colors` dict entre fallback y original. Mutar uno muta ambos. |
-| A2 | `config.py:70-71` | **Theme `mono` destruye jerarquía visual.** Todos los 5 color pairs quedan iguales (WHITE on default). Cursor, hints, status = mismo color. |
-| A3 | `audio.py:89-91` | **Rate se pierde en `play_file`.** `set_rate()` guarda `self.rate` pero `play_file()` no lo re-aplica. Siguiente reproduceción resetea a default VLC. |
-| A4 | `audio.py:187-191` | **VLC resources nunca se liberan.** `close()` solo restaura stderr. `player` y `instance` (libvlc C allocations) nunca se liberan. |
-| A5 | `explorer.py:104-112` | **Playlist open sin undo.** Abrir .m3u/.pls reemplaza stack completo sin `_push_snapshot()`. |
-| A6 | `radio.py:106,110,124` | **Index out of bounds.** `app.radios[app.radio_cursor]` sin bounds check. Si se borró un radio, cursor puede estar fuera de rango. |
-| A7 | `config_view.py:134,211` | **Cursor = -1.** Si `config_items` queda vacío después de rebuild, cursor se pone en -1. Crash al acceder array. |
-| A8 | `favorites.py:17-20` | **Vista stuck.** Early return en lista vacía puede bloquear ESC. Verificar si ESC se maneja en main dispatch. |
-| A9 | `platforms.py:135-140` | **`increment_downloads` nunca persiste.** Counter se resetea a 0 en cada restart. |
-| A10 | `ui.py:238` | **Dialog usa PAIR_OVERLAY para texto.** Si overlay es de bajo contraste, dialog completo ilegible. |
+| A1 | `config.py:89-98` | **Shallow copy de nested dict.** `dict(DEFAULT_CONFIG)` comparte `custom_colors` dict entre fallback y original. Mutar uno muta ambos. | ✅ v1.6.3 |
+| A2 | `config.py:70-71` | **Theme `mono` destruye jerarquía visual.** Todos los 5 color pairs quedan iguales (WHITE on default). Cursor, hints, status = mismo color. | ✅ v1.6.3 |
+| A3 | `audio.py:89-91` | **Rate se pierde en `play_file`.** `set_rate()` guarda `self.rate` pero `play_file()` no lo re-aplica. Siguiente reproduceción resetea a default VLC. | ✅ v1.6.3 |
+| A4 | `audio.py:187-191` | **VLC resources nunca se liberan.** `close()` solo restaura stderr. `player` y `instance` (libvlc C allocations) nunca se liberan. | ✅ v1.6.3 |
+| A5 | `explorer.py:104-112` | **Playlist open sin undo.** Abrir .m3u/.pls reemplaza stack completo sin `_push_snapshot()`. | ✅ v1.6.3 |
+| A6 | `radio.py:106,110,124` | **Index out of bounds.** `app.radios[app.radio_cursor]` sin bounds check. Si se borró un radio, cursor puede estar fuera de rango. | ✅ v1.6.3 |
+| A7 | `config_view.py:134,211` | **Cursor = -1.** Si `config_items` queda vacío después de rebuild, cursor se pone en -1. Crash al acceder array. | ✅ v1.6.3 |
+| A8 | `favorites.py:17-20` | **Vista stuck.** Early return en lista vacía puede bloquear ESC. Verificar si ESC se maneja en main dispatch. | ✅ v1.6.3 |
+| A9 | `platforms.py:135-140` | **`increment_downloads` nunca persiste.** Counter se resetea a 0 en cada restart. | ✅ v1.6.3 |
+| A10 | `ui.py:238` | **Dialog usa PAIR_OVERLAY para texto.** Si overlay es de bajo contraste, dialog completo ilegible. | ✅ v1.6.3 |
 
 ### CÓDIGO MUERTO
 
 | # | Archivo:Línea | Descripción |
 |---|---------------|-------------|
-| D1 | `web.py:256-344` | **88 líneas: función `download()` standalone.** Nunca se llama. Todo usa `DownloadManager._download_worker`. |
-| D2 | `webexplorer.py:504-517` | **Función `_do_download_direct`.** Definida pero nunca referenciada. |
-| D3 | `app.py:5,7` | **Imports `shutil` y `subprocess`.** Solo usados localmente, nunca a nivel módulo. |
-| D4 | `app.py:12-14` | **Bloque `TYPE_CHECKING`.** Importa `AudioEngine`, `Stack`, `StackItem` pero también se importan incondicionalmente. |
-| D5 | `app.py:80` | **`self.playlist_filter`.** Declarada pero nunca leída ni escrita. |
-| D6 | `file_utils.py:47-57` | **Función `human_size`.** Definida pero nunca llamada. |
-| D7 | `audio.py:53-55` | **Propiedad `is_playing`.** Nunca se llama en el codebase. |
-| D8 | `web.py:489-491` | **`get_items()`.** Duplicado exacto de propiedad `items` (línea 389-392). |
-| D9 | `app.py:1164` | **`needs_cursor = False`.** Asignado pero nunca leído. |
-| D10 | `app.py:292` | **Re-import `_list_dir`.** Ya importado arriba, redundante dentro del closure. |
-| D11 | `ui.py:197-199` | **Parámetros `active_name` y `stack` en `draw_status`.** Nunca usados en el cuerpo. |
-| D12 | `views.py:12` | **`draw_scroll_indicators` import.** Nunca se llama directamente (solo `draw_list_indicators`). |
+| D1 | `web.py:256-344` | **88 líneas: función `download()` standalone.** Nunca se llama. Todo usa `DownloadManager._download_worker`. | ✅ v1.6.3 |
+| D2 | `webexplorer.py:504-517` | **Función `_do_download_direct`.** Definida pero nunca referenciada. | ✅ v1.6.3 |
+| D3 | `app.py:5,7` | **Imports `shutil` y `subprocess`.** Solo usados localmente, nunca a nivel módulo. | ⏭️ Incorrecto — SÍ se usan |
+| D4 | `app.py:12-14` | **Bloque `TYPE_CHECKING`.** Importa `AudioEngine`, `Stack`, `StackItem` pero también se importan incondicionalmente. | ✅ v1.6.3 |
+| D5 | `app.py:80` | **`self.playlist_filter`.** Declarada pero nunca leída ni escrita. | ⏭️ Incorrecto — SÍ se usa |
+| D6 | `file_utils.py:47-57` | **Función `human_size`.** Definida pero nunca llamada. | ✅ v1.6.3 |
+| D7 | `audio.py:53-55` | **Propiedad `is_playing`.** Nunca se llama en el codebase. | ✅ v1.6.3 |
+| D8 | `web.py:489-491` | **`get_items()`.** Duplicado exacto de propiedad `items` (línea 389-392). | ✅ v1.6.3 |
+| D9 | `app.py:1164` | **`needs_cursor = False`.** Asignado pero nunca leído. | ✅ v1.6.3 |
+| D10 | `app.py:292` | **Re-import `_list_dir`.** Ya importado arriba, redundante dentro del closure. | ✅ v1.6.3 |
+| D11 | `ui.py:197-199` | **Parámetros `active_name` y `stack` en `draw_status`.** Nunca usados en el cuerpo. | ✅ v1.6.3 |
+| D12 | `views.py:12` | **`draw_scroll_indicators` import.** Nunca se llama directamente (solo `draw_list_indicators`). | ✅ v1.6.3 |
 
 ---
 
@@ -151,11 +151,11 @@ Audit completo del código fuente. Organizado por severidad para planificar etap
 - [x] C7: Fix thread safety en webexplorer (usar queue para comunicación main↔worker) ✅ v1.6.2
 - [x] C8: Fix URL incorrecta en _add_to_queue ✅ v1.6.0
 
-### Etapa 2: High Priority Bugs + Dead Code (v1.6.1)
-- [ ] A1-A10: Bugs menores
-- [ ] D1-D12: Eliminar código muerto
+### Etapa 2: High Priority Bugs + Dead Code (v1.6.3)
+- [x] A1-A10: Bugs menores ✅ v1.6.3
+- [x] D1-D12: Eliminar código muerto ✅ v1.6.3 (D3,D5 skipped — audit incorrecto)
 
-### Etapa 3: Abstracciones + DRY (v1.6.2)
+### Etapa 3: Abstracciones + DRY (v1.6.4)
 - [ ] R1-R3: FilterState + navigate_cursor + scroll clamping
 - [ ] R4-R6: Drawing helpers (_draw_row, _draw_item_with_duration, _draw_empty)
 - [ ] R7-R10: Handler pattern helpers

@@ -1,5 +1,18 @@
 # CHANGELOG — tplay
 
+## v1.6.3
+- fix: A1 — shallow copy de nested dict en config fallback (copy.deepcopy)
+- fix: A2 — theme mono ahora usa MONO_BOLD flag para diferenciar visual hierarchy
+- fix: A3 — rate se re-aplica en play_file() después de cada reproducción
+- fix: A4 — VLC resources (player/instance) ahora se liberan en close()
+- fix: A5 — playlist open (.m3u/.pls) ahora push snapshot antes de reemplazar stack
+- fix: A6 — radio.py bounds check antes de acceder app.radios[radio_cursor]
+- fix: A7 — config_view cursor se clamp a max(0, len-1) después de rebuild
+- fix: A8 — favorites ESC siempre funciona, incluso con lista vacía
+- fix: A9 — increment_downloads ahora persiste con save_platforms()
+- fix: A10 — dialog text usa PAIR_TEXTO en vez de PAIR_OVERLAY (mejor contraste)
+- refactor: D1-D12 dead code eliminado (D3,D5 skipped — audit incorrecto)
+
 ## v1.6.2
 - fix: C7 — thread safety en webexplorer: search y play usan pending flags (main loop procesa)
 
