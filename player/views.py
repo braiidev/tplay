@@ -691,7 +691,7 @@ def draw_download_history(app: PlayerApp, h: int, w: int) -> None:
 
         attr = destacar | curses.A_REVERSE if is_cur else texto
         if not exists:
-            attr = curses.color_pair(PAIR_NAV) if is_cur else curses.A_DIM
+            attr = (destacar | curses.A_REVERSE) if is_cur else curses.A_DIM
         safe_addstr(app.stdscr, y, 2, line[:w - 4], attr, h, w)
 
     draw_list_indicators(app.stdscr, h, w, start, total, list_h)

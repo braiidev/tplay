@@ -476,7 +476,9 @@ class DownloadManager:
                     elif "has already" in line:
                         filename = line.split("has already")[-1].strip()
                 elif "[ExtractAudio]" in line:
-                    pass
+                    extracted = line.split("Destination:")[-1].strip()
+                    if extracted:
+                        filename = extracted
                 elif "ERROR" in line or "error" in line.lower():
                     item.error = line
             stderr_out = proc.stderr.read() if proc.stderr else ""

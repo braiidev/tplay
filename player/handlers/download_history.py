@@ -166,22 +166,26 @@ def _re_download(app: PlayerApp) -> None:
     idx = items[app.dl_history_cursor]
     entry = app.download_history[idx]
 
-    if entry.is_temp:
-        app.web_search_buf = entry.title
-        app.web_search_mode = True
-        app.current_view = app.V_WEB
-        curses.curs_set(1)
-        _toast(app, f"Buscando: {entry.title}")
-        from .webexplorer import _do_search
-        _do_search(app, entry.title)
-    else:
-        from ..web import get_download_manager
-        dm = get_download_manager()
-        dm.add_download(
-            entry.webpage_url, entry.title,
-            entry.format, entry.quality, entry.platform,
-        )
-        _toast(app, f"Encolado: {entry.title}")
+    def _do() -> None:
+        if entry.is_temp:
+            app.web_search_buf = entry.title
+            app.web_search_mode = True
+            app.current_view = app.V_WEB
+            curses.curs_set(1)
+            _toast(app, f"Buscando: {entry.title}")
+            from .webexplorer import _do_search
+            _do_search(app, entry.title)
+        else:
+            from ..web import get_download_manager
+            dm = get_download_manager()
+            dm.add_download(
+                entry.webpage_url, entry.title,
+                entry.format, entry.quality, entry.platform,
+            )
+            _toast(app, f"Encolado: {entry.title}")
+
+    label = f"Re-buscar: {entry.title}?" if entry.is_temp else f"Re-descargar: {entry.title}?"
+    _confirm(app, label, _do)
 
 
 def _remove_from_history(app: PlayerApp) -> None:
