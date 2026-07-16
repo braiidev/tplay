@@ -11,6 +11,7 @@ from typing import Any
 DOWNLOADS_FILE: str = os.path.expanduser("~/.config/tplay/data/downloads.json")
 TMP_DIR: str = os.path.expanduser("~/.config/tplay/data/tmp")
 TEMP_MAX_AGE_DAYS: int = 7
+MAX_HISTORY_ENTRIES: int = 500
 
 
 @dataclass
@@ -93,6 +94,8 @@ def add_entry(
         play_count=1,
     )
     history.insert(0, entry)
+    if len(history) > MAX_HISTORY_ENTRIES:
+        del history[MAX_HISTORY_ENTRIES:]
     return entry
 
 

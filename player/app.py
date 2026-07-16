@@ -168,6 +168,7 @@ class PlayerApp:
         self._web_play_pending: tuple[str, Any] | None = None  # (stream_url, result)
         self._web_play_error: str | None = None
         self._stack_pending_adds: list[tuple[Any, int]] = []  # (StackItem, insert_pos or -1)
+        self._toast_pending: list[str] = []  # toasts from background threads
 
         self._load_web_platforms()
 
@@ -371,17 +372,7 @@ class PlayerApp:
             if result.returncode == 0:
                 self.update_available = False
                 return True, "Actualizado correctamente"
-            result2 = subprocess.run(
-                ["git", "reset", "--hard", "origin/main"],
-                cwd=repo,
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-            if result2.returncode == 0:
-                self.update_available = False
-                return True, "Actualizado correctamente"
-            return False, result.stderr.strip() or "Error al actualizar"
+            return False, result.stderr.strip() or "Error al actualizar — resolvé manualmente"
         except Exception as e:
             return False, str(e)
 
@@ -577,6 +568,12 @@ class PlayerApp:
                 self.stack.items.insert(pos, item)
         self.toast(f"Añadido: {pending[-1][0].name}")
 
+    def _process_toast_pending(self) -> None:
+        if not self._toast_pending:
+            return
+        msg = self._toast_pending.pop(0)
+        self.toast(msg)
+
     def _process_web_search(self) -> None:
         if self._web_search_error is not None:
             self.web_loading = False
@@ -671,6 +668,7 @@ class PlayerApp:
                 self._check_playback_end()
                 self._process_download_completions()
                 self._process_stack_pending_adds()
+                self._process_toast_pending()
                 self._process_web_search()
                 self._process_web_play()
                 self.audio.check_sleep_timer()

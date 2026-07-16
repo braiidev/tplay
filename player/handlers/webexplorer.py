@@ -487,7 +487,7 @@ def _add_to_queue(app: PlayerApp) -> None:
     def _run() -> None:
         stream_url = web.get_stream_url(result.webpage_url)
         if not stream_url:
-            _toast(app, "No se puede añadir — video no disponible")
+            app._toast_pending.append("No se puede añadir — video no disponible")
             return
         from ..stack import StackItem
         item = StackItem(path=stream_url, name=result.title)
@@ -508,7 +508,7 @@ def _add_to_queue_next(app: PlayerApp) -> None:
     def _run() -> None:
         stream_url = web.get_stream_url(result.webpage_url)
         if not stream_url:
-            _toast(app, "No se puede añadir — video no disponible")
+            app._toast_pending.append("No se puede añadir — video no disponible")
             return
         from ..stack import StackItem
         item = StackItem(path=stream_url, name=result.title)

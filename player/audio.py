@@ -13,6 +13,8 @@ except (ImportError, OSError) as _vlc_err:
 from .config import CONFIG_DIR
 
 LOG_FILE: str = os.path.join(CONFIG_DIR, "error.log")
+LOG_MAX_BYTES: int = 1_000_000  # 1MB
+LOG_KEEP_BYTES: int = 100_000  # 100KB
 
 
 class AudioEngine:
@@ -41,6 +43,12 @@ class AudioEngine:
         self._saved_stderr = os.dup(2)
         os.makedirs(CONFIG_DIR, exist_ok=True)
         try:
+            if os.path.isfile(LOG_FILE) and os.path.getsize(LOG_FILE) > LOG_MAX_BYTES:
+                with open(LOG_FILE, "rb") as f:
+                    f.seek(-LOG_KEEP_BYTES, 2)
+                    tail = f.read()
+                with open(LOG_FILE, "wb") as f:
+                    f.write(tail)
             log_fd: int = os.open(LOG_FILE, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
             os.dup2(log_fd, 2)
             os.close(log_fd)

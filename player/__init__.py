@@ -106,6 +106,9 @@ def main() -> None:
             sys.exit(1)
     if "--uninstall" in sys.argv:
         sys.exit(0 if _cli_uninstall() else 1)
+    if not sys.stdout.isatty():
+        print("Error: tplay requiere un terminal (TTY)", file=sys.stderr)
+        sys.exit(1)
     try:
         curses.wrapper(lambda stdscr: PlayerApp(stdscr).run())
     except KeyboardInterrupt:

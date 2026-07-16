@@ -102,7 +102,9 @@ def _append_cookies(cmd: list[str]) -> list[str]:
     cookies = cfg.get("online_cookies", "none")
     if cookies and cookies != "none":
         if cookies.startswith("file:"):
-            cmd.extend(["--cookies", cookies[5:]])
+            cookie_path = cookies[5:]
+            if os.path.isfile(cookie_path):
+                cmd.extend(["--cookies", cookie_path])
         else:
             cmd.extend(["--cookies-from-browser", cookies])
     return cmd
@@ -305,7 +307,7 @@ class DownloadManager:
 
     @max_concurrent.setter
     def max_concurrent(self, val: int) -> None:
-        self._max_concurrent = val
+        self._max_concurrent = max(1, min(val, 10))
 
     def _notify(self) -> None:
         cbs = list(self._callbacks)
