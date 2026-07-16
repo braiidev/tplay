@@ -19,7 +19,6 @@ from .config import load as _load_config
 _YTDLP_BIN = "yt-dlp"
 _YTDLP_COMMON = [_YTDLP_BIN, "--no-warnings", "--ignore-errors", "--no-colors"]
 _ytdlp_available: bool | None = None
-_node_available: bool | None = None
 
 
 class DownloadState(enum.Enum):
@@ -79,22 +78,6 @@ def is_available() -> bool:
     return _ytdlp_available
 
 
-def _has_node() -> bool:
-    """Verifica si Node.js está disponible (cached)."""
-    global _node_available
-    if _node_available is not None:
-        return _node_available
-    try:
-        r = subprocess.run(
-            ["node", "--version"],
-            capture_output=True, text=True, timeout=3,
-        )
-        _node_available = r.returncode == 0
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        _node_available = False
-    return _node_available
-
-
 def _classify_error(msg: str) -> str:
     """Clasifica errores de yt-dlp en mensajes amigables."""
     low = msg.lower()
@@ -113,12 +96,25 @@ def _classify_error(msg: str) -> str:
     return f"Error: {msg}"
 
 
+def _append_cookies(cmd: list[str]) -> list[str]:
+    """Agrega flags de cookies al comando si están configurados."""
+    cfg = _load_config()
+    cookies = cfg.get("online_cookies", "none")
+    if cookies and cookies != "none":
+        if cookies.startswith("file:"):
+            cmd.extend(["--cookies", cookies[5:]])
+        else:
+            cmd.extend(["--cookies-from-browser", cookies])
+    return cmd
+
+
 def _build_search_cmd(
     query: str, max_results: int, search_prefix: str,
 ) -> list[str]:
     """Construye comando para búsqueda."""
     cmd = list(_YTDLP_COMMON)
     cmd.extend(["--flat-playlist", "--dump-json"])
+    _append_cookies(cmd)
     cmd.append("--")
     cmd.append(f"{search_prefix}{max_results}:{query}")
     return cmd
@@ -130,17 +126,7 @@ def _build_stream_cmd(
     """Construye comando para obtener stream URL."""
     cmd = list(_YTDLP_COMMON)
     cmd.extend(["--get-url", "-f", "bestaudio/best"])
-    if _has_node():
-        cmd.extend(["--js-runtime", "node"])
-
-    cfg = _load_config()
-    cookies = cfg.get("online_cookies", "none")
-    if cookies and cookies != "none":
-        if cookies.startswith("file:"):
-            cmd.extend(["--cookies", cookies[5:]])
-        else:
-            cmd.extend(["--cookies-from-browser", cookies])
-
+    _append_cookies(cmd)
     cmd.append("--")
     cmd.append(webpage_url)
     return cmd
@@ -153,18 +139,9 @@ def _build_download_cmd(
     quality: str = "480p",
 ) -> list[str]:
     """Construye comando para descarga."""
-    cfg = _load_config()
     cmd = list(_YTDLP_COMMON)
     cmd.append("--continue")
-    if _has_node():
-        cmd.extend(["--js-runtime", "node"])
-
-    cookies = cfg.get("online_cookies", "none")
-    if cookies and cookies != "none":
-        if cookies.startswith("file:"):
-            cmd.extend(["--cookies", cookies[5:]])
-        else:
-            cmd.extend(["--cookies-from-browser", cookies])
+    _append_cookies(cmd)
 
     outtmpl = os.path.join(output_path, "%(title)s.%(ext)s")
 
@@ -177,17 +154,16 @@ def _build_download_cmd(
     else:
         quality_map: dict[str, str] = {
             "worst": "worst",
-            "144p": "bestvideo[height<=144]+bestaudio/best[height<=144]",
-            "240p": "bestvideo[height<=240]+bestaudio/best[height<=240]",
-            "480p": "bestvideo[height<=480]+bestaudio/best[height<=480]",
-            "720p": "bestvideo[height<=720]+bestaudio/best[height<=720]",
-            "1080p": "bestvideo[height<=1080]+bestaudio/best[height<=1080]",
-            "best": "bestvideo+bestaudio/best",
+            "144p": "best[height<=144]",
+            "240p": "best[height<=240]",
+            "480p": "best[height<=480]",
+            "720p": "best[height<=720]",
+            "1080p": "best[height<=1080]",
+            "best": "best",
         }
         fmt_selector = quality_map.get(quality, quality_map["480p"])
         cmd.extend([
             "-f", fmt_selector,
-            "--merge-output-format", "mp4",
             "-o", outtmpl,
         ])
 
