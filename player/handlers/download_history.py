@@ -58,7 +58,7 @@ def handle_download_history(app: PlayerApp, key: int) -> None:
         app.dl_history_cursor = _navigate_cursor(app.dl_history_cursor, key, total, _page_size(app))
     elif key == ord("G"):
         app.dl_history_cursor = _navigate_cursor(app.dl_history_cursor, key, total, _page_size(app))
-    elif key == ord("Enter") or key == 10 or key == 13:
+    elif key in (10, 13):
         _play_entry(app)
     elif key == ord("d"):
         _re_download(app)
