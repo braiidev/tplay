@@ -1,5 +1,12 @@
 # CHANGELOG — tplay
 
+## v1.7.1
+- fix: Eliminado `--js-runtime node` — el motor JS interno de yt-dlp es suficiente con cookies (feedback youtube_downloader)
+- fix: `_build_search_cmd` ahora pasa `--cookies-from-browser` (search requería auth)
+- refactor: `_append_cookies()` helper centraliza lógica de cookies (elimina duplicación en 3 funciones)
+- refactor: Quality map simplificado a `best[height<=X]` sin merge explícito (yt-dlp resuelve solo)
+- refactor: Eliminado `_has_node()` y `_node_available` (ya no se usan)
+
 ## v1.7.0
 - fix: F1 — `_has_node()` cached helper, `--js-runtime node` condicional en `_build_stream_cmd`/`_build_download_cmd`
 - fix: F2 — VLC import wrapped en try/except con `_VLC_ERROR` fallback, `AudioEngine.__init__` check `vlc is None`

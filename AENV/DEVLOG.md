@@ -256,3 +256,15 @@
 - Mypy check pasa (28 archivos)
 
 **Estado**: v1.7.0, mypy strict, security fixes F1-F8 completos
+
+---
+
+## Entrada 24 — 2026-07-15 — v1.7.1 yt-dlp fixes (feedback youtube_downloader)
+- Eliminado `--js-runtime node` de `_build_stream_cmd` y `_build_download_cmd` — el motor JS interno de yt-dlp funciona correctamente con cookies, Node.js causaba interferencia con auth y extracciones
+- Eliminado `_has_node()` y `_node_available` (ya no se usan)
+- `_build_search_cmd` ahora pasa `--cookies-from-browser` — search requería auth pero no tenía cookies
+- `_append_cookies()` helper centraliza lógica de cookies (antes duplicada en 3 funciones)
+- Quality map simplificado a `best[height<=X]` sin merge explícito — yt-dlp resuelve el merge internamente
+- Mypy pasa (28 archivos)
+
+**Estado**: v1.7.1, mypy strict, yt-dlp fixes completos
