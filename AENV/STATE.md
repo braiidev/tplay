@@ -2,33 +2,28 @@
 
 ## Estado actual
 - **Version**: v1.7.2
-- **Plan activo**: Security fixes F1-F8 implementados
+- **Security audit**: COMPLETO (todos los items resueltos o mitigados)
 - **Bugs abiertos**: 0
-- **Docs**: Sincronizados con v1.7.0
+- **Docs**: Sincronizados con v1.7.2
 
 ## Último commit
-- `v1.7.0 code — security fixes F1-F8`
+- `v1.7.2 docs — changelog, devlog, state, todo`
 
-## Resumen v1.5.75→v1.7.0
+## Resumen v1.5.75→v1.7.2
 | Versión | Cambio |
 |---------|--------|
 | 1.5.75 | Migración Python API → subprocess |
-| 1.5.76 | B55-B58: pause/resume fix, temp .part cleanup |
-| 1.5.77 | B59: `--continue` flag |
-| 1.5.78 | DownloadManager class |
-| 1.5.79 | B60-B61: Integración + .part cleanup |
-| 1.5.80 | #4+#5: Historial unificado |
-| 1.6.0 | C1,C3,C8 audit fixes |
-| 1.6.1 | C2,C5,C6 audit fixes |
-| 1.6.2 | C7 thread safety |
-| 1.6.3 | A1-A10 + D1-D12 audit |
-| 1.6.4 | R2 navigate_cursor + R15 import save |
-| 1.6.5 | R1 FilterState, P8 audio cache, V1-V5 visual |
-| 1.6.6 | P1 config cache, P4 history lookup, P5 undo shallow copy |
-| 1.6.7 | U1-U10 UX improvements + Security audit completo |
-| 1.7.0 | Security fixes: F1-F8 (critical + high severity) |
+| 1.5.76-79 | DownloadManager + fixes |
+| 1.5.80 | Historial unificado |
+| 1.6.0-62 | Audit critical bugs (C1-C8) |
+| 1.6.3 | Audit minor bugs + dead code (A1-A10, D1-D12) |
+| 1.6.4-65 | DRY refactoring + visual fixes |
+| 1.6.6 | Performance (config cache, history lookup) |
+| 1.6.7 | UX improvements + Security audit |
+| 1.7.0 | Security fixes high severity (F1-F8) |
+| 1.7.1 | yt-dlp fixes + config cycling |
+| 1.7.2 | Security fixes medium severity (S3-S14, D12-D16) |
 
 ## Pendiente para próxima sesión
-- [ ] Medium severity security fixes (S3, S5-S8, S10-S11, S14, D3-D7, D11-D16, B1-B10)
-- [ ] #6: Cache management
-- [ ] Features nuevas según necesidad
+- [ ] #6: Cache Management (limpiar cache yt-dlp)
+- [ ] #7: Paginación continua de resultados
