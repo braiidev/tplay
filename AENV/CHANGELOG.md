@@ -1,5 +1,15 @@
 # CHANGELOG — tplay
 
+## v1.7.2
+- fix: S3 — Cookie path `file:` validado con `os.path.isfile()` antes de pasar a yt-dlp
+- fix: S10 — `_toast()` desde threads usa `_toast_pending` list + main loop processing
+- fix: S14 — Eliminado `git reset --hard` en `_apply_updates` (destruía cambios locales)
+- fix: D12 — `sys.stdout.isatty()` check antes de curses
+- fix: D14 — Log rotation: `error.log` truncado a 100KB si excede 1MB
+- fix: D15 — Download history limit: máx 500 entradas
+- fix: D16 — `max_concurrent` clamped a [1, 10]
+- skip: S5-S8 (local files, isfile checks existentes), S11 (GIL), D3-D7 (riesgos inherentes), D11 (Linux-only), D13 (config validation extensa)
+
 ## v1.7.1
 - fix: Crash `ord("Enter")` en download_history — `"Enter"` es 5 chars, `ord()` espera 1
 - fix: `[ExtractAudio]` ahora actualiza `file_path` — yt-dlp renombra .webm→.mp3 pero filename no se capturaba

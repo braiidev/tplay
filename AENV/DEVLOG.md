@@ -268,3 +268,18 @@
 - Mypy pasa (28 archivos)
 
 **Estado**: v1.7.1, mypy strict, yt-dlp fixes completos
+
+---
+
+## Entrada 25 — 2026-07-15 — v1.7.2 Security Fixes Medium Severity
+- S3: `web.py` — `_append_cookies()` valida `os.path.isfile()` para cookie path con prefix `file:`
+- S10: `app.py` + `handlers/webexplorer.py` — `_toast_pending` list + `_process_toast_pending()` en main loop (threads ya no llaman `_toast()` directo)
+- S14: `app.py` — Eliminado `git reset --hard origin/main` fallback en `_apply_updates()` (destruía cambios locales sin confirmación)
+- D12: `__init__.py` — `sys.stdout.isatty()` check antes de `curses.wrapper()`
+- D14: `audio.py` — Log rotation: `error.log` truncado a 100KB cuando excede 1MB
+- D15: `downloads.py` — `MAX_HISTORY_ENTRIES = 500`, `add_entry()` trimma excedente
+- D16: `web.py` — `max_concurrent` setter clamped a `[1, 10]`
+- Skipped: S5-S8 (local files, isfile checks), S11 (GIL), D3-D7 (inherentes), D11 (Linux-only), D13 (config validation extensa)
+- Mypy pasa (28 archivos)
+
+**Estado**: v1.7.2, mypy strict, security audit COMPLETO (todos los items resueltos o mitigados)

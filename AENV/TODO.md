@@ -2,17 +2,20 @@
 
 ## Pendiente para próxima sesión
 
-### Security Fixes — Media Severity
-- [ ] S3: yt-dlp `--no-warnings` flag
-- [ ] S5-S8: Input validation en handlers
-- [ ] S10-S11: Network timeout en yt-dlp subprocess
-- [ ] S14: File size limits en downloads
-
 ### Features
 - [ ] #6: Cache Management (limpiar cache yt-dlp)
 - [ ] #7: Paginación continua de resultados (buscar N, si no satisface → buscar N+1...2N, append al mismo scroll)
 
 ## Completado
+
+### v1.7.2 — Security Fixes Medium Severity ✅
+- S3: Cookie path validation
+- S10: Toast pending-flag pattern
+- S14: git reset --hard eliminado
+- D12: isatty check
+- D14: Log rotation
+- D15: History limit
+- D16: max_concurrent validation
 
 ### v1.7.0 — Security Fixes High Severity ✅
 - F1: `--js-runtime node` condicional (`_has_node()`)

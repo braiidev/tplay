@@ -1,7 +1,7 @@
 # STATE — tplay
 
 ## Estado actual
-- **Version**: v1.7.1
+- **Version**: v1.7.2
 - **Plan activo**: Security fixes F1-F8 implementados
 - **Bugs abiertos**: 0
 - **Docs**: Sincronizados con v1.7.0
