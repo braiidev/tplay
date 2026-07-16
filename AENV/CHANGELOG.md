@@ -1,6 +1,7 @@
 # CHANGELOG — tplay
 
 ## v1.7.1
+- fix: Crash `ord("Enter")` en download_history — `"Enter"` es 5 chars, `ord()` espera 1
 - feat: `online_max_results` expuesto en Config→Sistema con cycling [5→10→15→20→30]
 - fix: Eliminado `--js-runtime node` — el motor JS interno de yt-dlp es suficiente con cookies (feedback youtube_downloader)
 - fix: `_build_search_cmd` ahora pasa `--cookies-from-browser` (search requería auth)
