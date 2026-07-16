@@ -2,6 +2,9 @@
 
 ## v1.7.1
 - fix: Crash `ord("Enter")` en download_history — `"Enter"` es 5 chars, `ord()` espera 1
+- fix: `[ExtractAudio]` ahora actualiza `file_path` — yt-dlp renombra .webm→.mp3 pero filename no se capturaba
+- fix: `<d>` ahora muestra `_confirm` antes de re-descargar/re-buscar
+- fix: Cursor en download_history usa `destacar|REVERSE` consistente con resto del código (era `PAIR_NAV`)
 - feat: `online_max_results` expuesto en Config→Sistema con cycling [5→10→15→20→30]
 - fix: Eliminado `--js-runtime node` — el motor JS interno de yt-dlp es suficiente con cookies (feedback youtube_downloader)
 - fix: `_build_search_cmd` ahora pasa `--cookies-from-browser` (search requería auth)
