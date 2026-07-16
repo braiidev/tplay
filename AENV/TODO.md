@@ -10,6 +10,7 @@
 
 ### Features
 - [ ] #6: Cache Management (limpiar cache yt-dlp)
+- [ ] #7: Paginación continua de resultados (buscar N, si no satisface → buscar N+1...2N, append al mismo scroll)
 
 ## Completado
 

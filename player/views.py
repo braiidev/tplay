@@ -722,6 +722,7 @@ def draw_config(app: PlayerApp, h: int, w: int) -> None:
         "online_download_quality": f"Calidad descarga: {app.config.get('online_download_quality', '480p')}",
         "online_download_max": f"Descargas máximas: {app.config.get('online_download_max', 3)}",
         "online_cookies": f"Cookies yt-dlp: {app.config.get('online_cookies', 'none')}",
+        "online_max_results": f"Resultados búsqueda: {app.config.get('online_max_results', '5')}",
     }
     cc = app.config.get("custom_colors", {})
 

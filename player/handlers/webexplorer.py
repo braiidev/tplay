@@ -352,7 +352,7 @@ def _do_search(app: PlayerApp, query: str) -> None:
 
     platforms = load_platforms()
     cfg = _load_config()
-    max_results = cfg.get("online_max_results", 5)
+    max_results = int(cfg.get("online_max_results", "5"))
 
     platform = platforms[app.web_active_platform] if app.web_platforms else None
     if not platform:
