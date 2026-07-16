@@ -494,11 +494,13 @@ class PlayerApp:
             {
                 "name": "Sistema",
                 "items": [
+                    ("_sep_descargas", "", "separator"),
                     ("online_download_format", "Formato descarga", "choice"),
                     ("online_download_quality", "Calidad descarga", "choice"),
                     ("online_download_max", "Descargas máximas", "int"),
                     ("online_cookies", "Cookies yt-dlp", "choice"),
                     ("online_max_results", "Resultados búsqueda", "choice"),
+                    ("_sep_general", "", "separator"),
                     ("keybindings", "Keybindings", "action"),
                     ("update", "Actualizar tplay", "action"),
                 ],
