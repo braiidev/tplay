@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import curses
 import os
+import queue
 import shutil
 import subprocess
 import threading
@@ -22,6 +23,7 @@ from . import handlers
 from . import keybindings as kb
 from . import web
 from . import ytdlp_update
+from . import ipc
 from .state import load_state, save_state, load_history, save_history
 from .radios import load_radios
 from .favorites import load_favorites, save_favorites
@@ -117,6 +119,9 @@ class PlayerApp:
         self.ytdlp_check_done: bool = False
         self._ytdlp_toast_shown: bool = False
         self.ytdlp_status: str = ""
+
+        self._ctl_pending: queue.Queue[str] = queue.Queue()
+        self.ipc_server: ipc.IpcServer | None = None
 
         self.history: list[dict[str, Any]] = load_history()
         self.history_cursor: int = 0
@@ -241,6 +246,7 @@ class PlayerApp:
         self._apply_theme()
         self._start_update_check()
         self._start_ytdlp_check()
+        self._start_ipc()
         self._resume_session()
 
     @property
@@ -599,6 +605,67 @@ class PlayerApp:
         msg = self._toast_pending.pop(0)
         self.toast(msg)
 
+    def _start_ipc(self) -> None:
+        try:
+            self.ipc_server = ipc.start_server(
+                ipc.socket_path(), self._handle_ipc_command,
+            )
+        except OSError:
+            self.ipc_server = None
+
+    def _handle_ipc_command(self, cmd: str) -> str:
+        if cmd == "status":
+            return self._ipc_status()
+        self._ctl_pending.put(cmd)
+        return "OK"
+
+    def _ipc_status(self) -> str:
+        state = "stopped"
+        if self.audio.playing:
+            state = "paused" if self.audio.paused else "playing"
+        title = ""
+        cur: str | None = self.audio.current_file
+        if cur:
+            title = os.path.basename(cur)
+        parts = [state]
+        if title:
+            parts.append(title)
+        parts.append(f"vol {self.audio.volume}%")
+        return " · ".join(parts)
+
+    def _process_ctl_pending(self) -> None:
+        while True:
+            try:
+                cmd = self._ctl_pending.get_nowait()
+            except queue.Empty:
+                return
+            self._exec_ctl(cmd)
+
+    def _exec_ctl(self, cmd: str) -> None:
+        if cmd == "toggle":
+            self.audio.toggle_play_pause()
+        elif cmd == "play":
+            if self.audio.playing and self.audio.paused:
+                self.audio.toggle_play_pause()
+        elif cmd == "pause":
+            if self.audio.playing and not self.audio.paused:
+                self.audio.toggle_play_pause()
+        elif cmd == "stop":
+            self.audio.stop()
+        elif cmd == "next":
+            self._play_next()
+        elif cmd == "prev":
+            self._play_prev()
+        elif cmd == "vol+":
+            self.audio.set_volume(self.audio.volume + 5)
+        elif cmd == "vol-":
+            self.audio.set_volume(self.audio.volume - 5)
+        elif cmd.startswith("vol "):
+            try:
+                self.audio.set_volume(int(cmd.split()[1]))
+            except (ValueError, IndexError):
+                pass
+
     def _process_web_search(self) -> None:
         if self._web_search_error is not None:
             self.web_loading = False
@@ -694,6 +761,7 @@ class PlayerApp:
                 self._process_download_completions()
                 self._process_stack_pending_adds()
                 self._process_toast_pending()
+                self._process_ctl_pending()
                 self._process_web_search()
                 self._process_web_play()
                 self.audio.check_sleep_timer()
@@ -730,6 +798,8 @@ class PlayerApp:
                 self._draw()
                 time.sleep(0.01 if self.dialog else 0.05)
         finally:
+            if self.ipc_server:
+                self.ipc_server.stop()
             from .web import get_download_manager
             get_download_manager().shutdown()
 

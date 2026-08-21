@@ -100,12 +100,35 @@ def _cli_uninstall() -> bool:
     return True
 
 
+def _cli_ctl(args: list[str]) -> int:
+    from . import ipc
+
+    if not args or args[0] in ("-h", "--help", "help"):
+        print("uso: tplay --ctl <comando>")
+        print(f"comandos: {', '.join(sorted(ipc.COMMANDS))} | vol <0-100>")
+        return 0
+    cmd = " ".join(args[:2]) if args[0] == "vol" and len(args) > 1 else args[0]
+    try:
+        resp = ipc.send_command(cmd)
+    except (FileNotFoundError, ConnectionRefusedError):
+        print("tplay no está corriendo", file=sys.stderr)
+        return 1
+    except OSError as e:
+        print(f"error IPC: {e}", file=sys.stderr)
+        return 1
+    print(resp)
+    return 0 if not resp.startswith("ERR") else 1
+
+
 def main() -> None:
     if "--update" in sys.argv:
         if not _cli_update():
             sys.exit(1)
     if "--uninstall" in sys.argv:
         sys.exit(0 if _cli_uninstall() else 1)
+    if "--ctl" in sys.argv:
+        idx = sys.argv.index("--ctl")
+        sys.exit(_cli_ctl(sys.argv[idx + 1:]))
     if not sys.stdout.isatty():
         print("Error: tplay requiere un terminal (TTY)", file=sys.stderr)
         sys.exit(1)
