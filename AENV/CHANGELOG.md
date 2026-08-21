@@ -66,7 +66,7 @@
 - fix: U8 — toast en compact mode ahora se dibuja en `h-2` en vez de row 1 (no sobreescribe contenido)
 - fix: U9 — goto overlay en compact mode respeta `h-3` para no superponerse con controls bar
 - refactor: U10 — `curses.curs_set(0)` movido de `draw_dialog` a `_prompt()` y `_confirm()` (state transition)
-- docs: Security audit completo (`AUDIT_v1.6.7_SECURITY.md`) — 27 hallazgos, 2 critical, 11 high
+- docs: Security audit completo — 27 hallazgos, 2 critical, 11 high (detalle en historial git)
 - skip: U4 (nav bar correcto), U6 (complejo), U7 (feature nueva)
 
 ## v1.6.6

@@ -1,7 +1,11 @@
 # TEST — tplay
 
 ## Framework
-_No hay tests unitarios implementados._
+pytest — `tests/test_*.py` (50 tests: ytdlp_update, ipc, cli -q)
+
+```bash
+python3 -m pytest tests/ -q
+```
 
 ## Testing manual
 
@@ -84,10 +88,6 @@ Alternativa sin `-q`: `run-shell "tplay --ctl toggle > /dev/null 2>&1"`
 
 ## Resultados
 
-- 2026-08-21 — `pytest tests/test_ytdlp_update.py` — 12 passed (v1.8.0, auto-update yt-dlp)
-
-## Resultados
-
-- 2026-08-21 — `pytest tests/test_ytdlp_update.py` — 12 passed (v1.8.0, auto-update yt-dlp)
-- 2026-08-21 — `pytest tests/` — 45 passed (v1.9.0, incluye 33 de IPC) + E2E real en tmux: status/toggle/vol N/vol+/play/stop/hax OK
 - 2026-08-21 — `pytest tests/` — 50 passed (v1.9.1: mute + -q + mensajes de estado) + E2E tmux verificado
+- 2026-08-21 — `pytest tests/` — 45 passed (v1.9.0, 33 de IPC) + E2E real en tmux
+- 2026-08-21 — `pytest tests/test_ytdlp_update.py` — 12 passed (v1.8.0, auto-update yt-dlp)
