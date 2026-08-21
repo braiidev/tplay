@@ -20,6 +20,8 @@ from . import ui
 from .ui import _build_hints, COMPACT_THRESHOLD, STATUS_ROW
 from . import handlers
 from . import keybindings as kb
+from . import web
+from . import ytdlp_update
 from .state import load_state, save_state, load_history, save_history
 from .radios import load_radios
 from .favorites import load_favorites, save_favorites
@@ -111,6 +113,10 @@ class PlayerApp:
         self.update_check_done: bool = False
         self._update_toast_shown: bool = False
         self.update_behind: int = 0
+
+        self.ytdlp_check_done: bool = False
+        self._ytdlp_toast_shown: bool = False
+        self.ytdlp_status: str = ""
 
         self.history: list[dict[str, Any]] = load_history()
         self.history_cursor: int = 0
@@ -234,6 +240,7 @@ class PlayerApp:
         curses.use_default_colors()
         self._apply_theme()
         self._start_update_check()
+        self._start_ytdlp_check()
         self._resume_session()
 
     @property
@@ -355,6 +362,23 @@ class PlayerApp:
             self.update_behind = 0
             self.update_available = False
         self.update_check_done = True
+
+    def _start_ytdlp_check(self) -> None:
+        self.ytdlp_check_done = False
+        self.ytdlp_status = ""
+        if not web.is_available():
+            self.ytdlp_check_done = True
+            return
+        t = threading.Thread(target=self._check_ytdlp, daemon=True)
+        t.start()
+
+    def _check_ytdlp(self) -> None:
+        try:
+            enabled = bool(self.config.get("online_ytdlp_autoupdate", True))
+            self.ytdlp_status = ytdlp_update.check_and_update(enabled=enabled)
+        except Exception:
+            self.ytdlp_status = ""
+        self.ytdlp_check_done = True
 
     def _apply_updates(self) -> tuple[bool, str]:
         repo = self._repo_dir
@@ -490,6 +514,7 @@ class PlayerApp:
                     ("online_download_quality", "Calidad descarga", "choice"),
                     ("online_download_max", "Descargas máximas", "int"),
                     ("online_cookies", "Cookies yt-dlp", "choice"),
+                    ("online_ytdlp_autoupdate", "Auto-actualizar yt-dlp", "bool"),
                     ("online_max_results", "Resultados búsqueda", "choice"),
                     ("_sep_general", "", "separator"),
                     ("keybindings", "Keybindings", "action"),
@@ -680,6 +705,10 @@ class PlayerApp:
                     self._update_toast_shown = True
                     if self.update_available:
                         self.toast("Nueva versión disponible")
+                if self.ytdlp_check_done and not self._ytdlp_toast_shown:
+                    self._ytdlp_toast_shown = True
+                    if self.ytdlp_status:
+                        self.toast(self.ytdlp_status)
                 key = self.stdscr.getch()
                 if key == curses.KEY_RESIZE:
                     self.stdscr.clear()
