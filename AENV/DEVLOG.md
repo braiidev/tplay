@@ -299,3 +299,21 @@
 - Mypy strict pasa
 
 **Estado**: v1.8.0, mypy strict, 12 tests nuevos OK
+
+---
+
+## Entrada 27 — 2026-08-21 — v1.9.0 API de control externo (IPC)
+- **Feature**: control de tplay desde fuera via Unix domain socket (`player/ipc.py`)
+  - Socket: `$XDG_RUNTIME_DIR/tplay-$UID/ctl.sock` (fallback `~/.local/state/tplay/`, dir 0700)
+  - Comandos: toggle, play, pause, stop, next, prev, vol+, vol-, vol N, status
+  - Server en daemon thread; mutantes se encolan (`_ctl_pending`) y el main loop los ejecuta vía `_process_ctl_pending()` — nunca curses/VLC desde el thread (patrón S10)
+  - `status` responde directo del thread (solo lecturas GIL-safe)
+  - Whitelist exacta + max 64 bytes + timeout recv 2s + excepciones del handler capturadas en `dispatch_command`
+  - Si bind falla (otra instancia), tplay sigue sin IPC silenciosamente
+- **Cliente CLI**: `tplay --ctl <cmd>` en `__init__.py` — antes del check isatty (tmux run-shell no tiene TTY); exit 0 OK / 1 error
+- Integración app.py: `_start_ipc()` en setup, cleanup `ipc_server.stop()` en finally del run()
+- Tests: `tests/test_ipc.py` — 33 casos (path resolution, whitelist, dispatch, round-trip real, stale socket, sin server). Total suite: 45 passed
+- E2E verificado con tplay real dentro de tmux: status/toggle/vol N/vol+/play/stop respondieron y el estado reflejó los cambios
+- Mypy strict pasa (30 archivos)
+
+**Estado**: v1.9.0, mypy strict, 45 tests OK, IPC E2E verificado

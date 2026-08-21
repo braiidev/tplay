@@ -5,9 +5,13 @@
 ### Features
 - [ ] #6: Cache Management (limpiar cache yt-dlp)
 - [ ] #7: Paginación continua de resultados
-- [ ] Commit v1.8.0 (code + docs) — pendiente autorización
+- [ ] Commit v1.9.0 (code + docs) — pendiente autorización
 
 ## Completado
+
+### v1.9.0 ✅
+- API control externo: Unix socket (`player/ipc.py`) + `tplay --ctl <cmd>` + toggle/play/pause/stop/next/prev/vol/status
+- 33 tests IPC (suite total 45) + E2E real verificado en tmux
 
 ### v1.8.0 ✅
 - Fix 403 YouTube (yt-dlp 2026.7.4 → 2026.8.19 + cache clear)

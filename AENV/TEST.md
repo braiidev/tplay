@@ -53,6 +53,21 @@ python app.py
 2. `u` → undo
 3. `U` → redo
 
+#### Control externo (IPC)
+1. Con tplay corriendo: `tplay --ctl status` → `playing/paused/stopped · título · vol N%`
+2. `tplay --ctl toggle|play|pause|stop|next|prev` → OK y acción visible en la TUI
+3. `tplay --ctl vol 75`, `vol+`, `vol-` → volumen cambia
+4. `tplay --ctl hax` → `ERR: comando desconocido` + exit 1
+5. Sin tplay corriendo → `tplay no está corriendo` + exit 1
+
+Binds tmux de ejemplo (~/.tmux.conf):
+```tmux
+bind-key P run-shell "tplay --ctl toggle"
+bind-key N run-shell "tplay --ctl next"
+bind-key B run-shell "tplay --ctl prev"
+bind-key X run-shell "tplay --ctl stop"
+```
+
 ### Verificar en diferentes tamaños de terminal
 - 80x24 (mínimo)
 - 120x40 (normal)
@@ -67,3 +82,8 @@ python app.py
 ## Resultados
 
 - 2026-08-21 — `pytest tests/test_ytdlp_update.py` — 12 passed (v1.8.0, auto-update yt-dlp)
+
+## Resultados
+
+- 2026-08-21 — `pytest tests/test_ytdlp_update.py` — 12 passed (v1.8.0, auto-update yt-dlp)
+- 2026-08-21 — `pytest tests/` — 45 passed (v1.9.0, incluye 33 de IPC) + E2E real en tmux: status/toggle/vol N/vol+/play/stop/hax OK

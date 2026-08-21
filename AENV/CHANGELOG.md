@@ -1,5 +1,14 @@
 # CHANGELOG — tplay
 
+## v1.9.0
+- feat: API de control externo via Unix domain socket (`player/ipc.py`)
+  - Comandos: toggle, play, pause, stop, next, prev, vol+, vol-, vol N, status
+  - Socket en `$XDG_RUNTIME_DIR/tplay-$UID/ctl.sock` (fallback `~/.local/state/tplay/`, dir 0700)
+  - Server daemon thread + cola `_ctl_pending` procesada en el main loop (patrón S10 — sin curses/VLC desde threads)
+  - Whitelist exacta, max 64 bytes, timeout recv 2s
+- feat: Cliente CLI `tplay --ctl <cmd>` (funciona sin TTY, para tmux run-shell)
+- test: `tests/test_ipc.py` — 33 casos; suite total 45 passed; E2E verificado con tplay real en tmux
+
 ## v1.8.0
 - fix: 403 Forbidden en descargas/reproducción YouTube — causa externa: yt-dlp 2026.7.4 desactualizado vs cambios server-side (experimentos PO Token, issues upstream #17395/#17404). Fix: actualizar binario a 2026.8.19 + `--rm-cache-dir`
 - feat: Auto-update de yt-dlp al iniciar tplay (`player/ytdlp_update.py`)
