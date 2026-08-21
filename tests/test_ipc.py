@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, Iterator
 
 import pytest
 
@@ -30,7 +30,7 @@ class TestSocketPath:
 
 class TestValidCommand:
     @pytest.mark.parametrize("cmd", [
-        "toggle", "play", "pause", "stop", "next", "prev",
+        "toggle", "play", "pause", "stop", "next", "prev", "mute",
         "vol+", "vol-", "status", "vol 30", "vol 0", "vol 100",
     ])
     def test_validos(self, cmd: str) -> None:
@@ -119,3 +119,54 @@ class TestServerRoundTrip:
             assert ipc.send_command("status", path=sock) == "dos"
         finally:
             s2.stop()
+
+
+class TestCliQuiet:
+    @pytest.fixture(autouse=True)
+    def _server_tmp(
+        self, tmp_path: Any, monkeypatch: pytest.MonkeyPatch,
+    ) -> Iterator[None]:
+        sock = str(tmp_path / "ctl.sock")
+        monkeypatch.setattr(ipc, "socket_path", lambda: sock)
+        server = ipc.start_server(
+            sock, lambda cmd: "▶ playing · test.mp3 · vol 50%",
+        )
+        yield
+        server.stop()
+
+    def test_sin_q_printea(self, capsys: pytest.CaptureFixture[str]) -> None:
+        from player import _cli_ctl
+        rc = _cli_ctl(["status"])
+        out = capsys.readouterr().out
+        assert rc == 0
+        assert "playing" in out
+
+    def test_con_q_silencia_stdout(
+        self, capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        from player import _cli_ctl
+        rc = _cli_ctl(["-q", "status"])
+        out = capsys.readouterr().out
+        assert rc == 0
+        assert out == ""
+
+    def test_q_largo_tambien_funciona(
+        self, capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        from player import _cli_ctl
+        rc = _cli_ctl(["--quiet", "toggle"])
+        assert rc == 0
+        assert capsys.readouterr().out == ""
+
+    def test_q_sin_server_stderr_silenciado(
+        self,
+        tmp_path: Any,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        monkeypatch.setattr(ipc, "socket_path", lambda: str(tmp_path / "nada.sock"))
+        from player import _cli_ctl
+        rc = _cli_ctl(["-q", "status"])
+        captured = capsys.readouterr()
+        assert rc == 1
+        assert captured.out == "" and captured.err == ""

@@ -13,7 +13,7 @@ import threading
 from typing import Callable
 
 COMMANDS: frozenset[str] = frozenset({
-    "toggle", "play", "pause", "stop", "next", "prev",
+    "toggle", "play", "pause", "stop", "next", "prev", "mute",
     "vol+", "vol-", "status",
 })
 MAX_CMD_LEN = 64

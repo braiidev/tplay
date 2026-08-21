@@ -103,20 +103,27 @@ def _cli_uninstall() -> bool:
 def _cli_ctl(args: list[str]) -> int:
     from . import ipc
 
+    quiet = False
+    while args and args[0] in ("-q", "--quiet"):
+        quiet = True
+        args = args[1:]
     if not args or args[0] in ("-h", "--help", "help"):
-        print("uso: tplay --ctl <comando>")
+        print("uso: tplay --ctl [-q] <comando>")
         print(f"comandos: {', '.join(sorted(ipc.COMMANDS))} | vol <0-100>")
         return 0
     cmd = " ".join(args[:2]) if args[0] == "vol" and len(args) > 1 else args[0]
     try:
         resp = ipc.send_command(cmd)
     except (FileNotFoundError, ConnectionRefusedError):
-        print("tplay no está corriendo", file=sys.stderr)
+        if not quiet:
+            print("tplay no está corriendo", file=sys.stderr)
         return 1
     except OSError as e:
-        print(f"error IPC: {e}", file=sys.stderr)
+        if not quiet:
+            print(f"error IPC: {e}", file=sys.stderr)
         return 1
-    print(resp)
+    if not quiet:
+        print(resp)
     return 0 if not resp.startswith("ERR") else 1
 
 

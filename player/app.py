@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import curses
 import os
-import queue
 import shutil
 import subprocess
 import threading
@@ -120,7 +119,6 @@ class PlayerApp:
         self._ytdlp_toast_shown: bool = False
         self.ytdlp_status: str = ""
 
-        self._ctl_pending: queue.Queue[str] = queue.Queue()
         self.ipc_server: ipc.IpcServer | None = None
 
         self.history: list[dict[str, Any]] = load_history()
@@ -614,49 +612,41 @@ class PlayerApp:
             self.ipc_server = None
 
     def _handle_ipc_command(self, cmd: str) -> str:
-        if cmd == "status":
-            return self._ipc_status()
-        self._ctl_pending.put(cmd)
-        return "OK"
+        """Ejecuta un comando IPC y retorna mensaje explícito.
 
-    def _ipc_status(self) -> str:
-        state = "stopped"
-        if self.audio.playing:
-            state = "paused" if self.audio.paused else "playing"
-        title = ""
-        cur: str | None = self.audio.current_file
-        if cur:
-            title = os.path.basename(cur)
-        parts = [state]
-        if title:
-            parts.append(title)
-        parts.append(f"vol {self.audio.volume}%")
-        return " · ".join(parts)
-
-    def _process_ctl_pending(self) -> None:
-        while True:
-            try:
-                cmd = self._ctl_pending.get_nowait()
-            except queue.Empty:
-                return
-            self._exec_ctl(cmd)
-
-    def _exec_ctl(self, cmd: str) -> None:
+        Síncrono a propósito: libvlc es thread-safe y las acciones
+        (audio/stack) no tocan curses, así el cliente recibe el estado
+        POST-acción (ej: toggle → '⏸ paused · tema.mp3').
+        """
         if cmd == "toggle":
             self.audio.toggle_play_pause()
-        elif cmd == "play":
+            return self._ipc_state_msg()
+        if cmd == "play":
             if self.audio.playing and self.audio.paused:
                 self.audio.toggle_play_pause()
-        elif cmd == "pause":
+            return self._ipc_state_msg()
+        if cmd == "pause":
             if self.audio.playing and not self.audio.paused:
                 self.audio.toggle_play_pause()
-        elif cmd == "stop":
+            return self._ipc_state_msg()
+        if cmd == "stop":
             self.audio.stop()
-        elif cmd == "next":
+            return "■ stopped"
+        if cmd == "mute":
+            was_vol = self.audio.volume
+            self.audio.toggle_mute()
+            if self.audio.muted:
+                return f"muted (vol previa {was_vol}%)"
+            return f"unmuted · vol {self.audio.volume}%"
+        if cmd == "next":
             self._play_next()
-        elif cmd == "prev":
+            return self._ipc_state_msg()
+        if cmd == "prev":
             self._play_prev()
-        elif cmd == "vol+":
+            return self._ipc_state_msg()
+        if cmd == "status":
+            return self._ipc_state_msg()
+        if cmd == "vol+":
             self.audio.set_volume(self.audio.volume + 5)
         elif cmd == "vol-":
             self.audio.set_volume(self.audio.volume - 5)
@@ -665,6 +655,22 @@ class PlayerApp:
                 self.audio.set_volume(int(cmd.split()[1]))
             except (ValueError, IndexError):
                 pass
+        suffix = " · muted" if self.audio.muted else ""
+        return f"vol {self.audio.volume}%{suffix}"
+
+    def _ipc_state_msg(self) -> str:
+        a = self.audio
+        title = ""
+        cur: str | None = a.current_file
+        if cur:
+            title = os.path.basename(cur)
+        if not a.playing:
+            state = "■ stopped"
+        elif a.paused:
+            state = f"⏸ paused · {title}" if title else "⏸ paused"
+        else:
+            state = f"▶ playing · {title}" if title else "▶ playing"
+        return f"{state} · vol {a.volume}%"
 
     def _process_web_search(self) -> None:
         if self._web_search_error is not None:
@@ -761,7 +767,6 @@ class PlayerApp:
                 self._process_download_completions()
                 self._process_stack_pending_adds()
                 self._process_toast_pending()
-                self._process_ctl_pending()
                 self._process_web_search()
                 self._process_web_play()
                 self.audio.check_sleep_timer()
