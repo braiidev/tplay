@@ -317,3 +317,17 @@
 - Mypy strict pasa (30 archivos)
 
 **Estado**: v1.9.0, mypy strict, 45 tests OK, IPC E2E verificado
+
+---
+
+## Entrada 28 — 2026-08-21 — v1.9.1 IPC: mute, -q y mensajes explícitos
+- **feat**: comando `mute` → `audio.toggle_mute()` (respuesta: `muted (vol previa N%)` / `unmuted · vol N%`)
+- **feat**: flag `-q/--quiet` en `--ctl` — silencia stdout/stderr, mantiene exit codes (para binds tmux sin panel bloqueante)
+- **refactor**: IPC ahora síncrono — eliminada la cola `_ctl_pending`/`_process_ctl_pending`/`_exec_ctl` + import queue
+  - Justificación: libvlc es thread-safe; las acciones (audio/stack) no tocan curses (verificado: `_play_next/_play_prev/_play_current` solo stack+audio+int)
+  - Beneficio: el cliente recibe el estado POST-acción real
+- **mensajes explícitos** (`_ipc_state_msg`): `▶ playing · título · vol N%` / `⏸ paused · ...` / `■ stopped · ...`; stop → `■ stopped`; vol → `vol N%[ · muted]`
+- Fix regresión detectada en E2E: `status` caía al branch de volumen (solo mostraba `vol N%`) — agregado branch explícito
+- Tests: 50 passed (+5: mute válido, 4 de `-q` con capsys). Mypy strict pasa
+
+**Estado**: v1.9.1, mypy strict, 50 tests OK

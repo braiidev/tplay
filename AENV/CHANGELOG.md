@@ -1,5 +1,12 @@
 # CHANGELOG — tplay
 
+## v1.9.1
+- feat: comando `mute` — toggle mute con respuesta `muted (vol previa N%)` / `unmuted · vol N%`
+- feat: flag `-q/--quiet` en `--ctl` — silencia salida, mantiene exit codes (binds tmux sin panel bloqueante)
+- refactor: IPC síncrono — eliminada cola `_ctl_pending` (libvlc thread-safe, acciones sin curses); respuestas con estado POST-acción
+- feat: mensajes explícitos — `▶ playing · título · vol N%` / `⏸ paused · ...` / `■ stopped` (antes solo "OK")
+- fix: `status` caía al branch de volumen y no mostraba estado (detectado en E2E)
+
 ## v1.9.0
 - feat: API de control externo via Unix domain socket (`player/ipc.py`)
   - Comandos: toggle, play, pause, stop, next, prev, vol+, vol-, vol N, status

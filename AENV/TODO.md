@@ -5,9 +5,12 @@
 ### Features
 - [ ] #6: Cache Management (limpiar cache yt-dlp)
 - [ ] #7: Paginación continua de resultados
-- [ ] Commit v1.9.0 (code + docs) — pendiente autorización
+- [ ] Commit v1.9.1 (code + docs) — pendiente autorización
 
 ## Completado
+
+### v1.9.1 ✅
+- IPC: comando `mute`, flag `-q/--quiet`, mensajes explícitos con estado POST-acción (IPC síncrono, sin cola)
 
 ### v1.9.0 ✅
 - API control externo: Unix socket (`player/ipc.py`) + `tplay --ctl <cmd>` + toggle/play/pause/stop/next/prev/vol/status
