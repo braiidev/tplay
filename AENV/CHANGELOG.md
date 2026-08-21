@@ -1,5 +1,15 @@
 # CHANGELOG — tplay
 
+## v1.8.0
+- fix: 403 Forbidden en descargas/reproducción YouTube — causa externa: yt-dlp 2026.7.4 desactualizado vs cambios server-side (experimentos PO Token, issues upstream #17395/#17404). Fix: actualizar binario a 2026.8.19 + `--rm-cache-dir`
+- feat: Auto-update de yt-dlp al iniciar tplay (`player/ytdlp_update.py`)
+  - Chequeo contra PyPI con cache 24h en `~/.config/tplay/data/ytdlp_check.json`
+  - Thread daemon + toast con resultado ("yt-dlp actualizado a X" / hint manual)
+  - Solo auto-actualiza si el binario es pip-managed (`~/.local/bin` o venv); si no, solo avisa
+  - Fallbacks pip en cascada: `--break-system-packages`, `--user`
+  - Config key `online_ytdlp_autoupdate` (default True) + toggle en Config→Sistema
+- test: `tests/test_ytdlp_update.py` — 12 tests (parse ver, outdated, cache fresco/stale, disabled, no-pip-managed, fallbacks pip)
+
 ## v1.7.2
 - fix: S3 — Cookie path `file:` validado con `os.path.isfile()` antes de pasar a yt-dlp
 - fix: S10 — `_toast()` desde threads usa `_toast_pending` list + main loop processing

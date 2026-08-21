@@ -63,3 +63,7 @@ python app.py
 - [ ] Colores se aplican correctamente
 - [ ] Scroll funciona en todas las vistas
 - [ ] Resize (SIGWINCH) no rompe la UI
+
+## Resultados
+
+- 2026-08-21 — `pytest tests/test_ytdlp_update.py` — 12 passed (v1.8.0, auto-update yt-dlp)

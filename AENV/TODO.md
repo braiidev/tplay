@@ -5,8 +5,13 @@
 ### Features
 - [ ] #6: Cache Management (limpiar cache yt-dlp)
 - [ ] #7: Paginación continua de resultados
+- [ ] Commit v1.8.0 (code + docs) — pendiente autorización
 
 ## Completado
+
+### v1.8.0 ✅
+- Fix 403 YouTube (yt-dlp 2026.7.4 → 2026.8.19 + cache clear)
+- Auto-update yt-dlp al inicio (`player/ytdlp_update.py`, cache 24h, toggle en Sistema, 12 tests)
 
 ### Security Fixes (v1.7.0-1.7.2) ✅
 - v1.7.0: F1-F8 (critical + high) — js-runtime, VLC import, pin versions, end-of-options, path validation, stack thread safety, atomic writes, confirm dialogs

@@ -1,15 +1,16 @@
 # STATE — tplay
 
 ## Estado actual
-- **Version**: v1.7.2
+- **Version**: v1.8.0
 - **Security audit**: COMPLETO (todos los items resueltos o mitigados)
 - **Bugs abiertos**: 0
-- **Docs**: Sincronizados con v1.7.2
+- **Tests**: 12 nuevos (ytdlp_update), todos pasan
+- **Docs**: Sincronizados con v1.8.0
 
 ## Último commit
-- `v1.7.2 docs — changelog, devlog, state, todo`
+- `v1.7.2 docs — changelog, devlog, state, todo` (v1.8.0 sin commitear aún)
 
-## Resumen v1.5.75→v1.7.2
+## Resumen v1.5.75→v1.8.0
 | Versión | Cambio |
 |---------|--------|
 | 1.5.75 | Migración Python API → subprocess |
@@ -23,7 +24,9 @@
 | 1.7.0 | Security fixes high severity (F1-F8) |
 | 1.7.1 | yt-dlp fixes + config cycling |
 | 1.7.2 | Security fixes medium severity (S3-S14, D12-D16) |
+| 1.8.0 | Fix 403 YouTube + auto-update yt-dlp al inicio |
 
 ## Pendiente para próxima sesión
 - [ ] #6: Cache Management (limpiar cache yt-dlp)
 - [ ] #7: Paginación continua de resultados
+- [ ] Commit v1.8.0 (code + docs) — pendiente autorización

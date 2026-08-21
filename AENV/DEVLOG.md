@@ -283,3 +283,19 @@
 - Mypy pasa (28 archivos)
 
 **Estado**: v1.7.2, mypy strict, security audit COMPLETO (todos los items resueltos o mitigados)
+
+---
+
+## Entrada 26 — 2026-08-21 — v1.8.0 Fix 403 YouTube + auto-update yt-dlp
+- **Bug**: todos los videos daban 403 al descargar/reproducir. Causa: yt-dlp 2026.7.4 desactualizado vs cambios server-side de YouTube (experimentos PO Token en clientes mweb/android_vr, issues upstream #17395/#17404)
+- Fix inmediato: `pip install --break-system-packages -U yt-dlp` (→ 2026.8.19) + `yt-dlp --rm-cache-dir`. Descarga verificada OK
+- **Feature nueva**: `player/ytdlp_update.py` — chequeo de versión contra PyPI al iniciar tplay
+  - Cache 24h en `~/.config/tplay/data/ytdlp_check.json` (evita hit de red en cada arranque)
+  - Auto-actualiza via pip solo si el binario es pip-managed (`~/.local/bin` o venv); si es apt u otro gestor, solo avisa
+  - Fallbacks pip: `--break-system-packages` y `--user` se pruean en cascada según el entorno
+  - Thread daemon al inicio + toast con resultado ("yt-dlp actualizado a X" / hint manual)
+  - Config key `online_ytdlp_autoupdate` (default True) + toggle en Config → Sistema
+- Tests: `tests/test_ytdlp_update.py` — 12 tests (parse ver, outdated, cache fresco/stale, disabled, no-pip-managed, fallbacks pip). Todos pasan
+- Mypy strict pasa
+
+**Estado**: v1.8.0, mypy strict, 12 tests nuevos OK
