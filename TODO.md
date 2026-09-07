@@ -1,13 +1,13 @@
 # TODO
 
 ## Doing
-- [ ] Temas compartidos con Clock (leer `~/.config/clock` o `~/Dev/Clock`) + hot-reload de theme sin reiniciar - v0.2
+- [ ] #6: Cache Management (limpiar cache yt-dlp)
 
 ## Next
-- [ ] #6: Cache Management (limpiar cache yt-dlp)
 - [ ] #7: Paginación continua de resultados
 
 ## Done
+- [x] Temas compartidos con Clock (leer `~/.config/clock` o `~/Dev/Clock`) + hot-reload de theme sin reiniciar - v0.2
 - [x] Migrar tracking a sistema de tareas atómicas (eliminar AENV) - v0.1
 - [x] v1.9.1: IPC síncrono + `mute` + `-q/--quiet` + mensajes de estado explícitos
 - [x] v1.9.0: API control externo vía Unix socket (`tplay --ctl`)
