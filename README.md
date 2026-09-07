@@ -59,7 +59,7 @@ Config persistente en `~/.config/tplay/data/config.json`:
 
 - Directorio de música
 - Volumen
-- Tema: clasico, mono, calido, contraste, flatline, custom
+- Tema: clasico, mono, calido, alto_contraste, flatline, custom (portados de Clock)
 - Sleep timer
 - Keybindings personalizables
 - `ui_minimal` / `ui_navbar` toggles de apariencia

@@ -105,15 +105,16 @@ def _cycle_choice(app: PlayerApp, key_name: str, direction: int) -> None:
 
 
     options_map: dict[str, list[str]] = {
-        "theme": ["default", "custom"],
         "online_download_format": ["audio", "video"],
         "online_download_quality": ["worst", "144p", "240p", "480p", "720p", "1080p", "best"],
         "online_cookies": ["none", "firefox", "brave", "chromium"],
         "online_max_results": ["5", "10", "15", "20", "30"],
     }
+    if key_name == "theme":
+        _cycle_theme(app, direction)
+        return
     opts = options_map.get(key_name)
     if not opts:
-        _cycle_theme(app, direction)
         return
     cur_val = app.config.get(key_name, opts[0])
     try:

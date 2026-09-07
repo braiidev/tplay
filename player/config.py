@@ -66,18 +66,22 @@ COLORS: dict[str, int] = {
     "Cian": curses.COLOR_CYAN, "Blanco": curses.COLOR_WHITE,
 }
 
+# Temas portados de Clock (braiidev/clock, src/clock_tui/core/theme.py).
+# Copia local — tplay no lee los themes de Clock en runtime para no romperse en cascada.
+# Mapeo de roles Clock -> tplay: marco->marco, texto->texto, helpers->destacar,
+# nav->nav, clima->overlay.
 THEMES: dict[str, dict[str, int]] = {
     "clasico": {"marco": curses.COLOR_CYAN, "texto": curses.COLOR_WHITE,
-                "destacar": curses.COLOR_YELLOW, "nav": curses.COLOR_GREEN, "overlay": curses.COLOR_MAGENTA},
+                "destacar": curses.COLOR_YELLOW, "nav": curses.COLOR_CYAN, "overlay": curses.COLOR_GREEN},
     "mono": {"marco": curses.COLOR_WHITE, "texto": curses.COLOR_WHITE,
              "destacar": curses.COLOR_WHITE, "nav": curses.COLOR_WHITE, "overlay": curses.COLOR_WHITE,
              "mono_bold": True},
     "calido": {"marco": curses.COLOR_YELLOW, "texto": curses.COLOR_WHITE,
-               "destacar": curses.COLOR_RED, "nav": curses.COLOR_GREEN, "overlay": curses.COLOR_YELLOW},
-    "contraste": {"marco": curses.COLOR_MAGENTA, "texto": curses.COLOR_WHITE,
-                  "destacar": curses.COLOR_GREEN, "nav": curses.COLOR_MAGENTA, "overlay": curses.COLOR_GREEN},
+               "destacar": curses.COLOR_YELLOW, "nav": curses.COLOR_RED, "overlay": curses.COLOR_RED},
+    "alto_contraste": {"marco": curses.COLOR_MAGENTA, "texto": curses.COLOR_WHITE,
+                       "destacar": curses.COLOR_MAGENTA, "nav": curses.COLOR_MAGENTA, "overlay": curses.COLOR_GREEN},
     "flatline": {"marco": curses.COLOR_CYAN, "texto": curses.COLOR_WHITE,
-                 "destacar": curses.COLOR_RED, "nav": curses.COLOR_CYAN, "overlay": curses.COLOR_RED},
+                 "destacar": curses.COLOR_RED, "nav": curses.COLOR_RED, "overlay": curses.COLOR_RED},
     "custom": {"marco": curses.COLOR_CYAN, "texto": curses.COLOR_WHITE,
                "destacar": curses.COLOR_YELLOW, "nav": curses.COLOR_GREEN, "overlay": curses.COLOR_MAGENTA},
 }
@@ -135,9 +139,17 @@ def save(cfg: dict[str, Any]) -> None:
         pass
 
 
+_THEME_LEGACY_ALIASES: dict[str, str] = {"contraste": "alto_contraste"}
+
+
+def resolve_theme_name(name: str) -> str:
+    """Resuelve el nombre de un tema, aplicando aliases legacy."""
+    return _THEME_LEGACY_ALIASES.get(name, name)
+
+
 def apply_theme(config: dict[str, Any]) -> None:
     global MONO_BOLD
-    theme_name = config.get("theme", "clasico")
+    theme_name = resolve_theme_name(config.get("theme", "clasico"))
     if theme_name == "custom":
         cc = config.get("custom_colors", {})
         merged = {**DEFAULT_CONFIG["custom_colors"], **cc}
