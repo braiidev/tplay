@@ -17,6 +17,25 @@ LOG_MAX_BYTES: int = 1_000_000  # 1MB
 LOG_KEEP_BYTES: int = 100_000  # 100KB
 
 
+def detect_aout() -> str | None:
+    """Elegir el módulo de salida de audio según el entorno.
+
+    PipeWire y PulseAudio exponen su socket en el runtime dir. Si
+    alguno está activo conviene usar el módulo 'pulse' (que hoy
+    PipeWire absorbe vía pipewire-pulse): evita que VLC abra ALSA
+    directo y se quede mudo tras un crash del servidor. Si no hay
+    ninguno, se deja el default de VLC (ALSA).
+    """
+    runtime = os.environ.get("XDG_RUNTIME_DIR")
+    if not runtime:
+        return None
+    if os.path.exists(os.path.join(runtime, "pipewire-0")):
+        return "pulse"
+    if os.path.exists(os.path.join(runtime, "pulse", "native")):
+        return "pulse"
+    return None
+
+
 class AudioEngine:
     _saved_stderr: int | None
     instance: vlc.Instance
@@ -55,7 +74,11 @@ class AudioEngine:
         except OSError:
             pass
 
-        self.instance = vlc.Instance("--no-video", "--quiet")
+        args = ["--no-video", "--quiet"]
+        aout = detect_aout()
+        if aout:
+            args.append(f"--aout={aout}")
+        self.instance = vlc.Instance(*args)
         self.player = self.instance.media_player_new()
         self.playing = False
         self.paused = False
