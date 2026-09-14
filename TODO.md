@@ -7,6 +7,7 @@
 - [ ] #7: Paginación continua de resultados
 
 ## Done
+- [x] Audio hardening: aout explícito (PipeWire/Pulse), deps de sistema en install.sh, wrapper POSIX, logs de estado - v0.3-v0.8
 - [x] Temas compartidos con Clock (leer `~/.config/clock` o `~/Dev/Clock`) + hot-reload de theme sin reiniciar - v0.2
 - [x] Migrar tracking a sistema de tareas atómicas (eliminar AENV) - v0.1
 - [x] v1.9.1: IPC síncrono + `mute` + `-q/--quiet` + mensajes de estado explícitos
