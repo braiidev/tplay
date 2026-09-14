@@ -53,7 +53,7 @@ fi
 # ── Ejecutable ──
 echo "  ↳ Creando $BIN (requiere sudo)..."
 sudo tee "$BIN" > /dev/null << TSCRIPT
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 exec python3 "$INSTALL_DIR/app.py" "\$@"
 TSCRIPT
 sudo chmod +x "$BIN"
