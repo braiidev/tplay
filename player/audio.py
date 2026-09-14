@@ -78,7 +78,16 @@ class AudioEngine:
         aout = detect_aout()
         if aout:
             args.append(f"--aout={aout}")
-        self.instance = vlc.Instance(*args)
+        try:
+            self.instance = vlc.Instance(*args)
+        except (NameError, OSError, AttributeError) as _e:
+            raise RuntimeError(
+                "Falta libvlc (librería VLC) en el sistema. Instalá VLC con tu "
+                "gestor:\n  Debian/Ubuntu:  sudo apt install vlc\n"
+                "  Alpine:          sudo apk add vlc\n"
+                "  Arch:            sudo pacman -S vlc\n"
+                "  Fedora:          sudo dnf install vlc"
+            ) from _e
         self.player = self.instance.media_player_new()
         self.playing = False
         self.paused = False
