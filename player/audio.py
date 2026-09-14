@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 import time
 
 _VLC_ERROR: str | None = None
@@ -89,6 +90,7 @@ class AudioEngine:
                 "  Fedora:          sudo dnf install vlc"
             ) from _e
         self.player = self.instance.media_player_new()
+        self._log_audio_state(aout)
         self.playing = False
         self.paused = False
         self.current_file = None
@@ -104,6 +106,22 @@ class AudioEngine:
         self._eq_enabled = False
         self._cached_time: int = -1
         self._cached_length: int = -1
+
+    def _log_audio_state(self, aout: str | None) -> None:
+        """Loguear estado de audio al arranque (device / aout / libvlc)."""
+        try:
+            ver = vlc.libvlc_get_version()
+        except Exception:
+            ver = "desconocida"
+        backend = aout or "default (ALSA)"
+        print(f"[audio] libvlc={ver} · aout={backend}", file=sys.stderr)
+        runtime = os.environ.get("XDG_RUNTIME_DIR")
+        if runtime and aout is None:
+            print(
+                "[audio] sin servidor de audio detectado — si usás PipeWire "
+                "instalá pipewire-alsa (apt/pacman/apk)",
+                file=sys.stderr,
+            )
 
     def toggle_play_pause(self) -> None:
         if self.playing:
