@@ -8,6 +8,21 @@ Reproductor multimedia de terminal con `curses` + `python-vlc`. Navega archivos 
 - VLC instalado (`libvlc`)
 - Linux (terminal 256 colores recomendada, ej: kmscon)
 
+### Instalar VLC (`libvlc`)
+
+| Distro          | Comando                       |
+|-----------------|-------------------------------|
+| Debian / Ubuntu | `sudo apt install vlc`        |
+| Alpine          | `sudo apk add vlc`            |
+| Arch            | `sudo pacman -S vlc`          |
+| Fedora          | `sudo dnf install vlc`        |
+
+> Si usás **PipeWire** (default en distros modernas) y VLC se queda mudo tras
+> un crash/reinicio del servicio, instalá el puente ALSA→PipeWire:
+> `sudo apt install pipewire-alsa` (o `apk add` / `pacman -S` / `dnf install`
+> `pipewire-alsa`). tplay detecta el backend al arrancar y loguea
+> `aout`/`libvlc` en `data/error.log`.
+
 ## Instalación
 
 ```bash
