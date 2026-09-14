@@ -50,6 +50,61 @@ else
     pip3 install -r requirements.txt --break-system-packages
 fi
 
+# ── Dependencias del sistema (libvlc / pipewire-alsa) ──
+
+detect_pkg_mgr() {
+    for mgr in apk apt-get dnf pacman; do
+        if command -v "$mgr" &>/dev/null; then
+            echo "$mgr"
+            return 0
+        fi
+    done
+    return 1
+}
+
+install_system_pkg() {
+    local mgr="$1"
+    shift
+    case "$mgr" in
+        apk)     sudo apk add --no-cache "$@" ;;
+        apt-get) sudo apt-get install -y "$@" ;;
+        dnf)     sudo dnf install -y "$@" ;;
+        pacman)  sudo pacman -S --noconfirm --needed "$@" ;;
+    esac
+}
+
+# libvlc: sin esta librería tplay no arranca — 100% necesario
+if ! python3 -c "import vlc; vlc.libvlc_get_version()" 2>/dev/null; then
+    echo "  ↳ No se detectó libvlc (VLC). Instalando vlc..."
+    if mgr=$(detect_pkg_mgr); then
+        aviso_manual="sudo $mgr install"
+        if [ "$mgr" = "apk" ]; then aviso_manual="sudo apk add"; fi
+        if [ "$mgr" = "pacman" ]; then aviso_manual="sudo pacman -S"; fi
+        if ! install_system_pkg "$mgr" vlc; then
+            echo "  ⚠ No se pudo instalar vlc automáticamente."
+            echo "    Instalalo manualmente y volvé a ejecutar este script:"
+            echo "      $aviso_manual vlc" >&2
+        fi
+    else
+        echo "  ⚠ No se detectó gestor de paquetes. Instalá VLC a mano:" >&2
+        echo "    Debian/Ubuntu: sudo apt install vlc" >&2
+        echo "    Alpine:        sudo apk add vlc" >&2
+        echo "    Arch:          sudo pacman -S vlc" >&2
+        echo "    Fedora:        sudo dnf install vlc" >&2
+    fi
+fi
+
+# pipewire-alsa: solo si hay PipeWire activo — evita tplay mudo
+if [ -n "$XDG_RUNTIME_DIR" ] && [ -S "$XDG_RUNTIME_DIR/pipewire-0" ]; then
+    if mgr=$(detect_pkg_mgr); then
+        echo "  ↳ PipeWire detectado. Instalando pipewire-alsa (puente ALSA→PipeWire)..."
+        if ! install_system_pkg "$mgr" pipewire-alsa; then
+            echo "  ⚠ No se pudo instalar pipewire-alsa automáticamente." >&2
+            echo "    Instalalo manualmente si tplay se queda mudo." >&2
+        fi
+    fi
+fi
+
 # ── Ejecutable ──
 echo "  ↳ Creando $BIN (requiere sudo)..."
 sudo tee "$BIN" > /dev/null << TSCRIPT
