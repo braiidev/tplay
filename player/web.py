@@ -93,6 +93,12 @@ def _classify_error(msg: str) -> str:
         return "Formato no disponible para este video"
     if "network" in low or "connection" in low or "timeout" in low:
         return "Error de conexión — verificá tu red"
+    if "ffmpeg" in low and ("not found" in low or "postprocessing" in low):
+        return (
+            "Falta ffmpeg (necesario para audio/merge). Instalalo con tu "
+            "gestor: sudo apt install ffmpeg · sudo apk add ffmpeg · "
+            "sudo pacman -S ffmpeg · sudo dnf install ffmpeg"
+        )
     return f"Error: {msg}"
 
 
