@@ -6,16 +6,21 @@ Reproductor multimedia de terminal con `curses` + `python-vlc`. Navega archivos 
 
 - Python 3.12+
 - VLC instalado (`libvlc`)
+- ffmpeg (requerido por yt-dlp para descargas de audio/video)
 - Linux (terminal 256 colores recomendada, ej: kmscon)
 
-### Instalar VLC (`libvlc`)
+`install.sh` instala VLC y ffmpeg automáticamente (con sudo) si faltan; esto es
+válido también para las descargas: sin ffmpeg, yt-dlp no puede extraer audio ni
+mergear video y la descarga falla al final.
 
-| Distro          | Comando                       |
-|-----------------|-------------------------------|
-| Debian / Ubuntu | `sudo apt install vlc`        |
-| Alpine          | `sudo apk add vlc`            |
-| Arch            | `sudo pacman -S vlc`          |
-| Fedora          | `sudo dnf install vlc`        |
+### Instalar VLC (`libvlc`) y ffmpeg
+
+| Distro          | Comando                              |
+|-----------------|--------------------------------------|
+| Debian / Ubuntu | `sudo apt install vlc ffmpeg`        |
+| Alpine          | `sudo apk add vlc ffmpeg`            |
+| Arch            | `sudo pacman -S vlc ffmpeg`          |
+| Fedora          | `sudo dnf install vlc ffmpeg`        |
 
 > Si usás **PipeWire** (default en distros modernas) y VLC se queda mudo tras
 > un crash/reinicio del servicio, instalá el puente ALSA→PipeWire:
