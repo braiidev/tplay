@@ -50,7 +50,7 @@ else
     pip3 install -r requirements.txt --break-system-packages
 fi
 
-# ── Dependencias del sistema (libvlc / pipewire-alsa) ──
+# ── Dependencias del sistema (vlc / ffmpeg / pipewire-alsa) ──
 
 detect_pkg_mgr() {
     for mgr in apk apt-get dnf pacman; do
@@ -73,17 +73,25 @@ install_system_pkg() {
     esac
 }
 
+aviso_manual() {
+    local mgr="$1"
+    local pkg="$2"
+    case "$mgr" in
+        apk)     echo "sudo apk add $pkg" ;;
+        apt-get) echo "sudo apt install $pkg" ;;
+        dnf)     echo "sudo dnf install $pkg" ;;
+        pacman)  echo "sudo pacman -S $pkg" ;;
+    esac
+}
+
 # libvlc: sin esta librería tplay no arranca — 100% necesario
 if ! python3 -c "import vlc; vlc.libvlc_get_version()" 2>/dev/null; then
     echo "  ↳ No se detectó libvlc (VLC). Instalando vlc..."
     if mgr=$(detect_pkg_mgr); then
-        aviso_manual="sudo $mgr install"
-        if [ "$mgr" = "apk" ]; then aviso_manual="sudo apk add"; fi
-        if [ "$mgr" = "pacman" ]; then aviso_manual="sudo pacman -S"; fi
         if ! install_system_pkg "$mgr" vlc; then
             echo "  ⚠ No se pudo instalar vlc automáticamente."
             echo "    Instalalo manualmente y volvé a ejecutar este script:"
-            echo "      $aviso_manual vlc" >&2
+            echo "      $(aviso_manual "$mgr" vlc)" >&2
         fi
     else
         echo "  ⚠ No se detectó gestor de paquetes. Instalá VLC a mano:" >&2
@@ -91,6 +99,24 @@ if ! python3 -c "import vlc; vlc.libvlc_get_version()" 2>/dev/null; then
         echo "    Alpine:        sudo apk add vlc" >&2
         echo "    Arch:          sudo pacman -S vlc" >&2
         echo "    Fedora:        sudo dnf install vlc" >&2
+    fi
+fi
+
+# ffmpeg: yt-dlp lo necesita para extraer/convertir audio y mergear video — sin él las descargas fallan
+if ! command -v ffmpeg &>/dev/null; then
+    echo "  ↳ No se detectó ffmpeg. Instalando ffmpeg (necesario para descargas)..."
+    if mgr=$(detect_pkg_mgr); then
+        if ! install_system_pkg "$mgr" ffmpeg; then
+            echo "  ⚠ No se pudo instalar ffmpeg automáticamente."
+            echo "    Instalalo manualmente y volvé a ejecutar este script:"
+            echo "      $(aviso_manual "$mgr" ffmpeg)" >&2
+        fi
+    else
+        echo "  ⚠ No se detectó gestor de paquetes. Instalá ffmpeg a mano:" >&2
+        echo "    Debian/Ubuntu: sudo apt install ffmpeg" >&2
+        echo "    Alpine:        sudo apk add ffmpeg" >&2
+        echo "    Arch:          sudo pacman -S ffmpeg" >&2
+        echo "    Fedora:        sudo dnf install ffmpeg" >&2
     fi
 fi
 
