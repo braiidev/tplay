@@ -7,6 +7,8 @@
 - [ ] #7: Paginación continua de resultados
 
 ## Done
+- [x] Flag --reinstall: re-ejecuta install.sh del repo (deps python, vlc, ffmpeg, wrapper) - v0.15
+- [x] Hardening install.sh: pip faltante detectado, cascada PEP668, verificación final libvlc/yt-dlp/ffmpeg - v0.13-v0.14
 - [x] Audio hardening: aout explícito (PipeWire/Pulse), deps de sistema en install.sh, wrapper POSIX, logs de estado - v0.3-v0.8
 - [x] Temas compartidos con Clock (leer `~/.config/clock` o `~/Dev/Clock`) + hot-reload de theme sin reiniciar - v0.2
 - [x] Migrar tracking a sistema de tareas atómicas (eliminar AENV) - v0.1

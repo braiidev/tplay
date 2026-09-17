@@ -7,8 +7,12 @@ from typing import Any
 from .app import PlayerApp
 
 
+def _repo_dir() -> str:
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
 def _cli_update() -> bool:
-    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    repo = _repo_dir()
     git_dir = os.path.join(repo, ".git")
     if not os.path.isdir(git_dir):
         print("Error: no es un repositorio git, no se puede actualizar", file=sys.stderr)
@@ -77,8 +81,28 @@ def _install_new_deps(repo: str, req_path: str, old_reqs: set[str]) -> None:
         print(f"  ⚠ Ejecutá manualmente: pip install --break-system-packages {' '.join(pkgs)}")
 
 
+def _cli_reinstall() -> bool:
+    repo = _repo_dir()
+    installer = os.path.join(repo, "install.sh")
+    if not os.path.isfile(installer):
+        print(f"Error: no se encontró {installer}", file=sys.stderr)
+        return False
+    print("▶ Reinstalando tplay (corre install.sh del repo)...")
+    print("   Esto puede pedir sudo para vlc/ffmpeg/wrapper.")
+    try:
+        r = subprocess.run(["bash", installer], cwd=repo)
+    except OSError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return False
+    if r.returncode == 0:
+        print("✓ tplay reinstalado correctamente")
+        return True
+    print("✗ install.sh falló", file=sys.stderr)
+    return False
+
+
 def _cli_uninstall() -> bool:
-    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    repo = _repo_dir()
     data = os.path.join(repo, "data")
     bin_path = "/usr/local/bin/tplay"
 
@@ -131,6 +155,8 @@ def main() -> None:
     if "--update" in sys.argv:
         if not _cli_update():
             sys.exit(1)
+    if "--reinstall" in sys.argv:
+        sys.exit(0 if _cli_reinstall() else 1)
     if "--uninstall" in sys.argv:
         sys.exit(0 if _cli_uninstall() else 1)
     if "--ctl" in sys.argv:
