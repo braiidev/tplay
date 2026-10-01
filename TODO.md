@@ -92,10 +92,16 @@ ya falló — nunca en cada arranque.
 - [x] v0.21: `--update` y `--reinstall` reconcilian deps tras el `git pull`; `--reinstall` pasa `$1` (bug 5)
 - [x] v0.22: datos a `~/.local/share/tplay/data` — paths en un solo módulo, auto-migración por copia con backup, y `--uninstall` pide confirmación antes de borrar (bug 6)
 - [x] v0.23: `tests/e2e_install.sh` (no existía: nada testeaba install.sh de verdad) + smoke test con `tplay --version` + README y AGENTS.md al día
+- [x] v0.24: el auto-actualizador de `yt-dlp` todavía escribía en el Python del SO — `_pip_flags_attempts()` seguía con la cascada de `--break-system-packages` que v0.19 había sacado de `install.sh`. Ahora depende del entorno real. `views.py` pedía `pip install --break-system-packages yt-dlp` (imposible de seguir: ese pip no es el del venv) → ahora `tplay --reinstall`. El test viejo codificaba el bug como esperado
+- [x] v0.25: `.pinned-python` al `.gitignore` — es estado local por máquina, install.sh lo reescribe en cada corrida
+- [x] v0.26: el guard de arranque decía "Faltan dependencias en el entorno virtual / repará el venv" cuando NO había venv (launcher legacy `/usr/local/bin/tplay` → `exec python3 app.py`). Las 3 deps importaban del user-site viejo pero el binario de yt-dlp no estaba en `/usr/bin`: un solo ítem, `yt-dlp (binario)`, que parecía una dep suelta y no una instalación en el sitio equivocado. Ahora `_hay_venv()` decide el mensaje y menciona `hash -r`/`rehash` por el cache de comando del shell
+- [x] v0.27: floor de `mutagen` a `>=1.48.0` (desde esa versión `File` está exportado; con 1.46/1.47 el `# type: ignore[attr-defined]` era necesario y sin él mypy falla). Los dos ignores sobrantes, fuera. AGENTS.md documenta que los tests van con venv de desarrollo: con el user-site limpio, `python3 -m pytest` ya no funciona
 
-**Resultado de la migración (v0.17 → v0.23, cerrado):** `pytest` 108 passed ·
-mypy strict 32 archivos · `bash tests/e2e_install.sh` 30/30 · instalación verificada
-en sandbox incluyendo venv flotante + pin muerto.
+**Resultado de la migración (v0.17 → v0.27, cerrado):** `pytest` 120 passed ·
+mypy strict 32 archivos · `bash tests/e2e_install.sh` 35/35 · instalación verificada
+en sandbox (venv flotante + pin muerto) **y en la máquina real**: instalado en
+`~/.local/share/tplay`, venv auto-reparado tras romperlo a propósito, y la TUI
+arrancada en un TTY de verdad.
 
 Bugs que quedaron escritos en el código como comentarios, para que no se
 reintroduzcan: falso negativo de libvlc por `grep -q` + `pipefail` (SIGPIPE);
