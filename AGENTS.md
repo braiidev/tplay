@@ -30,12 +30,28 @@ historial en un `rm -rf`.
 `~/.config/tplay/data` es por COPIA y vive en `paths.migrar_datos_legacy()`.
 
 ## Verificación
+
+**Los comandos de test van con un venv de desarrollo, no con el `python3` del
+sistema.** El user-site quedó limpio a propósito (v0.26), así que el intérprete
+del sistema ya no tiene `vlc`/`mutagen`/`yt_dlp` y `python3 -m pytest` falla con
+`ModuleNotFoundError`. El venv de producción (`~/.local/share/tplay/.venv`) no
+sirve para esto: no lleva pytest ni mypy, y no debería — no son deps de la app.
+
+```bash
+python3 -m venv /tmp/tplay-dev && /tmp/tplay-dev/bin/pip install -q -e . pytest mypy
+```
+
 | Qué | Comando |
 |-----|---------|
-| Tests | `python3 -m pytest` (108) |
-| Tipos | `python3 -m mypy player` (strict) |
+| Tests | `/tmp/tplay-dev/bin/python -m pytest` (120) |
+| Tipos | `/tmp/tplay-dev/bin/python -m mypy player` (strict) |
 | Instalador | `bash -n install.sh` |
-| E2E real | `bash tests/e2e_install.sh` (30 checks, sandbox) |
+| E2E real | `bash tests/e2e_install.sh` (35 checks, sandbox) |
+
+Que el test command requiera un venv no es un detalle: es exactamente el modo de
+fallo que se limpió en v0.26. Si `pytest` aparece para correr, algo volvió a
+depender del intérprete del sistema.
+
 
 El e2e es el único que corre `install.sh` de verdad. Encontró dos bugs que ningún
 test unitario veía: `grep -q` + `set -o pipefail` daba falso negativo de libvlc

@@ -27,7 +27,7 @@ class MetadataCache:
             self._cache.move_to_end(path)
             return self._cache[path]
         try:
-            audio = mutagen.File(path, easy=True)  # type: ignore[attr-defined]
+            audio = mutagen.File(path, easy=True)
             if audio is None:
                 tags = {}
             else:

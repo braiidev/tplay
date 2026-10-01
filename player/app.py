@@ -1307,7 +1307,7 @@ class PlayerApp:
         import mutagen
 
         try:
-            audio = mutagen.File(self.meta_edit_file, easy=True)  # type: ignore[attr-defined]
+            audio = mutagen.File(self.meta_edit_file, easy=True)
             if audio is not None:
                 for f, v in self.meta_edit_changed.items():
                     audio[f] = v

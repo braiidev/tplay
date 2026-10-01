@@ -19,6 +19,8 @@ dependencies = [
     # Las tres con techo, pero yt-dlp necesita un techo unusual.
     #
     # python-vlc y mutagen están API-estables: 3.x y 1.x. Con <4 y <2 alcanza.
+    # El floor de mutagen es 1.48 porque desde esa versión `File` está
+    # exportado explícitamente; antes hay que silencear attr-defined a mano.
     #
     # yt-dlp sube por fecha (YYYY.MM.DD), así que "mayor versión" no significa
     # "API incompatible": no usa semver. Un techo de 4ta mayor lo dejaría
@@ -30,7 +32,7 @@ dependencies = [
     # Además hay un auto-actualizador diario (player/ytdlp_update.py) contra
     # PyPI, así que el techo no frena las correcciones: las pide en caliente.
     "python-vlc>=3.0.0,<4.0.0",
-    "mutagen>=1.46.0,<2.0.0",
+    "mutagen>=1.48.0,<2.0.0",
     "yt-dlp>=2026.07.04,<2027.0.0",
 ]
 
