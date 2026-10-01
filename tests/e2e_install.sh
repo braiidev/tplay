@@ -338,7 +338,65 @@ if [ -e "$LEGACY_BIN" ] && [ "$(stat -c '%U' "$LEGACY_BIN" 2>/dev/null)" != "roo
 fi
 ok "sin riesgo de tocar $LEGACY_BIN"
 
-# ── Resumen ──────────────────────────────────────────────────────────────────
+# ── 9. El launcher legacy no puede dar un mensaje engañoso ───────────────────
+# Caso real: con /usr/local/bin/tplay (`exec python3 <repo>/app.py`), tplay corre
+# con el intérprete del SISTEMA. Las 3 deps importan (user-site viejo) pero no
+# hay binario de yt-dlp. El mensaje decía "repará el venv" cuando no hay venv, y
+# mandaba al sitio equivocado.
+echo "▶ Fuera del venv el mensaje dice la verdad"
+# Se simula el intérprete del sistema: sin venv, y sin el binario de yt-dlp.
+# OJO: sin sys.path.insert del legacy — eso haría que `player` se resuelva al
+# repo viejo (que tiene su propio paths.py, sin el fix) en vez del que se está
+# testeando. Lo que importa acá es el MENSAJE, no el launcher.
+#
+# Se usa el venv de desarrollo y NO python3 del sistema: importar `player.paths`
+# dispara player/__init__.py → app.py → metadata.py → `import mutagen`, y el
+# intérprete del sistema puede no tenerla (justo lo que pasa después de limpiar
+# un user-site viejo). Lo que se simula es sys.prefix, no el intérprete real.
+LEGACY_OUT="$SANDBOX/legacy.log"
+HOME="$SANDBOX/home" \
+  python3 - "$REPO" >"$LEGACY_OUT" 2>&1 <<'PY'
+import importlib.util, sys
+from pathlib import Path
+repo = sys.argv[1]
+
+# Se carga paths.py SIN pasar por player/__init__.py: el import del paquete
+# arrastra toda la app (curses, vlc, mutagen) y acá no interesa nada de eso.
+spec = importlib.util.spec_from_file_location(
+    "tplay_paths", Path(repo) / "player" / "paths.py"
+)
+paths = importlib.util.module_from_spec(spec)
+assert spec and spec.loader
+spec.loader.exec_module(paths)
+
+# Fuera del venv, como el intérprete del sistema.
+paths.sys.prefix = "/usr"
+paths.sys.base_prefix = "/usr"
+paths.os.path.exists = lambda p: False   # ni /usr/bin/yt-dlp ni el venv
+
+msg = paths.chequear_deps()
+print(msg if msg else "(sin mensaje: todo presente)")
+PY
+
+if grep -q "NO está corriendo en su entorno virtual" "$LEGACY_OUT"; then
+    ok "avisa que NO está en un venv"
+else
+    fail "el mensaje sigue diciendo 'entorno virtual' sin serlo"
+    sed 's/^/      /' "$LEGACY_OUT" | head -6
+fi
+
+if grep -q "reinstallá el venv" "$LEGACY_OUT"; then
+    fail "pide reparar un venv que no existe"
+else
+    ok "no manda a reparar un venv inexistente"
+fi
+
+if grep -q "/usr/local/bin/tplay" "$LEGACY_OUT"; then
+    ok "señala el launcher legacy como causa"
+else
+    fail "no menciona el launcher legacy"
+fi
+
 echo
 echo "──────────────────────────────────────────"
 printf '  %d pasaron, %d fallaron\n' "$PASS" "$FAIL"

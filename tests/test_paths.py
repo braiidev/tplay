@@ -214,3 +214,88 @@ class TestRutas:
 
     def test_config_dir_es_alias_de_data_dir(self) -> None:
         assert paths.CONFIG_DIR == paths.DATA_DIR
+
+
+class TestMensajeSinVenv:
+    """El caso que costó una sesión de diagnóstico.
+
+    Con el launcher legacy /usr/local/bin/tplay (`exec python3 <repo>/app.py`),
+    tplay corre con el intérprete del SISTEMA. Las 3 deps importan (están en el
+    user-site de la instalación vieja) pero el binario de yt-dlp no existe en
+    /usr/bin. El mensaje anterior decía "Faltan dependencias en el entorno
+    virtual" y pedía reparar el venv — que no es el que lo estaba ejecutando.
+    """
+
+    def _fuera_de_venv(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(sys, "prefix", "/usr")
+        monkeypatch.setattr(sys, "base_prefix", "/usr")  # sin venv
+
+    def test_dice_que_no_esta_en_el_venv(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(os.path, "exists", lambda p: False)
+        self._fuera_de_venv(monkeypatch)
+
+        msg = paths._mensaje_deps(["yt-dlp (binario)"])
+
+        assert msg is not None
+        assert "NO está corriendo en su entorno virtual" in msg
+        assert "sys.prefix: /usr" in msg
+
+    def test_no_pide_reparar_el_venv_cuando_no_hay_venv(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Pedir 'reinstallá el venv' sin venv manda al sitio equivocado."""
+        monkeypatch.setattr(os.path, "exists", lambda p: False)
+        self._fuera_de_venv(monkeypatch)
+
+        msg = paths._mensaje_deps(["yt-dlp (binario)"])
+
+        assert "reinstallá el venv" not in msg
+        assert "install.sh" in msg, "pero sí tiene que decir cómo arreglarlo"
+
+    def test_nombra_el_launcher_legacy(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """El mensaje tiene que señalar la causa real: /usr/local/bin/tplay."""
+        monkeypatch.setattr(os.path, "exists", lambda p: False)
+        self._fuera_de_venv(monkeypatch)
+
+        msg = paths._mensaje_deps(["yt-dlp (binario)"])
+
+        assert "/usr/local/bin/tplay" in msg
+        assert "user-site" in msg, "explica de dónde vienen las deps que sí importan"
+
+    def test_menciona_hash_para_el_cache_del_shell(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """zsh/bash cachean el path del comando: por eso `tplay` a secas
+        seguía pegando al legacy aunque ~/.local/bin ya estuviera en el PATH."""
+        monkeypatch.setattr(os.path, "exists", lambda p: False)
+        self._fuera_de_venv(monkeypatch)
+
+        msg = paths._mensaje_deps(["yt-dlp (binario)"])
+
+        assert "hash -r" in msg
+        assert "rehash" in msg
+
+    def test_dentro_del_venv_sigue_diciendo_venv(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Con venv, el mensaje viejo era correcto: no hay que cambiarlo."""
+        monkeypatch.setattr(sys, "prefix", "/venv")
+        monkeypatch.setattr(sys, "base_prefix", "/usr")
+        monkeypatch.setattr(os.path, "exists", lambda p: False)
+
+        msg = paths._mensaje_deps(["mutagen"])
+
+        assert "entorno virtual" in msg
+        assert "reinstallá el venv" in msg
+        assert "NO está corriendo" not in msg
+
+    def test_hay_venv_detecta_el_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(sys, "prefix", "/venv")
+        monkeypatch.setattr(sys, "base_prefix", "/usr")
+        assert paths._hay_venv() is True
+
+        monkeypatch.setattr(sys, "prefix", "/usr")
+        monkeypatch.setattr(sys, "base_prefix", "/usr")
+        assert paths._hay_venv() is False

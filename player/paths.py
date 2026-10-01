@@ -44,6 +44,10 @@ CONFIG_FILE = os.path.join(DATA_DIR, "config.json")
 # Árbol legacy: datos dentro del repo clonado en ~/.config/tplay.
 LEGACY_DATA_DIR = os.path.expanduser("~/.config/tplay/data")
 
+# Repo legacy completo, para nombrarlo en los mensajes de error. El launcher
+# viejo /usr/local/bin/tplay hace `exec python3 <LEGACY_REPO>/app.py`.
+LEGACY_REPO = os.path.expanduser("~/.config/tplay")
+
 # `yt-dlp` se llama como binario del PATH (ver player/web.py), no como módulo. El
 # wrapper pone el bin del venv en el PATH; si alguien invoca el módulo sin
 # wrapper (python -m player), no lo encuentra. Esta es la razón por la que
@@ -111,6 +115,15 @@ DEPS_IMPORT: tuple[tuple[str, str], ...] = (
 )
 
 
+def _hay_venv() -> bool:
+    """True si estamos corriendo desde el venv que creó install.sh.
+
+    `sys.prefix != sys.base_prefix` es la forma canónica de saberlo. Fuera del
+    venv, `sys.prefix` es el del intérprete del sistema.
+    """
+    return sys.prefix != sys.base_prefix
+
+
 def chequear_deps() -> str | None:
     """Devuelve un mensaje de error si falta alguna dep, o None si todo está.
 
@@ -135,11 +148,54 @@ def chequear_deps() -> str | None:
     if not faltantes:
         return None
 
-    return (
-        "Faltan dependencias en el entorno virtual:\n"
-        + "".join(f"  · {d}\n" for d in faltantes)
-        + "\nReparalo con:\n"
-        f"  curl -fsSL https://raw.githubusercontent.com/braiidev/tplay/main/install.sh | bash\n"
-        f"\n(o reinstallá el venv: {os.path.join(INSTALL_DIR, '.venv', 'bin', 'pip')}"
-        f" install -e {INSTALL_DIR})"
-    )
+    return _mensaje_deps(faltantes)
+
+
+def _mensaje_deps(faltantes: list[str]) -> str:
+    """Arma el mensaje, adaptándolo a si hay venv o no.
+
+    Este detalle costó una sesión de diagnóstico: la primera versión decía
+    siempre "Faltan dependencias en el entorno virtual" y daba "repará el venv"
+    como única solución. Pero cuando tplay corre FUERA de un venv —el caso del
+    launcher legacy `/usr/local/bin/tplay`, que hace `exec python3 app.py`— no
+    hay ningún venv que reparar, y el mensaje mandaba a tocar el sitio
+    equivocado.
+
+    Ese caso es confuso de ver porque las 3 deps SÍ importan (están en el
+    user-site de una instalación vieja) pero el binario de yt-dlp no existe en
+    `/usr/bin`. El síntoma visible es un solo ítem, "yt-dlp (binario)", que
+    parece una dep suelta y no una instalación en el sitio incorrecto.
+    """
+    if _hay_venv():
+        cabecera = "Faltan dependencias en el entorno virtual:\n"
+        solucion = (
+            "\nReparalo con:\n"
+            "  curl -fsSL https://raw.githubusercontent.com/braiidev/tplay/main/install.sh | bash\n"
+            f"\n(o reinstallá el venv: {os.path.join(INSTALL_DIR, '.venv', 'bin', 'pip')}"
+            f" install -e {INSTALL_DIR})"
+        )
+    else:
+        # Sin venv: el código está en el intérprete del sistema y las deps
+        # pueden venir de un user-site viejo. Decirlo es la mitad del arreglo.
+        cabecera = (
+            "Faltan dependencias, y además tplay NO está corriendo en su entorno virtual.\n"
+            f"  intérprete: {sys.executable}\n"
+            f"  sys.prefix: {sys.prefix}  (no es un venv)\n"
+            "\nEsto pasa con el launcher viejo /usr/local/bin/tplay, que hace\n"
+            f"  exec python3 {LEGACY_REPO}/app.py\n"
+            "y corre con el Python del sistema en vez del venv de tplay.\n"
+            "\nLas deps de arriba pueden estar viniendo de un user-site viejo\n"
+            f"(~/.local/lib/python3.X/site-packages), y ese no se usa desde {INSTALL_DIR}.\n"
+        )
+        solucion = (
+            "\nSolución: instalá tplay y usá el comando del venv:\n"
+            "  curl -fsSL https://raw.githubusercontent.com/braiidev/tplay/main/install.sh | bash\n"
+            f"\n  {os.path.expanduser('~/.local/bin/tplay')}\n"
+            "\nSi el comando sigue resolviendo al launcher viejo, tu PATH tiene\n"
+            "/usr/local/bin antes que ~/.local/bin. Corregilo, o:\n"
+            f"  hash -r    # zsh/bash: limpia el comando cacheado de la sesión\n"
+            f"  rehash     # zsh, alternativa"
+        )
+
+    return cabecera + "".join(f"  · {d}\n" for d in faltantes) + solucion
+
