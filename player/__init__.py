@@ -6,6 +6,24 @@ from typing import Any
 
 from .app import PlayerApp
 
+__version__ = "0.16.0"
+
+_USAGE = """\
+Uso: tplay [opción]
+
+Reproductor de música TUI: biblioteca local, YouTube y radio, con ecualizador
+y tema configurable.
+
+Opciones:
+  (sin flags)      abre el reproductor (requiere terminal interactivo)
+  --update         descarga la última versión del repo y reconcilia las deps
+  --reinstall      re-ejecuta install.sh de este repo
+  --uninstall      desinstala tplay (pide confirmación antes de tocar datos)
+  --ctl <cmd>      control externo por socket: play|pause|next|prev|status|...
+  --version        imprime la versión y sale
+  --help           imprime esta ayuda y sale
+"""
+
 
 def _repo_dir() -> str:
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -152,6 +170,16 @@ def _cli_ctl(args: list[str]) -> int:
 
 
 def main() -> None:
+    # --version y --help van primero y con return: son los dos únicos caminos que
+    # no necesitan TTY, y son los que usan el smoke test de install.sh y el e2e.
+    # Antes no existían, así que no había forma de verificar la instalación sin
+    # levantar la TUI.
+    if "--version" in sys.argv or "-V" in sys.argv:
+        print(f"tplay {__version__}")
+        return
+    if "--help" in sys.argv or "-h" in sys.argv:
+        print(_USAGE, end="")
+        return
     if "--update" in sys.argv:
         if not _cli_update():
             sys.exit(1)
