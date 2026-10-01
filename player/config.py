@@ -6,8 +6,7 @@ import copy
 import curses
 from typing import Any
 
-CONFIG_DIR: str = os.path.expanduser("~/.config/tplay/data")
-CONFIG_FILE: str = os.path.join(CONFIG_DIR, "config.json")
+from .paths import CONFIG_DIR, CONFIG_FILE  # noqa: F401  (re-exportados)
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "music_dir": os.path.expanduser("~/Music"),

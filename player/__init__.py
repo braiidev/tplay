@@ -5,6 +5,7 @@ import sys
 from typing import Any
 
 from .app import PlayerApp
+from .paths import chequear_deps, migrar_datos_legacy
 
 __version__ = "0.16.0"
 
@@ -178,6 +179,7 @@ def main() -> None:
         print(f"tplay {__version__}")
         return
     if "--help" in sys.argv or "-h" in sys.argv:
+
         print(_USAGE, end="")
         return
     if "--update" in sys.argv:
@@ -190,6 +192,25 @@ def main() -> None:
     if "--ctl" in sys.argv:
         idx = sys.argv.index("--ctl")
         sys.exit(_cli_ctl(sys.argv[idx + 1:]))
+    # Guard de arranque (capa 3 del plan). Va después de los flags de ciclo de
+    # vida y antes de la TUI: `--ctl` y `--update` tienen que funcionar aunque falte
+    # una dep, porque son justamente los comandos con los que se repara.
+    #
+    # Antes, si faltaba mutagen o yt-dlp, la app moría con ModuleNotFoundError
+    # crudo en player/metadata.py:5 (que hace `import mutagen` sin guard) o en
+    # player/web.py. Ahora el mensaje dice qué falta y cómo arreglarlo.
+    faltan = chequear_deps()
+    if faltan:
+        print(faltan, file=sys.stderr)
+        sys.exit(1)
+
+    # Migración de datos: one-shot, por copia, sin red. Los datos iban a vivir
+    # dentro del repo clonado (~/.config/tplay/data); ahora van a
+    # ~/.local/share/tplay/data. Si ya hubo migración antes, no se repite.
+    msg_migracion = migrar_datos_legacy()
+    if msg_migracion:
+        print(msg_migracion)
+
     if not sys.stdout.isatty():
         print("Error: tplay requiere un terminal (TTY)", file=sys.stderr)
         sys.exit(1)

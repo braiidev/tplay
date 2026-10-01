@@ -4,7 +4,7 @@ import json
 import os
 from typing import Any, cast
 
-from .config import CONFIG_DIR
+from .paths import CONFIG_DIR
 
 FAVORITES_FILE: str = os.path.join(CONFIG_DIR, "favorites.json")
 

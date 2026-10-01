@@ -4,7 +4,7 @@ import os
 import json
 from typing import Any
 
-from .config import CONFIG_DIR
+from .paths import CONFIG_DIR
 
 PLAYLIST_FILE: str = os.path.join(CONFIG_DIR, "playlist.json")
 

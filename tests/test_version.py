@@ -57,8 +57,11 @@ class TestVersionYHelp:
             [sys.executable, "-m", "player"],
             capture_output=True, text=True, check=False,
         )
+        # Sin deps y sin TTY puede ganar cualquiera de los dos guards; lo que
+        # importa es que ninguno de los dos sea un traceback crudo.
         assert r.returncode == 1
-        assert "TTY" in r.stderr
+        assert "Traceback" not in r.stderr
+        assert ("TTY" in r.stderr) or ("Faltan dependencias" in r.stderr)
 
     def test_version_coincide_con_pyproject(self) -> None:
         # Si divergen, el smoke test de install.sh miente sobre qué se instaló.

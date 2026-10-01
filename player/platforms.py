@@ -5,7 +5,9 @@ import json
 import os
 from dataclasses import asdict, dataclass, field
 
-PLATFORMS_FILE: str = os.path.expanduser("~/.config/tplay/data/platforms.json")
+from .paths import DATA_DIR
+
+PLATFORMS_FILE: str = os.path.join(DATA_DIR, "platforms.json")
 
 DEFAULT_PLATFORMS: list[dict[str, str | int | bool]] = [
     {

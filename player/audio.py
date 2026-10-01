@@ -11,7 +11,7 @@ except (ImportError, OSError) as _vlc_err:
     vlc = None
     _VLC_ERROR = str(_vlc_err)
 
-from .config import CONFIG_DIR
+from .paths import CONFIG_DIR
 
 LOG_FILE: str = os.path.join(CONFIG_DIR, "error.log")
 LOG_MAX_BYTES: int = 1_000_000  # 1MB

@@ -8,8 +8,10 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any
 
-DOWNLOADS_FILE: str = os.path.expanduser("~/.config/tplay/data/downloads.json")
-TMP_DIR: str = os.path.expanduser("~/.config/tplay/data/tmp")
+from .paths import DATA_DIR
+
+DOWNLOADS_FILE: str = os.path.join(DATA_DIR, "downloads.json")
+TMP_DIR: str = os.path.join(DATA_DIR, "tmp")
 TEMP_MAX_AGE_DAYS: int = 7
 MAX_HISTORY_ENTRIES: int = 500
 

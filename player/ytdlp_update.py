@@ -18,7 +18,9 @@ from typing import Any
 _BIN = "yt-dlp"
 _PYPI_URL = "https://pypi.org/pypi/yt-dlp/json"
 _CHECK_INTERVAL_SECS = 24 * 3600
-_CACHE_FILE = os.path.expanduser("~/.config/tplay/data/ytdlp_check.json")
+from .paths import DATA_DIR
+
+_CACHE_FILE = os.path.join(DATA_DIR, "ytdlp_check.json")
 _UPDATE_TIMEOUT_SECS = 180
 
 
