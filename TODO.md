@@ -1,9 +1,11 @@
 # TODO
 
 ## Doing
-- [ ] Migración del instalador al patrón de Clock/MonitorPC (v0.17 → v0.23, abajo)
+- (vacío)
 
 ## Next
+- [ ] Unificar el número de versión: el tag (v0.N) y `pyproject.__version__`
+      (0.16.0) corren distinto. Elegir una sola fuente.
 - [ ] #6: Cache Management (limpiar cache yt-dlp)
 - [ ] #7: Paginación continua de resultados
 
@@ -84,12 +86,23 @@ ya falló — nunca en cada arranque.
 
 - [x] v0.17: `pyproject.toml` — `[build-system]` + `[project]` (name/version/deps con techo) +
   `[project.scripts] tplay` + `requires-python`. **El repo no era instalable con pip.** `requirements.txt` eliminado
-- [ ] v0.18: `--version` y `--help` + `player/__main__.py` (arregla `python3 -m player`) + `conftest.py` (`pytest` pelado) — precondición del smoke test
-- [ ] v0.19: install.sh — pin + venv con intérprete versionado del SO (rango 3.10-3.14), idempotente, **eliminar la cascada `--break-system-packages`**, conservar la verificación de deps de sistema (`libvlc` por `ldconfig -p`, `ffmpeg` por `command -v`, `pipewire-alsa` solo si hay socket)
-- [ ] v0.20: wrapper en `~/.local/bin/tplay` (sale de `/usr/local/bin`, deja de needing sudo para lo Python) + auto-reparación con guarda de un intento + **`export PATH="$VENV/bin:$PATH"`** para que `yt-dlp` se encuentre (bug 1)
-- [ ] v0.21: `--update` y `--reinstall` reconcilian deps tras el `git pull`; `--reinstall` pasa `$1` (bug 5)
-- [ ] v0.22: datos a `~/.local/share/tplay/data` — paths en un solo módulo, auto-migración por copia con backup, y `--uninstall` pide confirmación antes de borrar (bug 6)
-- [ ] v0.23: `tests/e2e_install.sh` (no existe: hoy nada testea install.sh de verdad) + smoke test con `tplay --version` + README y AGENTS.md al día
+- [x] v0.18: `--version` y `--help` + `player/__main__.py` (arregla `python3 -m player`) + `conftest.py` (`pytest` pelado) — precondición del smoke test
+- [x] v0.19: install.sh — pin + venv con intérprete versionado del SO (rango 3.10-3.14), idempotente, **eliminar la cascada `--break-system-packages`**, conservar la verificación de deps de sistema (`libvlc` por `ldconfig -p`, `ffmpeg` por `command -v`, `pipewire-alsa` solo si hay socket)
+- [x] v0.20: wrapper en `~/.local/bin/tplay` (sale de `/usr/local/bin`, deja de needing sudo para lo Python) + auto-reparación con guarda de un intento + **`export PATH="$VENV/bin:$PATH"`** para que `yt-dlp` se encuentre (bug 1)
+- [x] v0.21: `--update` y `--reinstall` reconcilian deps tras el `git pull`; `--reinstall` pasa `$1` (bug 5)
+- [x] v0.22: datos a `~/.local/share/tplay/data` — paths en un solo módulo, auto-migración por copia con backup, y `--uninstall` pide confirmación antes de borrar (bug 6)
+- [x] v0.23: `tests/e2e_install.sh` (no existía: nada testeaba install.sh de verdad) + smoke test con `tplay --version` + README y AGENTS.md al día
+
+**Resultado de la migración (v0.17 → v0.23, cerrado):** `pytest` 108 passed ·
+mypy strict 32 archivos · `bash tests/e2e_install.sh` 30/30 · instalación verificada
+en sandbox incluyendo venv flotante + pin muerto.
+
+Bugs que quedaron escritos en el código como comentarios, para que no se
+reintroduzcan: falso negativo de libvlc por `grep -q` + `pipefail` (SIGPIPE);
+glob sin match abortando el script; backtick en comentario de heredoc ejecutado
+como command substitution; `--update` que no instalaba nada porque leía
+`requirements.txt` ya borrado; `--uninstall` con `rm -rf` sin preguntar; sugerencia
+de `--break-system-packages` que escribe en el Python del sistema.
 
 **Entrega:** un commit por ítem, cada uno con su tag `v0.N` (regla de oro de `AGENTS.md`), verificado
 con `python3 -m pytest` + el e2e de instalación.

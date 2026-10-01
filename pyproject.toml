@@ -16,9 +16,22 @@ requires-python = ">=3.10,<3.15"
 # YouTube) y player/ytdlp_update.py ya lo actualiza contra PyPI cada 24h con
 # cache en disco; un techo lo dejaría clavado en una versión que deja de servir.
 dependencies = [
+    # Las tres con techo, pero yt-dlp necesita un techo unusual.
+    #
+    # python-vlc y mutagen están API-estables: 3.x y 1.x. Con <4 y <2 alcanza.
+    #
+    # yt-dlp sube por fecha (YYYY.MM.DD), así que "mayor versión" no significa
+    # "API incompatible": no usa semver. Un techo de 4ta mayor lo dejaría
+    # instalar sin cambios durante meses y después fallaría de golpe en cada
+    # instalación, sin aviso. Por eso el techo es de AÑO: <2027.0.0 acota el
+    # salto mayor anual (cuando yt-dlp cambia la API del extractor y sí hay que
+    # revisarlo) pero deja que las correcciones mensuales fluyan.
+    #
+    # Además hay un auto-actualizador diario (player/ytdlp_update.py) contra
+    # PyPI, así que el techo no frena las correcciones: las pide en caliente.
     "python-vlc>=3.0.0,<4.0.0",
     "mutagen>=1.46.0,<2.0.0",
-    "yt-dlp>=2026.07.04",
+    "yt-dlp>=2026.07.04,<2027.0.0",
 ]
 
 [project.scripts]
