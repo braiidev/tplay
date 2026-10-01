@@ -1,5 +1,40 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tplay"
+# La versión la lee player/__init__.py:__version__ (entry point tplay).
+# Antes no había bloque [project] en absoluto: el repo no era instalable con pip,
+# por eso install.sh usaba `pip install --user -r requirements.txt` y nada más.
+version = "0.16.0"
+description = "Reproductor de música TUI en curses: biblioteca local, YouTube y radio, con ecualizador y tema configurable."
+# Rango, no versión exacta: el pin real lo persiste install.sh en .pinned-python.
+# El SO puede subir a 3.14 sin romper la instalación.
+requires-python = ">=3.10,<3.15"
+# Techos en las tres. yt-dlp se deja sin techo porque se rompe seguido (403 de
+# YouTube) y player/ytdlp_update.py ya lo actualiza contra PyPI cada 24h con
+# cache en disco; un techo lo dejaría clavado en una versión que deja de servir.
+dependencies = [
+    "python-vlc>=3.0.0,<4.0.0",
+    "mutagen>=1.46.0,<2.0.0",
+    "yt-dlp>=2026.07.04",
+]
+
+[project.scripts]
+tplay = "player:main"
+
+[tool.setuptools.packages.find]
+# El paquete vive en la raíz del repo, no en src/ como Clock y MonitorPC.
+where = ["."]
+include = ["player*"]
+
 [tool.mypy]
 strict = true
 python_version = "3.12"
 exclude = [".venv", "build", "dist"]
 ignore_missing_imports = true
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
