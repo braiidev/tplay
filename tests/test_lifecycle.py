@@ -198,6 +198,136 @@ class TestReinstall:
         assert "install.sh" in capsys.readouterr().err
 
 
+class TestConfirmar:
+    def test_sin_tty_aborta(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Sin terminal no hay a quién preguntar: NO se asume que sí."""
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: False, raising=False)
+        assert cli._confirmar("¿borrar?") is False
+
+    def test_acepta_s_si_yes(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: True, raising=False)
+        for respuesta in ("s", "S", "si", "sí", "y", "yes", "  s  "):
+            monkeypatch.setattr("builtins.input", lambda p, r=respuesta: r)
+            assert cli._confirmar("¿borrar?") is True, respuesta
+
+    def test_rechaza_vacio_y_otros(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Default es NO: cualquier cosa que no sea un sí explícito, no."""
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: True, raising=False)
+        for respuesta in ("", "n", "no", "nop", "quiza", "1"):
+            monkeypatch.setattr("builtins.input", lambda p, r=respuesta: r)
+            assert cli._confirmar("¿borrar?") is False, respuesta
+
+    def test_eof_aborta(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: True, raising=False)
+
+        def eof(prompt: str = "") -> str:
+            raise EOFError
+
+        monkeypatch.setattr("builtins.input", eof)
+        assert cli._confirmar("¿borrar?") is False
+
+    def test_ctrl_c_aborta(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: True, raising=False)
+
+        def ctrlc(prompt: str = "") -> str:
+            raise KeyboardInterrupt
+
+        monkeypatch.setattr("builtins.input", ctrlc)
+        assert cli._confirmar("¿borrar?") is False
+
+
+class TestUninstall:
+    def _preparar(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, con_datos: bool = True
+    ) -> tuple[Path, Path]:
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / "player").mkdir()
+        (repo / "player" / "__init__.py").write_text("")
+        if con_datos:
+            datos = tmp_path / "data"
+            (datos / "tmp").mkdir(parents=True)
+            (datos / "favorites.json").write_text('[{"title": "canción real"}]')
+            (datos / "tmp" / "x.mp3").write_bytes(b"x" * 100)
+        # HOME falso: sin esto _cli_uninstall busca ~/.local/bin/tplay de
+        # verdad e intenta borrarlo. En un test, nunca.
+        home = tmp_path / "home"
+        (home / ".local" / "bin").mkdir(parents=True)
+        (home / ".local" / "bin" / "tplay").write_text("#!/bin/sh\n")
+        monkeypatch.setattr(os.path, "expanduser",
+                            lambda p: p.replace("~", str(home), 1))
+        monkeypatch.setattr(paths, "INSTALL_DIR", str(home / ".local" / "share" / "tplay"))
+        monkeypatch.setattr(cli, "_repo_dir", lambda: str(repo))
+        # Los datos del test van a una ruta propia: _cli_uninstall lee
+        # paths.DATA_DIR en tiempo de llamada, así que alcanza con redirigirlo.
+        if con_datos:
+            monkeypatch.setattr(paths, "DATA_DIR", str(datos))
+            monkeypatch.setattr(paths, "LEGACY_DATA_DIR", str(tmp_path / "no-existe"))
+        return repo, (datos if con_datos else tmp_path / "nada")
+
+    def test_sin_tty_conserva_los_datos(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """El caso que importaba: sin TTY, datos intactos."""
+        repo, datos = self._preparar(monkeypatch, tmp_path)
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: False, raising=False)
+
+        assert cli._cli_uninstall() is True
+
+        assert datos.exists(), "los datos NO se borran sin confirmación"
+        assert (datos / "favorites.json").read_text() == '[{"title": "canción real"}]'
+
+    def test_responiendo_que_no_conserva_los_datos(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        repo, datos = self._preparar(monkeypatch, tmp_path)
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: True, raising=False)
+        monkeypatch.setattr("builtins.input", lambda p="": "n")
+
+        cli._cli_uninstall()
+
+        assert datos.exists(), "un 'no' tiene que conservar los datos"
+
+    def test_responiendo_que_si_borra(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        repo, datos = self._preparar(monkeypatch, tmp_path)
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: True, raising=False)
+        monkeypatch.setattr("builtins.input", lambda p="": "s")
+
+        cli._cli_uninstall()
+
+        assert not datos.exists(), "un 'sí' explícito sí borra"
+
+    def test_nunca_pide_sudo_para_borrar(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys
+    ) -> None:
+        """nota: el fixture aísla también el binario, para no tocar el real."""
+        """Antes era `sudo rm -f` + `rm -rf`: sudo para borrar el comando."""
+        repo, _ = self._preparar(monkeypatch, tmp_path)
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: False, raising=False)
+
+        def prohibido(cmd, *a, **k):
+            raise AssertionError(f"no debe usar sudo: {cmd}")
+
+        monkeypatch.setattr(subprocess, "run", prohibido)
+        cli._cli_uninstall()
+
+    def test_muestra_los_datos_antes_de_borrar(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys
+    ) -> None:
+        """El usuario tiene que ver QUÉ se va a perder antes de confirmar."""
+        repo, datos = self._preparar(monkeypatch, tmp_path)
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: False, raising=False)
+
+        cli._cli_uninstall()
+
+        out = capsys.readouterr().out
+        assert str(datos) in out
+        assert "no se pueden recuperar" in out.lower()
+
+
+
 class TestFmtBytes:
     def test_legible(self) -> None:
         assert cli._fmt_bytes(0) == "0 B"

@@ -153,26 +153,110 @@ def _cli_reinstall() -> bool:
     return False
 
 
+def _confirmar(pregunta: str) -> bool:
+    """Confirmación por stdin. Sin TTY = no, siempre.
+
+    El `rm -rf` de los datos tiene que ser explícito. Si no hay terminal no
+    hay a quién preguntarle, y asumir "sí" desde un script o un pipe es
+    exactamente cómo se pierden favoritos e historial.
+    """
+    if not sys.stdin.isatty():
+        print(
+            f"{pregunta}\n  (sin terminal interactiva no se puede confirmar: "
+            "se aborta por seguridad)",
+            file=sys.stderr,
+        )
+        return False
+    try:
+        r = input(f"{pregunta} [s/N]: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return False
+    return r in ("s", "si", "sí", "y", "yes")
+
+
+def _tamano_duro(path: str) -> int:
+    """Bytes en disco de un árbol. Para mostrarle al usuario qué va a perder."""
+    total = 0
+    for dirpath, _dirnames, filenames in os.walk(path):
+        for n in filenames:
+            try:
+                total += os.path.getsize(os.path.join(dirpath, n))
+            except OSError:
+                pass
+    return total
+
+
 def _cli_uninstall() -> bool:
-    # TODO(v0.22): esto borra los datos con rm -rf sin preguntar, y después de
-    # v0.20 los datos ya no están acá adentro. Se reescribe en v0.22.
     repo = _repo_dir()
-    data = os.path.join(repo, "data")
-    bin_path = "/usr/local/bin/tplay"
+    from . import paths
+
+    # Se leen los atributos del módulo (y no `from .paths import DATA_DIR`) para
+    # que los tests puedan redirigirlos con monkeypatch: importando el valor al
+    # principio de la función, quedaría congelado y no se podría testear sin
+    # tocar el disco real del usuario.
+    #
+    # Rutas viejas: el uninstall tiene que alcanzar lo que instalaciones
+    # anteriores dejaron, no solo la disposición nueva.
+    candidatos_datos = [
+        paths.DATA_DIR,
+        os.path.join(repo, "data"),
+        paths.LEGACY_DATA_DIR,
+    ]
+    datos = [d for d in dict.fromkeys(candidatos_datos) if os.path.isdir(d)]
+
+    # El comando ya no está en /usr/local/bin (v0.19), pero installations viejas
+    # sí lo dejaron ahí, y sin sudo el rm silencioso no avisaba nada.
+    comandos = [os.path.expanduser("~/.local/bin/tplay"), "/usr/local/bin/tplay"]
+    binarios = [b for b in dict.fromkeys(comandos) if os.path.isfile(b) or os.path.islink(b)]
 
     print("▶ Desinstalando tplay...")
+    print()
+    print("  Se va a eliminar:")
+    for b in binarios:
+        print(f"    · comando   {b}")
+    for d in datos:
+        archivos = sum(1 for _ in (Path(d).rglob("*"))) if Path(d).exists() else 0
+        tam = _tamano_duro(d)
+        print(f"    · datos     {d}  ({archivos} entradas, {_fmt_bytes(tam)})")
+    print(f"    · repo      {repo}")
+    print()
 
-    if os.path.isfile(bin_path):
-        print(f"  ↳ Eliminando {bin_path}...")
-        subprocess.run(["sudo", "rm", "-f", bin_path], check=False)
+    # El repo y el comando se van siempre; los datos requieren confirmación
+    # explícita. Sin TTY no hay a quién preguntarle, así que los datos se
+    # conservan: assumption de "sí" desde un script es cómo se pierden
+    # favoritos e historial.
+    borrar_datos = False
+    if datos:
+        print(
+            "  Los datos contienen tu biblioteca, favoritos, historial y descargas.\n"
+            "  No se pueden recuperar una vez borrados."
+        )
+        borrar_datos = _confirmar("  ¿Borrar los datos también?")
+        if not borrar_datos:
+            print("  → Se conservan los datos (se puede borrar a mano después).")
+    else:
+        print("  No hay datos que borrar.")
 
-    if os.path.isdir(data):
-        print(f"  ↳ Eliminando datos: {data}...")
-        subprocess.run(["rm", "-rf", data], check=False)
+    for b in binarios:
+        print(f"  ↳ Eliminando {b}...")
+        try:
+            os.remove(b)
+        except OSError as e:
+            # No puede pasar con el wrapper propio (~/.local/bin), pero con el
+            # legacy de /usr/local/bin sí: es de root. El aviso va después de
+            # la línea correspondiente, no mezclado con el listado.
+            print(f"  ⚠ No se pudo eliminar {b}: {e}")
+            print(f"    Si es de root: sudo rm -f {b}")
+
+    if borrar_datos:
+        for d in datos:
+            print(f"  ↳ Eliminando datos: {d}...")
+            shutil.rmtree(d, ignore_errors=True)
 
     if os.path.isdir(repo):
         print(f"  ↳ Eliminando repositorio: {repo}...")
-        subprocess.run(["rm", "-rf", repo], check=False)
+        shutil.rmtree(repo, ignore_errors=True)
 
     print("✓ tplay desinstalado")
     return True
