@@ -12,3 +12,6 @@ node_modules/
 *SPEC*
 SCENES*
 data/
+# Generado por install.sh: el intérprete que se pinneó en ESTA máquina.
+# No va al repo — es estado local de la instalación.
+.pinned-python
