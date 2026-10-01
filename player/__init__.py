@@ -1,7 +1,9 @@
 import curses
 import os
+import shutil
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 
 from .app import PlayerApp
@@ -27,6 +29,12 @@ Opciones:
 
 
 def _repo_dir() -> str:
+    """Raíz del repo: el directorio padre del paquete `player`.
+
+    Sigue siendo válida después del cambio a ~/.local/share/tplay porque
+    describe la estructura del repo, no una ruta hardcodeada. Los datos ya no
+    viven acá adentro (ver player/paths.py).
+    """
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -37,12 +45,6 @@ def _cli_update() -> bool:
         print("Error: no es un repositorio git, no se puede actualizar", file=sys.stderr)
         return False
     try:
-        req_path = os.path.join(repo, "requirements.txt")
-        old_reqs: set[str] = set()
-        if os.path.isfile(req_path):
-            with open(req_path) as f:
-                old_reqs = {l.strip() for l in f if l.strip() and not l.startswith("#")}
-
         subprocess.run(["git", "fetch", "origin"], cwd=repo, capture_output=True, timeout=10)
         result = subprocess.run(
             ["git", "rev-list", "--count", "HEAD..origin/main"],
@@ -51,20 +53,20 @@ def _cli_update() -> bool:
         behind = int(result.stdout.strip() or 0)
         if behind == 0:
             print("✓ tplay ya está actualizado")
-            _install_new_deps(repo, req_path, old_reqs)
+            _reconciliar_deps(repo)
             return True
         print(f"  ↳ {behind} commits detrás, actualizando...")
         pull = subprocess.run(["git", "pull", "--ff-only"], cwd=repo,
                               capture_output=True, text=True, timeout=30)
         if pull.returncode == 0:
             print("✓ tplay actualizado correctamente")
-            _install_new_deps(repo, req_path, old_reqs)
+            _reconciliar_deps(repo)
             return True
         reset = subprocess.run(["git", "reset", "--hard", "origin/main"],
                                 cwd=repo, capture_output=True, text=True, timeout=10)
         if reset.returncode == 0:
             print("✓ tplay actualizado correctamente (historial corregido)")
-            _install_new_deps(repo, req_path, old_reqs)
+            _reconciliar_deps(repo)
             return True
         print(f"Error: {pull.stderr.strip()}", file=sys.stderr)
         return False
@@ -73,31 +75,58 @@ def _cli_update() -> bool:
         return False
 
 
-def _install_new_deps(repo: str, req_path: str, old_reqs: set[str]) -> None:
-    if not os.path.isfile(req_path):
-        return
-    try:
-        with open(req_path) as f:
-            new_reqs = {l.strip() for l in f if l.strip() and not l.startswith("#")}
-    except OSError:
-        return
-    added = new_reqs - old_reqs
-    if not added:
-        return
-    pkgs = [p.split(">=")[0].split("==")[0] for p in added]
-    print(f"  ↳ Instalando dependencias nuevas: {', '.join(pkgs)}")
-    try:
-        result = subprocess.run(
-            [sys.executable, "-m", "pip", "install", "--user"] + pkgs,
-            capture_output=True, text=True, timeout=120,
+def _pip_venv() -> str | None:
+    """El pip del venv, o None si estamos fuera de un venv.
+
+    Importante: nunca usamos `sys.executable -m pip --user` ni
+    `--break-system-packages`. Con el venv de install.sh, `sys.executable` YA
+    es el intérprete del venv, así que un pip simple instala en el lugar
+    correcto. Si no hay venv, saymoso y que el usuario use install.sh.
+    """
+    if sys.prefix == sys.base_prefix:
+        return None  # intérprete del sistema, sin venv
+    return sys.executable
+
+
+def _reconciliar_deps(repo: str) -> None:
+    """Instala el proyecto y sus deps en el venv, después de un git pull.
+
+    Reemplaza a la versión anterior, que comparaba `requirements.txt` línea por
+    línea. Ese archivo ya no existe (v0.17 lo borró: pyproject.toml es la única
+    fuente), así que `_install_new_deps` retornaba en silencio y un update que
+    cambiaba una dependencia no la instalaba — el peor fallo posible, porque
+    parecía haber funcionado.
+
+    `pip install -e .` resuelve por sí solo el conjunto completo de deps: si
+    pyproject agrega, quita o sube el techo de algo, esto lo reconcilia sin
+    tocar código.
+    """
+    pip = _pip_venv()
+    if pip is None:
+        print(
+            "  ⚠ No estás en el venv de tplay; no se tocan las deps.\n"
+            "  ⚠ Para reconciliarlas: curl -fsSL "
+            "https://raw.githubusercontent.com/braiidev/tplay/main/install.sh | bash",
+            file=sys.stderr,
         )
-        if result.returncode == 0:
-            print(f"✓ Dependencias instaladas: {', '.join(pkgs)}")
-        else:
-            print(f"  ⚠ No se pudo instalar automáticamente.")
-            print(f"  ⚠ Ejecutá manualmente: pip install --break-system-packages {' '.join(pkgs)}")
-    except Exception:
-        print(f"  ⚠ Ejecutá manualmente: pip install --break-system-packages {' '.join(pkgs)}")
+        return
+
+    try:
+        r = subprocess.run(
+            [pip, "-m", "pip", "install", "-e", repo],
+            capture_output=True, text=True, timeout=300,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        print("  ⚠ No se pudo reconciliar las deps automáticamente.", file=sys.stderr)
+        print(f"  ⚠ Ejecutá: {pip} -m pip install -e {repo}", file=sys.stderr)
+        return
+
+    if r.returncode == 0:
+        print("✓ Dependencias reconciliadas en el venv")
+    else:
+        # No abortamos: el código ya está actualizado y puede funcionar igual.
+        print("  ⚠ No se pudieron reconciliar todas las deps.", file=sys.stderr)
+        print(f"  ⚠ Ejecutá: {pip} -m pip install -e {repo}", file=sys.stderr)
 
 
 def _cli_reinstall() -> bool:
@@ -109,6 +138,10 @@ def _cli_reinstall() -> bool:
     print("▶ Reinstalando tplay (corre install.sh del repo)...")
     print("   Esto puede pedir sudo para vlc/ffmpeg/wrapper.")
     try:
+        # install.sh v0.19 acepta overrides por variables de entorno
+        # (TPLAY_DIR/TPLAY_BIN/TPLAY_RC) y no usa posicionales, así que no
+        # hay argumentos que reenviar. La versión anterior usaba un $1 que ya
+        # no existe; hoy queda explícito para que no parezca un olvido.
         r = subprocess.run(["bash", installer], cwd=repo)
     except OSError as e:
         print(f"Error: {e}", file=sys.stderr)
@@ -121,6 +154,8 @@ def _cli_reinstall() -> bool:
 
 
 def _cli_uninstall() -> bool:
+    # TODO(v0.22): esto borra los datos con rm -rf sin preguntar, y después de
+    # v0.20 los datos ya no están acá adentro. Se reescribe en v0.22.
     repo = _repo_dir()
     data = os.path.join(repo, "data")
     bin_path = "/usr/local/bin/tplay"
@@ -141,6 +176,18 @@ def _cli_uninstall() -> bool:
 
     print("✓ tplay desinstalado")
     return True
+
+
+def _fmt_bytes(n: int) -> str:
+    """Bytes legibles. 1023 B → '1023 B'; 2048 → '2.0 KB'."""
+    if n < 1024:
+        return f"{n} B"
+    valor = float(n)
+    for unidad in ("KB", "MB", "GB"):
+        valor /= 1024.0
+        if valor < 1024.0 or unidad == "GB":
+            return f"{valor:.1f} {unidad}"
+    return f"{valor:.1f} GB"
 
 
 def _cli_ctl(args: list[str]) -> int:
