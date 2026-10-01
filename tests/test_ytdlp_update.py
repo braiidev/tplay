@@ -122,25 +122,115 @@ class TestCheckAndUpdate:
         assert yu.check_and_update(enabled=True) == ""
 
 
-class TestRunUpdateFallbacks:
-    def test_flag_rechazado_cae_al_siguiente(
-        self, monkeypatch: pytest.MonkeyPatch,
+class TestPipFlags:
+    """El auto-actualizador NO puede escribir en el Python del sistema.
+
+    Antes `_pip_flags_attempts()` devolvía cuatro variantes que empezaban por
+    `pip install --break-system-packages --user` y degradaban hasta `--upgrade`
+    pelado: era la misma cascada que v0.19 eliminó de install.sh, y quedaba
+    viva acá. Un test viejo incluso la exigía como comportamiento esperado
+    (`return 2 if "--break-system-packages" in cmd`), o sea que el bug estaba
+    codificado en la suite.
+    """
+
+    def _flags(self, monkeypatch: pytest.MonkeyPatch, en_venv: bool) -> list[list[str]]:
+        if en_venv:
+            monkeypatch.setattr(yu.sys, "prefix", "/venv")
+            monkeypatch.setattr(yu.sys, "base_prefix", "/usr")
+        else:
+            monkeypatch.setattr(yu.sys, "prefix", "/usr")
+            monkeypatch.setattr(yu.sys, "base_prefix", "/usr")
+        return yu._pip_flags_attempts()
+
+    def test_dentro_del_venv_un_solo_intento(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Con venv, `pip install --upgrade` pelado ya instala en el lugar
+        correcto: sys.executable es el intérprete del venv."""
+        flags = self._flags(monkeypatch, en_venv=True)
+
+        assert len(flags) == 1
+        assert flags[0][-1] == "--upgrade"
+
+    def test_fuera_del_venv_no_pisa_el_python_del_sistema(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        flags = self._flags(monkeypatch, en_venv=False)
+
+        assert flags, "tiene que haber algún camino de actualización"
+        for cmd in flags:
+            assert "--break-system-packages" not in cmd, (
+                f"nunca --break-system-packages: escribe en el Python del SO → {cmd}"
+            )
+
+    def test_fuera_del_venv_prefiere_user(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Instalación vieja (user-site): primero --user, que es lo que va."""
+        flags = self._flags(monkeypatch, en_venv=False)
+
+        assert "--user" in flags[0]
+
+    def test_nunca_devuelve_break_system_packages(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Barrido: ninguna combinación de venv/user produce el flag prohibido."""
+        for en_venv in (True, False):
+            for cmd in self._flags(monkeypatch, en_venv=en_venv):
+                assert "--break-system-packages" not in cmd
+
+
+class TestRunUpdate:
+    def test_actualiza_con_el_primer_intento_valido(
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         cmds: list[list[str]] = []
 
         class FakeCompleted:
             def __init__(self, code: int) -> None:
                 self.returncode = code
-                self.stdout = ""
-                self.stderr = "error: unrecognized arguments" if code else ""
+                self.stdout = "Successfully installed"
+                self.stderr = ""
 
         def fake_run(cmd: list[str], **kw: Any) -> FakeCompleted:
             cmds.append(cmd)
-            return FakeCompleted(2 if "--break-system-packages" in cmd else 0)
+            return FakeCompleted(0)
 
         monkeypatch.setattr(yu.subprocess, "run", fake_run)
         monkeypatch.setattr(yu, "get_installed_version", lambda: "2026.8.19")
+        monkeypatch.setattr(yu.sys, "prefix", "/venv")
+        monkeypatch.setattr(yu.sys, "base_prefix", "/usr")
+
         ok, msg = yu.run_update()
+
         assert ok
         assert "2026.8.19" in msg
-        assert len(cmds) >= 2
+        assert len(cmds) == 1, "con venv alcanza un intento; no hay cascada"
+
+    def test_no_escribe_en_el_python_del_sistema(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """aunque pip falle en todos los intentos, ninguno lleva el flag prohibido."""
+        cmds: list[list[str]] = []
+
+        class FakeCompleted:
+            def __init__(self, code: int) -> None:
+                self.returncode = code
+                self.stdout = ""
+                self.stderr = "boom"
+
+        def fake_run(cmd: list[str], **kw: Any) -> FakeCompleted:
+            cmds.append(cmd)
+            return FakeCompleted(1)
+
+        monkeypatch.setattr(yu.subprocess, "run", fake_run)
+        monkeypatch.setattr(yu, "get_installed_version", lambda: "2026.8.19")
+        monkeypatch.setattr(yu.sys, "prefix", "/usr")
+        monkeypatch.setattr(yu.sys, "base_prefix", "/usr")
+
+        ok, _msg = yu.run_update()
+
+        assert ok is False
+        assert cmds
+        for cmd in cmds:
+            assert "--break-system-packages" not in cmd

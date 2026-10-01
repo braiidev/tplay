@@ -1015,10 +1015,11 @@ def draw_web(app: PlayerApp, h: int, w: int) -> None:
     draw_box(app.stdscr, h, w, "Web")
 
     if not _web.is_available():
-        safe_addstr(app.stdscr, 3, 2, "yt-dlp no está instalado.", destacar, h, w)
-        safe_addstr(app.stdscr, 5, 2, "Ejecutá en tu terminal:", texto, h, w)
-        safe_addstr(app.stdscr, 6, 2, "pip install --break-system-packages yt-dlp", nav, h, w)
-        safe_addstr(app.stdscr, 8, 2, "Luego reiniciá tplay.", texto, h, w)
+        safe_addstr(app.stdscr, 3, 2, "yt-dlp no está disponible.", destacar, h, w)
+        safe_addstr(app.stdscr, 5, 2, "Reparalo desde tu terminal:", texto, h, w)
+        safe_addstr(app.stdscr, 6, 2, "  tplay --reinstall", nav, h, w)
+        safe_addstr(app.stdscr, 8, 2, "No hace falta tocar el Python del sistema.", texto, h, w)
+        safe_addstr(app.stdscr, 9, 2, "tplay --reinstall lo instala en su venv.", texto, h, w)
         return
 
     if app.web_motor_edit_mode:

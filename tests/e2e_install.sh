@@ -39,6 +39,92 @@ else
     fail "player/ no compila"
 fi
 
+# `--break-system-packages` escribe en el site-packages del SO. Es exactamente el
+# bug que este trabajo arregla (FIX del TODO.md), así que si aparece en código
+# ejecutable, vuelve. Solo se permite en comentarios y en los tests que verifican
+# su ausencia.
+echo "▶ Nada toca el Python del sistema"
+
+# Se usa el tokenizer de Python en vez de grep: distinguir "comentario que
+# documenta el bug" de "flag en una cadena que se ejecuta" no es un problema de
+# regex. Los docstrings tampoco cuentan (no se ejecutan).
+prohibidos="$(python3 - "$REPO" <<'PY'
+import ast
+import pathlib
+import sys
+
+repo = pathlib.Path(sys.argv[1])
+prohibidos = ("--break-system-packages", "--user")
+encontrados = []
+
+# Las docstrings son ast.Constant, igual que un string en código: se excluyen
+# porque no se ejecutan. Un string suelto sí cuenta, porque puede acabar en un
+# subprocess.
+def es_docstring(nodo: ast.AST) -> bool:
+    return (
+        isinstance(nodo, ast.Expr)
+        and isinstance(nodo.value, ast.Constant)
+        and isinstance(nodo.value.value, str)
+    )
+
+docstrings: set[int] = set()
+for ruta in sorted(repo.rglob("*")):
+    if ruta.suffix != ".py" or "__pycache__" in ruta.parts:
+        continue
+    rel = ruta.relative_to(repo)
+    if rel.parts and rel.parts[0] == "tests":
+        continue  # los tests NOMBRAN el flag para verificar su ausencia
+    try:
+        arbol = ast.parse(ruta.read_text(encoding="utf-8"))
+    except (SyntaxError, UnicodeDecodeError):
+        continue
+    for nodo in ast.walk(arbol):
+        if es_docstring(nodo):
+            docstrings.add(id(nodo.value))
+    for nodo in ast.walk(arbol):
+        if id(nodo) in docstrings:
+            continue
+        if isinstance(nodo, ast.Constant) and isinstance(nodo.value, str):
+            for flag in prohibidos:
+                if flag in nodo.value:
+                    encontrados.append(f"{rel}:{nodo.lineno}: {flag}")
+
+# install.sh no se parsea: se chequea que el flag no esté en una línea de código
+# (no comentario) con awk.
+if encontrados:
+    print("\n".join(encontrados))
+PY
+)"
+
+# `--user` sí es legítimo en un solo caso: una instalación vieja por user-site,
+# donde no hay venv. Con venv (el mundo normal desde v0.19) no aparece. El flag
+# prohibido sin excusas es --break-system-packages.
+if [ -n "$prohibidos" ]; then
+    graves="$(echo "$prohibidos" | grep -- '--break-system-packages' || true)"
+    if [ -n "$graves" ]; then
+        fail "--break-system-packages en strings ejecutables:"
+        echo "$graves" | sed 's/^/      /'
+    else
+        ok "player/ sin --break-system-packages en strings"
+    fi
+else
+    ok "player/ sin flags de Python del sistema en strings"
+fi
+
+sh_prohibidos="$(
+    awk '
+        /^[[:space:]]*#/ { next }        # comentario de shell
+        /--break-system-packages/        { print FILENAME ":" FNR ": " $0 }
+        /pip[0-9]*[[:space:]]+install.*[[:space:]]--user/ { print FILENAME ":" FNR ": " $0 }
+    ' "$REPO/install.sh"
+)"
+if [ -n "$sh_prohibidos" ]; then
+    fail "install.sh toca el Python del sistema:"
+    echo "$sh_prohibidos" | sed 's/^/      /'
+else
+    ok "install.sh sin --break-system-packages ni pip --user"
+fi
+
 # ── 2. Las deps del venv se pueden instalar ──────────────────────────────────
 # Se prueba en un venv desechable aparte: si pyproject declara una dep inexistente
 # o un techo imposible, esto falla acá y no en la máquina del usuario.

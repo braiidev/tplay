@@ -126,13 +126,31 @@ def _pip_managed() -> bool:
 
 
 def _pip_flags_attempts() -> list[list[str]]:
+    """Variantes de pip para instalar, de la más segura a la más amplia.
+
+    ANTES: cuatro intentos que empezaban por `pip install --break-system-packages
+    --user` y degradaban hasta `--upgrade` pelado. Es la misma cascada que v0.19
+    eliminó de install.sh, y quedaba viva acá: el auto-actualizador diario de
+    yt-dlp podía escribir en el site-packages del SISTEMA. Con venv (el mundo
+    normal desde v0.19) no hace falta ninguna variante con sudo-bypass: el primer
+    intento ya instala en el lugar correcto.
+
+    Ahora el orden depende del entorno real:
+
+    - Dentro de un venv: un solo intento. `sys.executable` YA es el intérprete
+      del venv, así que pip simple instala donde corresponde.
+    - Fuera de un venv (instalación vieja por user-site): primero `--user`, que
+      es lo que corresponde ahí. Sin `--break-system-packages`, porque eso
+      escribe en el Python del SO.
+    - `PEP 668` (sistema con distro que bloquea pip): sin venv y sin `--user`
+      queda un solo intento que probablemente falle. Para eso está install.sh,
+      que crea el venv. Fallar acá es mejor que escribir en el sistema.
+    """
     base = [sys.executable, "-m", "pip", "install"]
-    return [
-        base + ["--break-system-packages", "--user", "--upgrade"],
-        base + ["--break-system-packages", "--upgrade"],
-        base + ["--user", "--upgrade"],
-        base + ["--upgrade"],
-    ]
+    dentro_de_venv = sys.prefix != sys.base_prefix
+    if dentro_de_venv:
+        return [base + ["--upgrade"]]
+    return [base + ["--user", "--upgrade"], base + ["--upgrade"]]
 
 
 def run_update(timeout: float = _UPDATE_TIMEOUT_SECS) -> tuple[bool, str]:
